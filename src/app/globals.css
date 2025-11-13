@@ -1,1 +1,73 @@
-@import "tailwindcss";
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 0 0% 100%;
+    --foreground: 0 0% 3.5%;
+    --card: 0 0% 100%;
+    --card-foreground: 0 0% 3.5%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 0 0% 3.5%;
+    --primary: 20 100% 59%;
+    --primary-foreground: 0 0% 98%;
+    --secondary: 43 100% 81%;
+    --secondary-foreground: 20 100% 59%;
+    --muted: 200 47% 96%;
+    --muted-foreground: 0 0% 32%;
+    --accent: 89 76% 69%;
+    --accent-foreground: 0 0% 3.5%;
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 98%;
+    --success: 142 76% 36%;
+    --success-foreground: 0 0% 98%;
+    --warning: 38 92% 50%;
+    --warning-foreground: 0 0% 98%;
+    --border: 0 0% 85%;
+    --input: 0 0% 85%;
+    --ring: 20 100% 59%;
+    --radius: 0.5rem;
+  }
+
+  .dark {
+    --background: 0 0% 3.5%;
+    --foreground: 0 0% 98%;
+    --card: 0 0% 3.5%;
+    --card-foreground: 0 0% 98%;
+    --popover: 0 0% 3.5%;
+    --popover-foreground: 0 0% 98%;
+    --primary: 20 100% 59%;
+    --primary-foreground: 0 0% 98%;
+    --secondary: 43 100% 81%;
+    --secondary-foreground: 20 100% 59%;
+    --muted: 0 0% 15%;
+    --muted-foreground: 0 0% 63.5%;
+    --accent: 89 76% 69%;
+    --accent-foreground: 0 0% 98%;
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 0 0% 98%;
+    --success: 142 76% 36%;
+    --success-foreground: 0 0% 98%;
+    --warning: 38 92% 50%;
+    --warning-foreground: 0 0% 98%;
+    --border: 0 0% 14.9%;
+    --input: 0 0% 14.9%;
+    --ring: 20 100% 59%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+    font-family: var(--font-inter), 'Inter', sans-serif;
+  }
+  
+  h1, h2, h3, h4, h5, h6, p, span, div, a, button, input, textarea, select, label {
+    font-family: var(--font-inter), 'Inter', sans-serif;
+  }
+}
+
