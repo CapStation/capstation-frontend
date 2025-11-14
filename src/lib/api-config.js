@@ -55,11 +55,11 @@ export const endpoints = {
   // Documents
   documents: {
     base: '/documents',
-    list: (projectId) => `/projects/${projectId}/documents`,
+    list: (projectId) => `/documents/project/${projectId}`,
     detail: (id) => `/documents/${id}`,
-    upload: (projectId) => `/projects/${projectId}/documents`,
+    upload: '/documents',
     update: (id) => `/documents/${id}`,
-    delete: (projectId, documentId) => `/projects/${projectId}/documents/${documentId}`,
+    delete: (id) => `/documents/${id}`,
     download: (id) => `/documents/${id}/download`,
   },
   
