@@ -1,15 +1,16 @@
 "use client";
 
-import React, { createContext, useContext, useState, useEffect } from 'react';
-import apiClient from '@/lib/api-client';
-import endpoints from '@/lib/api-config';
+import React, { createContext, useContext, useState, useEffect } from "react";
+import apiClient from "@/lib/api-client";
+import endpoints from "@/lib/api-config";
+import OAuthService from "@/services/OAuthService";
 
 const AuthContext = createContext(null);
 
 export const useAuth = () => {
   const context = useContext(AuthContext);
   if (!context) {
-    throw new Error('useAuth must be used within an AuthProvider');
+    throw new Error("useAuth must be used within an AuthProvider");
   }
   return context;
 };
@@ -33,7 +34,7 @@ export const AuthProvider = ({ children }) => {
         setIsAuthenticated(true);
       }
     } catch (error) {
-      console.error('Auth check failed:', error);
+      console.error("Auth check failed:", error);
       apiClient.removeAuthToken();
       setUser(null);
       setIsAuthenticated(false);
@@ -44,16 +45,16 @@ export const AuthProvider = ({ children }) => {
 
   const login = async (email, password) => {
     try {
-      console.log('Attempting login with:', { email });
-      console.log('API endpoint:', endpoints.auth.login);
-      console.log('Full URL:', `${apiClient.baseURL}${endpoints.auth.login}`);
-      
+      console.log("Attempting login with:", { email });
+      console.log("API endpoint:", endpoints.auth.login);
+      console.log("Full URL:", `${apiClient.baseURL}${endpoints.auth.login}`);
+
       const response = await apiClient.post(endpoints.auth.login, {
         email,
         password,
       });
 
-      console.log('Login response:', response);
+      console.log("Login response:", response);
 
       // Backend returns { accessToken, user }
       if (response.accessToken) {
@@ -63,42 +64,45 @@ export const AuthProvider = ({ children }) => {
         return { success: true, user: response.user };
       }
 
-      throw new Error('Login failed - no access token received');
+      throw new Error("Login failed - no access token received");
     } catch (error) {
-      console.error('Login error:', {
+      console.error("Login error:", {
         message: error.message,
         status: error.status,
         data: error.data,
-        error: error
+        error: error,
       });
-      
-      let errorMessage = 'Login gagal. Silakan coba lagi.';
-      
+
+      let errorMessage = "Login gagal. Silakan coba lagi.";
+
       // Handle network/CORS errors
       if (error.status === 0) {
-        errorMessage = error.message || 'Tidak dapat terhubung ke server. Periksa koneksi internet Anda.';
+        errorMessage =
+          error.message ||
+          "Tidak dapat terhubung ke server. Periksa koneksi internet Anda.";
       }
       // Handle 401 Unauthorized
       else if (error.status === 401) {
-        errorMessage = 'Email atau password salah.';
+        errorMessage = "Email atau password salah.";
       }
       // Handle 404 Not Found
       else if (error.status === 404) {
-        errorMessage = 'Endpoint login tidak ditemukan. Periksa konfigurasi API.';
+        errorMessage =
+          "Endpoint login tidak ditemukan. Periksa konfigurasi API.";
       }
       // Handle 500 Server Error
       else if (error.status >= 500) {
-        errorMessage = 'Server sedang bermasalah. Silakan coba lagi nanti.';
+        errorMessage = "Server sedang bermasalah. Silakan coba lagi nanti.";
       }
       // Use custom error message if available
       else if (error.message) {
         errorMessage = error.message;
       }
-      
-      return { 
-        success: false, 
+
+      return {
+        success: false,
         error: errorMessage,
-        details: error 
+        details: error,
       };
     }
   };
@@ -109,16 +113,18 @@ export const AuthProvider = ({ children }) => {
 
       // Backend returns success message, not auto-login
       // User needs to verify email first
-      return { 
-        success: true, 
-        message: response.message || 'Registrasi berhasil. Silakan cek email untuk verifikasi.',
-        requiresVerification: true
+      return {
+        success: true,
+        message:
+          response.message ||
+          "Registrasi berhasil. Silakan cek email untuk verifikasi.",
+        requiresVerification: true,
       };
     } catch (error) {
-      console.error('Register error:', error);
+      console.error("Register error:", error);
       return {
         success: false,
-        error: error.message || 'Registrasi gagal. Silakan coba lagi.',
+        error: error.message || "Registrasi gagal. Silakan coba lagi.",
       };
     }
   };
@@ -127,7 +133,7 @@ export const AuthProvider = ({ children }) => {
     try {
       await apiClient.post(endpoints.auth.logout);
     } catch (error) {
-      console.error('Logout error:', error);
+      console.error("Logout error:", error);
     } finally {
       apiClient.removeAuthToken();
       setUser(null);
@@ -139,6 +145,57 @@ export const AuthProvider = ({ children }) => {
     setUser((prev) => ({ ...prev, ...userData }));
   };
 
+  /**
+   * Login with OAuth (Google)
+   * Called after role selection in /oauth-setup page
+   * @param {string} setupToken - Token from OAuth callback
+   * @param {string} role - Selected role (mahasiswa/dosen)
+   */
+  const loginWithOAuth = async (setupToken, role) => {
+    try {
+      const result = await OAuthService.completeProfile(setupToken, role);
+
+      if (result.success) {
+        if (result.isPending) {
+          // Role pending approval - don't login
+          return {
+            success: true,
+            isPending: true,
+            message: result.message,
+          };
+        }
+
+        // Login successful - set token and user
+        if (result.accessToken) {
+          apiClient.setAuthToken(result.accessToken);
+          setUser(result.user);
+          setIsAuthenticated(true);
+          return {
+            success: true,
+            isPending: false,
+            user: result.user,
+          };
+        }
+      }
+
+      return result;
+    } catch (error) {
+      console.error("OAuth login error:", error);
+      return {
+        success: false,
+        error: error.message || "Gagal login dengan Google.",
+      };
+    }
+  };
+
+  /**
+   * Initiate Google OAuth login
+   * Redirects to backend Google OAuth endpoint
+   */
+  const loginWithGoogle = () => {
+    OAuthService.initiateGoogleLogin();
+  };
+
   const value = {
     user,
     loading,
@@ -148,6 +205,8 @@ export const AuthProvider = ({ children }) => {
     logout,
     updateUser,
     checkAuth,
+    loginWithOAuth,
+    loginWithGoogle,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
