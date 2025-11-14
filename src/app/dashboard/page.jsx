@@ -113,12 +113,12 @@ export default function DashboardPage() {
 
       {/* Header */}
       <div className="bg-gradient-to-r from-primary via-secondary to-accent">
-        <div className="container mx-auto px-4 py-12 text-center">
+        <div className="container mx-auto px-4 py-8 text-center">
           <h1 className="text-4xl md:text-5xl font-bold text-white">Dashboard Capstone</h1>
         </div>
       </div>
 
-      <div className="container mx-auto px-4 py-8">
+      <div className="container mx-auto px-4 py-5">
         {/* Stats */}
         <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-8">
           <Card className="text-center">

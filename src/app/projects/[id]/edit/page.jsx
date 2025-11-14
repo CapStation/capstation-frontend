@@ -227,7 +227,7 @@ export default function EditProjectPage() {
     <div className="min-h-screen bg-gradient-to-br from-neutral-50 via-white to-neutral-50">
       <Navbar />
 
-      <div className="container mx-auto px-4 py-12">
+      <div className="container mx-auto px-4 py-8">
         <div className="max-w-3xl mx-auto">
           <div className="mb-8">
             <Button 
