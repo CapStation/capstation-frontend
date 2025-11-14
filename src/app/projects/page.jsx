@@ -161,7 +161,7 @@ export default function ProjectsPage() {
           </div>
           {!myProject && (
             <Link href="/projects/new">
-              <Button className="bg-[#B6EB75] hover:bg-[#a3d965] text-neutral-900 font-medium shadow-md hover:shadow-lg transition-all">
+              <Button className="bg-[#FF8730] hover:bg-[#FF8730]/90 text-white font-medium shadow-md hover:shadow-lg transition-all">
                 <Plus className="h-4 w-4 mr-2" />
                 Buat Proyek Baru
               </Button>
@@ -282,8 +282,8 @@ export default function ProjectsPage() {
         ) : (
           <Card className="p-12 text-center border-2 border-dashed border-neutral-200 mb-8">
             <div className="max-w-md mx-auto">
-              <div className="w-20 h-20 bg-gradient-to-br from-[#B6EB75] to-[#FFE49C] rounded-full flex items-center justify-center mx-auto mb-4">
-                <Plus className="h-10 w-10 text-neutral-700" />
+              <div className="w-20 h-20 bg-gradient-to-br from-[#FF8730]/10 to-[#FF8730]/30 rounded-full flex items-center justify-center mx-auto mb-3">
+                <Plus className="h-10 w-10 text-[#FF8730]" />
               </div>
               <h3 className="text-2xl font-bold text-neutral-900 mb-2">
                 Belum Ada Proyek
@@ -293,7 +293,7 @@ export default function ProjectsPage() {
               </p>
               <div className="flex gap-3 justify-center">
                 <Link href="/projects/new">
-                  <Button className="bg-[#B6EB75] hover:bg-[#a3d965] text-neutral-900 font-medium shadow-md hover:shadow-lg transition-all">
+                  <Button className="bg-[#FF8730] hover:bg-[#FF8730]/90 text-white font-medium shadow-md hover:shadow-lg transition-all">
                     <Plus className="h-4 w-4 mr-2" />
                     Buat Proyek Baru
                   </Button>

@@ -760,7 +760,7 @@ export default function DocumentsAdminPage() {
                                     variant={pagination.page === page ? "default" : "outline"}
                                     size="sm"
                                     onClick={() => handlePageChange(page)}
-                                    className={pagination.page === page ? "bg-[#FF8730] hover:bg-[#FF8730]/90" : ""}
+                                    className={pagination.page === page ? "bg-[#B6EB75] hover:bg-[#B6EB75]/90 text-neutral-900" : "hover:bg-[#FFE49C] hover:text-neutral-900"}
                                   >
                                     {page}
                                   </Button>
