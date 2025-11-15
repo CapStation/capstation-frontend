@@ -1,4 +1,4 @@
-import { apiConfig } from './api-config';
+import { apiConfig } from "./api-config";
 
 class ApiClient {
   constructor() {
@@ -8,23 +8,23 @@ class ApiClient {
 
   // Get auth token from localStorage
   getAuthToken() {
-    if (typeof window !== 'undefined') {
-      return localStorage.getItem('accessToken');
+    if (typeof window !== "undefined") {
+      return localStorage.getItem("accessToken");
     }
     return null;
   }
 
   // Set auth token
   setAuthToken(token) {
-    if (typeof window !== 'undefined') {
-      localStorage.setItem('accessToken', token);
+    if (typeof window !== "undefined") {
+      localStorage.setItem("accessToken", token);
     }
   }
 
   // Remove auth token
   removeAuthToken() {
-    if (typeof window !== 'undefined') {
-      localStorage.removeItem('accessToken');
+    if (typeof window !== "undefined") {
+      localStorage.removeItem("accessToken");
     }
   }
 
@@ -37,7 +37,7 @@ class ApiClient {
 
     const token = this.getAuthToken();
     if (token) {
-      headers['Authorization'] = `Bearer ${token}`;
+      headers["Authorization"] = `Bearer ${token}`;
     }
 
     return headers;
@@ -45,14 +45,14 @@ class ApiClient {
 
   // Handle response
   async handleResponse(response) {
-    const contentType = response.headers.get('content-type');
-    const isJson = contentType && contentType.includes('application/json');
+    const contentType = response.headers.get("content-type");
+    const isJson = contentType && contentType.includes("application/json");
     const data = isJson ? await response.json() : await response.text();
 
     if (!response.ok) {
       const error = {
         status: response.status,
-        message: data.message || data.error || 'An error occurred',
+        message: data.message || data.error || "An error occurred",
         data: data,
       };
 
@@ -70,127 +70,176 @@ class ApiClient {
   // GET request
   async get(endpoint, options = {}) {
     const fullUrl = `${this.baseURL}${endpoint}`;
-    
-    console.log('🔵 GET Request:', {
-      endpoint,
-      fullUrl,
-      hasToken: !!this.getAuthToken(),
-    });
+
+    if (process.env.NODE_ENV === "development") {
+      console.log("🔵 GET Request:", {
+        endpoint,
+        fullUrl,
+        hasToken: !!this.getAuthToken(),
+      });
+    }
 
     try {
       const response = await fetch(fullUrl, {
-        method: 'GET',
+        method: "GET",
         headers: this.buildHeaders(options.headers),
         signal: options.signal,
       });
 
-      console.log('🟢 GET Response:', {
-        endpoint,
-        status: response.status,
-        ok: response.ok,
-      });
+      if (process.env.NODE_ENV === "development") {
+        console.log("🟢 GET Response:", {
+          endpoint,
+          status: response.status,
+          ok: response.ok,
+        });
+      }
 
       const result = await this.handleResponse(response);
-      console.log('✅ GET Success:', {
-        endpoint,
-        dataType: typeof result,
-        isArray: Array.isArray(result),
-        hasData: !!result?.data,
-      });
-      
+
+      if (process.env.NODE_ENV === "development") {
+        console.log("✅ GET Success:", {
+          endpoint,
+          dataType: typeof result,
+          isArray: Array.isArray(result),
+        });
+      }
+
       return result;
     } catch (error) {
-      // Check if it's a fetch error (network error, CORS, etc)
-      if (!error || error.message === 'Failed to fetch' || error.name === 'TypeError') {
-        console.error('🔴 Network/CORS Error:', {
-          endpoint,
-          fullUrl,
-          errorName: error?.name,
-          errorMessage: error?.message,
-          backendRunning: 'Check if backend is running on localhost:5000',
-        });
-        throw {
+      // Check if it's a network/CORS error
+      if (
+        !error.status ||
+        error.message === "Failed to fetch" ||
+        error.name === "TypeError"
+      ) {
+        const networkError = {
           status: 0,
-          message: 'Tidak dapat terhubung ke server. Pastikan backend berjalan di localhost:5000',
+          message: `Tidak dapat terhubung ke server. Periksa koneksi internet Anda.`,
           data: null,
-          originalError: error
+          isNetworkError: true,
         };
+
+        if (process.env.NODE_ENV === "development") {
+          console.warn("🔴 Network/CORS Error:", {
+            endpoint,
+            fullUrl,
+            baseURL: this.baseURL,
+            suggestion: "Periksa koneksi internet atau status server",
+          });
+        }
+
+        throw networkError;
       }
-      
-      console.error('🔴 GET Error:', {
-        endpoint,
-        fullUrl,
-        status: error.status,
-        message: error.message,
-        errorType: typeof error,
-        errorKeys: Object.keys(error || {}),
-        fullError: error
-      });
-      
+
+      if (process.env.NODE_ENV === "development") {
+        console.warn("⚠️ GET Error:", {
+          endpoint,
+          status: error.status,
+          message: error.message,
+        });
+      }
+
       throw error;
     }
   }
 
   // POST request
   async post(endpoint, data = {}, options = {}) {
+    const fullUrl = `${this.baseURL}${endpoint}`;
+
+    if (process.env.NODE_ENV === "development") {
+      console.log("🔵 POST Request:", {
+        endpoint,
+        fullUrl,
+        hasToken: !!this.getAuthToken(),
+        dataType: data instanceof FormData ? "FormData" : "JSON",
+      });
+    }
+
     try {
       const isFormData = data instanceof FormData;
       const headers = this.buildHeaders(options.headers);
 
       // Remove Content-Type for FormData (browser will set it with boundary)
       if (isFormData) {
-        delete headers['Content-Type'];
+        delete headers["Content-Type"];
       }
 
-      console.log('Making POST request to:', `${this.baseURL}${endpoint}`);
-      console.log('Request data:', data);
-
-      const response = await fetch(`${this.baseURL}${endpoint}`, {
-        method: 'POST',
+      const response = await fetch(fullUrl, {
+        method: "POST",
         headers,
         body: isFormData ? data : JSON.stringify(data),
         signal: options.signal,
       });
 
-      console.log('Response status:', response.status);
-      console.log('Response ok:', response.ok);
-      
-      return await this.handleResponse(response);
-    } catch (error) {
-      // Check if it's a fetch error (network error, CORS, etc)
-      if (error.message === 'Failed to fetch' || !error.status) {
-        console.error('Network error or CORS issue:', {
-          message: error.message,
-          endpoint: endpoint,
-          fullUrl: `${this.baseURL}${endpoint}`,
+      if (process.env.NODE_ENV === "development") {
+        console.log("🟢 POST Response:", {
+          endpoint,
+          status: response.status,
+          ok: response.ok,
         });
-        throw {
-          status: 0,
-          message: 'Tidak dapat terhubung ke server. Periksa koneksi internet Anda atau coba lagi nanti.',
-          data: null,
-          originalError: error
-        };
       }
-      
-      console.error('POST request error:', {
-        message: error.message,
-        status: error.status,
-        endpoint: endpoint,
-        fullUrl: `${this.baseURL}${endpoint}`,
-        error: error
-      });
+
+      const result = await this.handleResponse(response);
+
+      if (process.env.NODE_ENV === "development") {
+        console.log("✅ POST Success:", {
+          endpoint,
+          dataReceived: !!result,
+        });
+      }
+
+      return result;
+    } catch (error) {
+      // Check if it's a network/CORS error
+      if (
+        !error.status ||
+        error.message === "Failed to fetch" ||
+        error.name === "TypeError"
+      ) {
+        const networkError = {
+          status: 0,
+          message: `Tidak dapat terhubung ke server. Periksa koneksi internet Anda.`,
+          data: null,
+          isNetworkError: true,
+        };
+
+        if (process.env.NODE_ENV === "development") {
+          console.warn("🔴 Network/CORS Error:", {
+            endpoint,
+            fullUrl,
+            baseURL: this.baseURL,
+            suggestion:
+              "Periksa koneksi internet atau status server di Vercel",
+          });
+        }
+
+        throw networkError;
+      }
+
+      // API error with status code
+      if (process.env.NODE_ENV === "development") {
+        console.warn("⚠️ POST Error:", {
+          endpoint,
+          status: error.status,
+          message: error.message,
+        });
+      }
+
       throw error;
     }
   }
 
   // PUT request
   async put(endpoint, data = {}, options = {}) {
+    const fullUrl = `${this.baseURL}${endpoint}`;
+
     try {
       const isFormData = data instanceof FormData;
       const headers = this.buildHeaders(options.headers);
 
       if (isFormData) {
-        delete headers['Content-Type'];
+        delete headers["Content-Type"];
       }
 
       const fullUrl = `${this.baseURL}${endpoint}`;
@@ -265,7 +314,7 @@ class ApiClient {
   async patch(endpoint, data = {}, options = {}) {
     try {
       const response = await fetch(`${this.baseURL}${endpoint}`, {
-        method: 'PATCH',
+        method: "PATCH",
         headers: this.buildHeaders(options.headers),
         body: JSON.stringify(data),
         signal: options.signal,
@@ -273,7 +322,13 @@ class ApiClient {
 
       return await this.handleResponse(response);
     } catch (error) {
-      console.error('PATCH request error:', error);
+      if (process.env.NODE_ENV === "development") {
+        console.warn("⚠️ PATCH Error:", {
+          endpoint,
+          status: error.status,
+          message: error.message,
+        });
+      }
       throw error;
     }
   }
@@ -282,14 +337,20 @@ class ApiClient {
   async delete(endpoint, options = {}) {
     try {
       const response = await fetch(`${this.baseURL}${endpoint}`, {
-        method: 'DELETE',
+        method: "DELETE",
         headers: this.buildHeaders(options.headers),
         signal: options.signal,
       });
 
       return await this.handleResponse(response);
     } catch (error) {
-      console.error('DELETE request error:', error);
+      if (process.env.NODE_ENV === "development") {
+        console.warn("⚠️ DELETE Error:", {
+          endpoint,
+          status: error.status,
+          message: error.message,
+        });
+      }
       throw error;
     }
   }
@@ -298,17 +359,17 @@ class ApiClient {
   async downloadFile(endpoint, filename) {
     try {
       const response = await fetch(`${this.baseURL}${endpoint}`, {
-        method: 'GET',
+        method: "GET",
         headers: this.buildHeaders(),
       });
 
       if (!response.ok) {
-        throw new Error('Download failed');
+        throw new Error("Download failed");
       }
 
       const blob = await response.blob();
       const url = window.URL.createObjectURL(blob);
-      const link = document.createElement('a');
+      const link = document.createElement("a");
       link.href = url;
       link.download = filename;
       document.body.appendChild(link);
@@ -318,7 +379,7 @@ class ApiClient {
 
       return true;
     } catch (error) {
-      console.error('Download error:', error);
+      console.error("Download error:", error);
       throw error;
     }
   }
