@@ -83,7 +83,7 @@ export default function BrowseCapstonesPage() {
       result = sortedByDate.slice(0, 12);
     } else if (activeTab === "available") {
       result = result.filter(p => 
-        p.status === 'active' && (p.capstoneStatus === 'pending' || p.capstoneStatus === 'accepted')
+        p.status === 'dapat_dilanjutkan'
       );
     }
 
@@ -110,11 +110,11 @@ export default function BrowseCapstonesPage() {
     if (selectedAvailability && selectedAvailability !== "all") {
       if (selectedAvailability === "tersedia") {
         result = result.filter(p => 
-          p.status === 'active' && (p.capstoneStatus === 'pending' || p.capstoneStatus === 'accepted')
+          p.status === 'dapat_dilanjutkan'
         );
       } else if (selectedAvailability === "tidak-tersedia") {
         result = result.filter(p => 
-          p.status !== 'active' || p.capstoneStatus === 'completed'
+          p.status !== 'dapat_dilanjutkan'
         );
       }
     }
@@ -169,8 +169,8 @@ export default function BrowseCapstonesPage() {
     ];
 
     const mockCategories = ["Kesehatan", "Smart City", "IoT", "Pengelolaan Sampah", "AI/ML"];
-    const statuses = ["active", "inactive"];
-    const capstoneStatuses = ["pending", "accepted", "completed"];
+    const statuses = ["active", "inactive", "selesai", "dapat_dilanjutkan"];
+    const capstoneStatuses = ["new", "pending"];
 
     return Array.from({ length: count }, (_, i) => ({
       _id: `browse-${i}`,

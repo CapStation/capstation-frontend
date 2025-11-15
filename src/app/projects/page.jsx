@@ -34,22 +34,43 @@ export default function ProjectsPage() {
   const loadProjectData = async () => {
     setLoading(true);
     try {
-      // Get user's main project
+      // Get all user's projects
       const result = await projectService.getMyProjects();
       if (result.success) {
         const projectsData = Array.isArray(result.data) 
           ? result.data 
           : result.data?.projects || result.data?.data || [];
         
-        // User hanya punya 1 proyek utama
-        setMyProject(projectsData.length > 0 ? projectsData[0] : null);
+        // Pisahkan project aktif dan request history
+        // Project aktif: status = 'active' atau 'selesai', capstoneStatus = 'new' atau 'accepted'
+        const activeProjects = projectsData.filter(p => 
+          (p.status === 'active' || p.status === 'selesai') && 
+          (p.capstoneStatus === 'new' || p.capstoneStatus === 'accepted')
+        );
+        
+        // Request history: capstoneStatus = 'pending' atau 'rejected'
+        const requestProjects = projectsData.filter(p => 
+          p.capstoneStatus === 'pending' || p.capstoneStatus === 'rejected'
+        );
+        
+        // Set main project (ambil yang pertama dari active projects)
+        setMyProject(activeProjects.length > 0 ? activeProjects[0] : null);
+        
+        // Set request history (convert format)
+        const requests = requestProjects.map(p => ({
+          _id: p._id,
+          projectTitle: p.title,
+          requestDate: p.createdAt,
+          status: p.capstoneStatus, // 'pending' atau 'rejected'
+          reason: p.description || "Request untuk melanjutkan project",
+          rejectionReason: p.capstoneStatus === 'rejected' ? "Request ditolak oleh tim pemilik project" : null
+        }));
+        
+        setRequestHistory(requests);
       } else {
         setMyProject(generateMockProject());
+        setRequestHistory(generateMockRequests());
       }
-
-      // TODO: Get continuation request history from API
-      // For now, use mock data
-      setRequestHistory(generateMockRequests());
     } catch (error) {
       console.error("Failed to load project data:", error);
       setMyProject(generateMockProject());
@@ -69,7 +90,7 @@ export default function ProjectsPage() {
       createdAt: "2024-09-15T10:00:00Z",
       updatedAt: "2024-11-01T15:30:00Z",
       status: "active",
-      capstoneStatus: "accepted",
+      capstoneStatus: "new",
       supervisor: "68da7fd4c9999e954110c9e2",
       tema: "kesehatan",
       academicYear: "Gasal-2024",
@@ -95,13 +116,6 @@ export default function ProjectsPage() {
         reason: "Tim kami ingin mengembangkan fitur pembayaran digital",
         rejectionReason: "Proyek sudah dilanjutkan oleh tim lain"
       },
-      {
-        _id: "req3",
-        projectTitle: "Sistem Deteksi Kualitas Udara Real-time",
-        requestDate: "2024-06-10T09:00:00Z",
-        status: "approved",
-        reason: "Kami memiliki expertise di sensor dan data analytics"
-      },
     ];
   };
 
@@ -117,25 +131,34 @@ export default function ProjectsPage() {
 
   const getStatusBadge = (status) => {
     const statusMap = {
-      pending: { color: "bg-yellow-100 text-yellow-700 border-yellow-300", icon: Clock, label: "Menunggu" },
-      approved: { color: "bg-green-100 text-green-700 border-green-300", icon: CheckCircle2, label: "Disetujui" },
+      // capstoneStatus
+      new: { color: "bg-blue-100 text-blue-700 border-blue-300", icon: AlertCircle, label: "Baru" },
+      pending: { color: "bg-yellow-100 text-yellow-700 border-yellow-300", icon: Clock, label: "Menunggu Persetujuan" },
+      accepted: { color: "bg-green-100 text-green-700 border-green-300", icon: CheckCircle2, label: "Diterima" },
       rejected: { color: "bg-red-100 text-red-700 border-red-300", icon: XCircle, label: "Ditolak" },
-      accepted: { color: "bg-green-100 text-green-700 border-green-300", icon: CheckCircle2, label: "Dapat Dilanjutkan" },
-      active: { color: "bg-blue-100 text-blue-700 border-blue-300", icon: AlertCircle, label: "Sedang Berjalan" },
-      completed: { color: "bg-purple-100 text-purple-700 border-purple-300", icon: CheckCircle2, label: "Selesai" },
+      
+      // status
+      inactive: { color: "bg-gray-100 text-gray-700 border-gray-300", icon: XCircle, label: "Tidak Aktif" },
+      active: { color: "bg-green-100 text-green-700 border-green-300", icon: CheckCircle2, label: "Sedang Berjalan" },
+      selesai: { color: "bg-purple-100 text-purple-700 border-purple-300", icon: CheckCircle2, label: "Selesai" },
+      dapat_dilanjutkan: { color: "bg-emerald-100 text-emerald-700 border-emerald-300", icon: AlertCircle, label: "Dapat Dilanjutkan" },
+      
+      // Legacy for request history
+      approved: { color: "bg-green-100 text-green-700 border-green-300", icon: CheckCircle2, label: "Disetujui" },
     };
-    return statusMap[status?.toLowerCase()] || statusMap.pending;
+    return statusMap[status?.toLowerCase()] || statusMap.new;
   };
 
   const getThemeLabel = (tema) => {
     const themeMap = {
       'kesehatan': 'Kesehatan',
-      'pengelolaan_sampah': 'Pengelolaan Sampah',
-      'smart_city': 'Smart City',
+      'pengelolaan-sampah': 'Pengelolaan Sampah',
+      'smart-city': 'Smart City',
+      'transportasi-ramah-lingkungan': 'Transportasi Ramah Lingkungan',
       'iot': 'IoT',
       'ai': 'Artificial Intelligence',
     };
-    return themeMap[tema?.toLowerCase()] || tema || 'Lainnya';
+    return themeMap[tema?.toLowerCase()] || tema?.replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase()) || 'Lainnya';
   };
 
   if (authLoading || loading) {
@@ -176,9 +199,10 @@ export default function ProjectsPage() {
               <div className="flex items-start justify-between">
                 <div className="flex-1">
                   <div className="flex items-center gap-3 mb-3">
-                    <Badge className={`${getStatusBadge(myProject.capstoneStatus || myProject.status).color} flex items-center gap-1`}>
-                      {React.createElement(getStatusBadge(myProject.capstoneStatus || myProject.status).icon, { className: "h-3 w-3" })}
-                      {getStatusBadge(myProject.capstoneStatus || myProject.status).label}
+                    {/* Hanya tampilkan status (active atau selesai) */}
+                    <Badge className={`${getStatusBadge(myProject.status).color} flex items-center gap-1`}>
+                      {React.createElement(getStatusBadge(myProject.status).icon, { className: "h-3 w-3" })}
+                      {getStatusBadge(myProject.status).label}
                     </Badge>
                     {myProject.tema && (
                       <Badge variant="outline" className="bg-white/80">

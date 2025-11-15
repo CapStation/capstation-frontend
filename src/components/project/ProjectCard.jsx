@@ -87,25 +87,41 @@ export default function ProjectCard({ project, showStatus = false }) {
     fetchUserData();
   }, [fetchUserData]);
   const getStatusColor = (status) => {
-    // Normalize status - check if project is available to continue
+    // Normalize status
     const normalizedStatus = status?.toLowerCase();
     
-    // Available statuses (green)
-    if (normalizedStatus === "accepted" || 
-        normalizedStatus === "pending" || 
-        normalizedStatus === "active" || 
-        normalizedStatus === "available") {
+    // Status colors based on new business logic
+    if (normalizedStatus === "dapat_dilanjutkan") {
+      return "bg-emerald-300 text-gray-800 border-neutral-300";
+    }
+    
+    if (normalizedStatus === "active") {
       return "bg-green-300 text-gray-800 border-neutral-300";
     }
     
-    // Rejected status (red)
-    if (normalizedStatus === "rejected" || normalizedStatus === "ditolak") {
-      return "bg-red-300 text-black-800 border-neutral-300";
+    if (normalizedStatus === "selesai") {
+      return "bg-blue-300 text-black-800 border-neutral-300";
     }
     
-    // Completed status (blue)
-    if (normalizedStatus === "completed" || normalizedStatus === "selesai") {
-      return "bg-blue-300 text-black-800 border-neutral-300";
+    if (normalizedStatus === "inactive") {
+      return "bg-gray-300 text-gray-800 border-neutral-300";
+    }
+    
+    // CapstoneStatus colors
+    if (normalizedStatus === "new") {
+      return "bg-blue-200 text-gray-800 border-neutral-300";
+    }
+    
+    if (normalizedStatus === "pending") {
+      return "bg-yellow-300 text-gray-800 border-neutral-300";
+    }
+    
+    if (normalizedStatus === "accepted") {
+      return "bg-green-300 text-gray-800 border-neutral-300";
+    }
+    
+    if (normalizedStatus === "rejected") {
+      return "bg-red-300 text-gray-800 border-neutral-300";
     }
     
     // Default (gray)
@@ -115,21 +131,20 @@ export default function ProjectCard({ project, showStatus = false }) {
   const getStatusLabel = (status) => {
     const normalizedStatus = status?.toLowerCase();
     
-    // All "available" statuses show as "Dapat dilanjutkan"
-    if (normalizedStatus === "accepted" || 
-        normalizedStatus === "pending" || 
-        normalizedStatus === "active" || 
-        normalizedStatus === "available") {
-      return "Dapat dilanjutkan";
-    }
+    // Status labels
+    if (normalizedStatus === "dapat_dilanjutkan") return "Dapat Dilanjutkan";
+    if (normalizedStatus === "active") return "Sedang Berjalan";
+    if (normalizedStatus === "selesai") return "Selesai";
+    if (normalizedStatus === "inactive") return "Tidak Aktif";
     
-    // Other statuses
+    // CapstoneStatus labels
+    if (normalizedStatus === "new") return "Baru";
+    if (normalizedStatus === "pending") return "Menunggu Persetujuan";
+    if (normalizedStatus === "accepted") return "Diterima";
     if (normalizedStatus === "rejected") return "Ditolak";
-    if (normalizedStatus === "completed") return "Selesai";
-    if (normalizedStatus === "cancelled") return "Dibatalkan";
     
     // Fallback
-    return status || "Dapat dilanjutkan";
+    return status || "Baru";
   };
 
   // Format date to Indonesian format

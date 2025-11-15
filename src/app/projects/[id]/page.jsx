@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import * as React from "react";
 import { useRouter, useParams } from "next/navigation";
 import Link from "next/link";
+import { useAuth } from "@/contexts/AuthContext";
 import Navbar from "@/components/layout/Navbar";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -80,6 +81,7 @@ export default function ProjectDetailPage() {
   const router = useRouter();
   const params = useParams();
   const { toast } = useToast();
+  const { user } = useAuth();
   const [project, setProject] = useState(null);
   const [documents, setDocuments] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -104,6 +106,15 @@ export default function ProjectDetailPage() {
     files: []
   });
   const [isDragging, setIsDragging] = useState(false);
+  
+  // Complete project dialog states
+  const [showCompleteDialog, setShowCompleteDialog] = useState(false);
+  const [confirmationText, setConfirmationText] = useState("");
+  const [canContinue, setCanContinue] = useState(false);
+  const [completingProject, setCompletingProject] = useState(false);
+  
+  // Set to dapat dilanjutkan dialog
+  const [showSetContinuableDialog, setShowSetContinuableDialog] = useState(false);
 
   useEffect(() => {
     if (params.id) {
@@ -227,6 +238,84 @@ export default function ProjectDetailPage() {
       toast({
         title: "Error",
         description: "Terjadi kesalahan saat menghapus proyek",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleCompleteProject = async () => {
+    if (confirmationText !== "SELESAI") {
+      toast({
+        title: "Konfirmasi Tidak Sesuai",
+        description: "Ketik 'SELESAI' untuk mengonfirmasi",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setCompletingProject(true);
+    try {
+      const updateData = {
+        status: canContinue ? 'dapat_dilanjutkan' : 'selesai'
+      };
+
+      const result = await projectService.updateProject(params.id, updateData);
+      
+      if (result.success) {
+        toast({
+          title: "Berhasil",
+          description: canContinue 
+            ? "Proyek telah selesai dan dapat dilanjutkan oleh mahasiswa lain" 
+            : "Proyek berhasil diselesaikan",
+        });
+        setShowCompleteDialog(false);
+        setConfirmationText("");
+        setCanContinue(false);
+        loadProjectData();
+      } else {
+        toast({
+          title: "Error",
+          description: result.error || "Gagal menyelesaikan proyek",
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      console.error("Error completing project:", error);
+      toast({
+        title: "Error",
+        description: "Terjadi kesalahan saat menyelesaikan proyek",
+        variant: "destructive",
+      });
+    } finally {
+      setCompletingProject(false);
+    }
+  };
+
+  const handleSetContinuable = async () => {
+    try {
+      const result = await projectService.updateProject(params.id, {
+        status: 'dapat_dilanjutkan'
+      });
+      
+      if (result.success) {
+        toast({
+          title: "Berhasil",
+          description: "Proyek sekarang dapat dilanjutkan oleh mahasiswa lain",
+        });
+        setShowSetContinuableDialog(false);
+        loadProjectData();
+      } else {
+        toast({
+          title: "Error",
+          description: result.error || "Gagal mengubah status proyek",
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      console.error("Error updating project:", error);
+      toast({
+        title: "Error",
+        description: "Terjadi kesalahan saat mengubah status proyek",
         variant: "destructive",
       });
     }
@@ -743,11 +832,31 @@ export default function ProjectDetailPage() {
   };
 
   const getStatusColor = (status) => {
+    // New status values
     if (status === "active") return "bg-green-500 text-white";
-    if (status === "completed") return "bg-blue-500 text-white";
-    if (status === "suspended") return "bg-yellow-500 text-neutral-900";
-    if (status === "deactive") return "bg-red-500 text-white";
+    if (status === "selesai") return "bg-blue-500 text-white";
+    if (status === "inactive") return "bg-gray-500 text-white";
+    if (status === "dapat_dilanjutkan") return "bg-emerald-500 text-white";
+    
+    // CapstoneStatus values
+    if (status === "new") return "bg-blue-400 text-white";
+    if (status === "pending") return "bg-yellow-500 text-neutral-900";
+    if (status === "accepted") return "bg-green-500 text-white";
+    if (status === "rejected") return "bg-red-500 text-white";
+    
     return "bg-neutral-200 text-neutral-700";
+  };
+
+  const getStatusLabel = (status) => {
+    if (status === "active") return "Sedang Berjalan";
+    if (status === "selesai") return "Selesai";
+    if (status === "inactive") return "Tidak Aktif";
+    if (status === "dapat_dilanjutkan") return "Dapat Dilanjutkan";
+    if (status === "new") return "Baru";
+    if (status === "pending") return "Menunggu Persetujuan";
+    if (status === "accepted") return "Diterima";
+    if (status === "rejected") return "Ditolak";
+    return status;
   };
 
   if (loading) {
@@ -796,8 +905,9 @@ export default function ProjectDetailPage() {
                 <div className="flex-1">
                   <CardTitle className="text-2xl mb-4 leading-tight">{project.title}</CardTitle>
                   <div className="flex flex-wrap gap-2">
+                    {/* Hanya tampilkan status (active, selesai, inactive, dapat_dilanjutkan) */}
                     <Badge className={getStatusColor(project.status)}>
-                      {project.status === 'active' ? 'Active' : project.status}
+                      {getStatusLabel(project.status)}
                     </Badge>
                     {project.tema && (
                       <Badge variant="outline" className="capitalize">
@@ -813,7 +923,7 @@ export default function ProjectDetailPage() {
                     )}
                   </div>
                 </div>
-                <div className="flex gap-2 flex-shrink-0">
+                <div className="flex gap-2 flex-shrink-0 flex-wrap">
                   <Link href={`/projects/${params.id}/edit`}>
                     <Button variant="outline" size="sm">
                       <Edit className="h-4 w-4 mr-2" />
@@ -929,6 +1039,8 @@ export default function ProjectDetailPage() {
                   })}
                 </p>
               </div>
+
+              {/* Tombol Aksi Proyek akan dipindah ke bawah dokumen */}
             </CardContent>
           </Card>
 
@@ -1031,6 +1143,36 @@ export default function ProjectDetailPage() {
                       </div>
                     </div>
                   ))}
+                </div>
+              )}
+              {/* Tombol Aksi Proyek - hanya untuk owner, dipindah ke bawah dokumen */}
+              {user && project.owner && 
+               (typeof project.owner === 'string' ? project.owner === user.id : project.owner._id === user.id) && (
+                <div className="pt-6 border-t border-neutral-200 mt-8 space-y-2">
+                  {/* Tombol Selesaikan Proyek - untuk project active */}
+                  {project.status === 'active' && (
+                    <Button
+                      variant="default"
+                      size="lg"
+                      onClick={() => setShowCompleteDialog(true)}
+                      className="w-full bg-green-600 hover:bg-green-700 text-white font-semibold"
+                    >
+                      <CheckCircle2 className="h-5 w-5 mr-2" />
+                      Konfirmasi Proyek telah Selesai
+                    </Button>
+                  )}
+                  {/* Tombol Dapat Dilanjutkan - untuk project selesai */}
+                  {project.status === 'selesai' && (
+                    <Button
+                      variant="default"
+                      size="lg"
+                      onClick={() => setShowSetContinuableDialog(true)}
+                      className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-semibold"
+                    >
+                      <AlertCircle className="h-5 w-5 mr-2" />
+                      Tandai Dapat Dilanjutkan
+                    </Button>
+                  )}
                 </div>
               )}
             </CardContent>
@@ -1488,6 +1630,110 @@ export default function ProjectDetailPage() {
                 </Button>
               </DialogFooter>
             </form>
+          </DialogContent>
+        </Dialog>
+
+        {/* Complete Project Dialog */}
+        <Dialog open={showCompleteDialog} onOpenChange={setShowCompleteDialog}>
+          <DialogContent className="max-w-md">
+            <DialogHeader>
+              <DialogTitle>Selesaikan Proyek</DialogTitle>
+              <DialogDescription>
+                Pastikan semua pekerjaan telah selesai sebelum menandai proyek sebagai selesai.
+              </DialogDescription>
+            </DialogHeader>
+            
+            <div className="space-y-4">
+              <div>
+                <Label className="flex items-center gap-2 mb-3">
+                  <input
+                    type="checkbox"
+                    checked={canContinue}
+                    onChange={(e) => setCanContinue(e.target.checked)}
+                    className="h-4 w-4"
+                  />
+                  <span>Proyek ini dapat dilanjutkan oleh mahasiswa lain</span>
+                </Label>
+                <p className="text-sm text-neutral-500 ml-6">
+                  {canContinue 
+                    ? "Proyek akan ditandai sebagai 'Dapat Dilanjutkan' dan dapat di-request oleh mahasiswa baru"
+                    : "Proyek akan ditandai sebagai 'Selesai' (Anda dapat mengubahnya nanti)"
+                  }
+                </p>
+              </div>
+
+              <div>
+                <Label htmlFor="confirmation">
+                  Ketik <span className="font-bold text-red-600">SELESAI</span> untuk mengonfirmasi
+                </Label>
+                <Input
+                  id="confirmation"
+                  value={confirmationText}
+                  onChange={(e) => setConfirmationText(e.target.value.toUpperCase())}
+                  placeholder="Ketik SELESAI"
+                  className="mt-2"
+                />
+              </div>
+            </div>
+
+            <DialogFooter>
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setShowCompleteDialog(false);
+                  setConfirmationText("");
+                  setCanContinue(false);
+                }}
+                disabled={completingProject}
+              >
+                Batal
+              </Button>
+              <Button
+                onClick={handleCompleteProject}
+                disabled={confirmationText !== "SELESAI" || completingProject}
+                className="bg-green-600 hover:bg-green-700"
+              >
+                {completingProject ? (
+                  <>
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    Memproses...
+                  </>
+                ) : (
+                  <>
+                    <CheckCircle2 className="h-4 w-4 mr-2" />
+                    Ya, Selesaikan
+                  </>
+                )}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        {/* Set Continuable Dialog */}
+        <Dialog open={showSetContinuableDialog} onOpenChange={setShowSetContinuableDialog}>
+          <DialogContent className="max-w-md">
+            <DialogHeader>
+              <DialogTitle>Ubah Status Proyek</DialogTitle>
+              <DialogDescription>
+                Proyek akan diubah menjadi "Dapat Dilanjutkan" sehingga mahasiswa baru dapat mengajukan request untuk melanjutkan proyek ini.
+              </DialogDescription>
+            </DialogHeader>
+
+            <DialogFooter>
+              <Button
+                variant="outline"
+                onClick={() => setShowSetContinuableDialog(false)}
+              >
+                Batal
+              </Button>
+              <Button
+                onClick={handleSetContinuable}
+                className="bg-emerald-600 hover:bg-emerald-700"
+              >
+                <AlertCircle className="h-4 w-4 mr-2" />
+                Ya, Dapat Dilanjutkan
+              </Button>
+            </DialogFooter>
           </DialogContent>
         </Dialog>
       </div>

@@ -311,54 +311,17 @@ export default function EditProjectPage() {
                   </Label>
                   <div className="relative mt-2">
                     <div 
-                      className="flex items-center gap-2 px-3 py-2 border border-neutral-300 rounded-md cursor-pointer hover:bg-neutral-50"
-                      onClick={() => setShowDosenDropdown(!showDosenDropdown)}
+                      className="flex items-center gap-2 px-3 py-2 border border-neutral-300 rounded-md bg-neutral-50 cursor-not-allowed"
                     >
-                      <Search className="h-4 w-4 text-neutral-500" />
-                      <span className={formData.supervisorName ? "text-neutral-900" : "text-neutral-500"}>
-                        {formData.supervisorName || "Pilih dosen pembimbing..."}
+                      <Search className="h-4 w-4 text-neutral-400" />
+                      <span className="text-neutral-600">
+                        {formData.supervisorName || "Belum ada dosen pembimbing"}
                       </span>
                     </div>
-                    
-                    {showDosenDropdown && (
-                      <div className="absolute z-10 w-full mt-1 bg-white border border-neutral-300 rounded-md shadow-lg max-h-64 overflow-hidden">
-                        <div className="p-2 border-b">
-                          <Input
-                            type="text"
-                            placeholder="Cari dosen..."
-                            value={dosenSearchQuery}
-                            onChange={(e) => handleDosenSearch(e.target.value)}
-                            className="w-full"
-                            autoFocus
-                          />
-                        </div>
-                        <div className="max-h-48 overflow-y-auto">
-                          {loadingDosen ? (
-                            <div className="p-4 text-center text-neutral-500">
-                              <Loader2 className="h-4 w-4 animate-spin mx-auto" />
-                            </div>
-                          ) : filteredDosenList.length === 0 ? (
-                            <div className="p-4 text-center text-neutral-500 text-sm">
-                              Dosen tidak ditemukan
-                            </div>
-                          ) : (
-                            filteredDosenList.map((dosen) => (
-                              <div
-                                key={dosen._id}
-                                className={`px-3 py-2 hover:bg-neutral-100 cursor-pointer ${
-                                  formData.supervisor === dosen._id ? 'bg-neutral-50' : ''
-                                }`}
-                                onClick={() => selectDosen(dosen)}
-                              >
-                                <div className="font-medium text-neutral-900">{dosen.name}</div>
-                                <div className="text-xs text-neutral-500">{dosen.email}</div>
-                              </div>
-                            ))
-                          )}
-                        </div>
-                      </div>
-                    )}
                   </div>
+                  <p className="text-xs text-blue-600 mt-2 font-medium">
+                    ℹ️ Nama dosen tidak dapat diubah. Jika ada kesalahan pengisian dosen, silahkan hubungi akademik.
+                  </p>
                 </div>
 
                 <div>
