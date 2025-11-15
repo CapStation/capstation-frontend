@@ -7,13 +7,20 @@ import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { AlertCircle, Loader2, Mail, Lock } from "lucide-react";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { AlertCircle, Loader2, Mail, Lock, Eye, EyeOff } from "lucide-react";
 
 export default function LoginPage() {
   const router = useRouter();
-  const { login } = useAuth();
-  
+  const { login, loginWithGoogle } = useAuth();
+
   const [formData, setFormData] = useState({
     email: "",
     password: "",
@@ -21,19 +28,23 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [apiStatus, setApiStatus] = useState("checking");
+  const [showPassword, setShowPassword] = useState(false);
 
   // Check API connectivity on mount
   useEffect(() => {
     const checkApi = async () => {
       try {
-        const response = await fetch(process.env.NEXT_PUBLIC_API_URL || 'https://capstation-backend.vercel.app/api');
+        const response = await fetch(
+          process.env.NEXT_PUBLIC_API_URL ||
+            "https://capstation-backend.vercel.app/api"
+        );
         if (response.ok) {
           setApiStatus("connected");
         } else {
           setApiStatus("error");
         }
       } catch (err) {
-        console.error('API check failed:', err);
+        console.error("API check failed:", err);
         setApiStatus("offline");
       }
     };
@@ -55,7 +66,7 @@ export default function LoginPage() {
 
     try {
       const result = await login(formData.email, formData.password);
-      
+
       if (result.success) {
         router.push("/dashboard");
       } else {
@@ -96,7 +107,7 @@ export default function LoginPage() {
           <CardDescription className="text-neutral-600">
             Masuk ke akun Anda untuk melanjutkan
           </CardDescription>
-          
+
           {/* API Status Indicator */}
           {apiStatus === "checking" && (
             <div className="text-xs text-neutral-500 flex items-center justify-center gap-2">
@@ -152,14 +163,29 @@ export default function LoginPage() {
                 <Input
                   id="password"
                   name="password"
-                  type="password"
+                  type={showPassword ? "text" : "password"}
                   placeholder="••••••••"
                   value={formData.password}
                   onChange={handleChange}
-                  className="pl-10"
+                  className="pl-10 pr-10"
                   required
                   disabled={loading}
                 />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-neutral-400 hover:text-neutral-600 focus:outline-none focus:text-neutral-600 transition-colors"
+                  disabled={loading}
+                  aria-label={
+                    showPassword ? "Sembunyikan password" : "Tampilkan password"
+                  }
+                >
+                  {showPassword ? (
+                    <EyeOff className="h-5 w-5" />
+                  ) : (
+                    <Eye className="h-5 w-5" />
+                  )}
+                </button>
               </div>
             </div>
 
@@ -207,10 +233,7 @@ export default function LoginPage() {
               className="w-full"
               size="lg"
               disabled={loading}
-              onClick={() => {
-                // BLUM ADA Google OAuth
-                alert("Google OAuth belum ada buat sendiri wkwkkw");
-              }}
+              onClick={loginWithGoogle}
             >
               <svg className="mr-2 h-5 w-5" viewBox="0 0 24 24">
                 <path
