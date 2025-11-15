@@ -56,12 +56,9 @@ class ApiClient {
         data: data,
       };
 
-      // Handle unauthorized
+      // Handle unauthorized - hanya remove token, tidak auto redirect
       if (response.status === 401) {
         this.removeAuthToken();
-        if (typeof window !== 'undefined') {
-          window.location.href = '/login';
-        }
       }
 
       throw error;

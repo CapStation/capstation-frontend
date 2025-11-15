@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
@@ -14,6 +14,7 @@ import ProjectService from "@/services/ProjectService";
 export default function DashboardPage() {
   const { user, loading: authLoading } = useAuth();
   const router = useRouter();
+  const loadedRef = useRef(false);
   
   const [stats, setStats] = useState(null);
   const [announcements, setAnnouncements] = useState([]);
@@ -21,16 +22,11 @@ export default function DashboardPage() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (!authLoading && !user) {
-      router.push("/login");
-    }
-  }, [user, authLoading, router]);
-
-  useEffect(() => {
-    if (user) {
+    if (!authLoading && !loadedRef.current) {
+      loadedRef.current = true;
       loadDashboardData();
     }
-  }, [user]);
+  }, [authLoading]);
 
   const loadDashboardData = async () => {
     setLoading(true);
@@ -38,16 +34,16 @@ export default function DashboardPage() {
       console.log('📊 Loading dashboard data...');
       console.log('🔑 Auth token:', localStorage.getItem('accessToken') ? 'Present' : 'Missing');
       console.log('🌐 API URL:', process.env.NEXT_PUBLIC_API_URL);
+      console.log('👤 User:', user ? 'Logged in' : 'Guest');
       
-      const [statsResult, announcementsResult, projectsResult] = await Promise.all([
+      // Hanya load data yang tidak memerlukan autentikasi
+      const [statsResult, announcementsResult] = await Promise.all([
         DashboardService.getStats(),
         DashboardService.getRecentAnnouncements(5),
-        ProjectService.getMyProjects(),
       ]);
 
       console.log('📈 Stats result:', statsResult);
       console.log('📢 Announcements result:', announcementsResult);
-      console.log('📁 Projects result:', projectsResult);
 
       if (statsResult.success) {
         setStats(statsResult.data);
@@ -57,19 +53,31 @@ export default function DashboardPage() {
         setAnnouncements(announcementsResult.data);
       }
       
-      // Use real API data or fallback to mock
-      if (projectsResult.success && Array.isArray(projectsResult.data)) {
-        console.log('✅ Using API projects:', projectsResult.data.length, 'projects');
-        setMyProjects(projectsResult.data);
+      // Hanya load my projects jika user sudah login
+      if (user) {
+        const projectsResult = await ProjectService.getMyProjects();
+        console.log('📁 Projects result:', projectsResult);
+        
+        if (projectsResult.success && Array.isArray(projectsResult.data)) {
+          console.log('✅ Using API projects:', projectsResult.data.length, 'projects');
+          setMyProjects(projectsResult.data);
+        } else {
+          console.log('⚠️ API failed, using mock data');
+          setMyProjects(generateMockProjects(6, "my"));
+        }
       } else {
-        console.log('⚠️ API failed, using mock data');
-        // Fallback to mock data if API fails
-        setMyProjects(generateMockProjects(6, "my"));
+        // Guest user - tampilkan mock projects atau kosong
+        console.log('👤 Guest user - showing empty projects');
+        setMyProjects([]);
       }
     } catch (error) {
       console.error("❌ Failed to load dashboard data:", error);
-      // Fallback to mock data on error
-      setMyProjects(generateMockProjects(6, "my"));
+      // Fallback to empty projects on error for guest
+      if (!user) {
+        setMyProjects([]);
+      } else {
+        setMyProjects(generateMockProjects(6, "my"));
+      }
     } finally {
       setLoading(false);
     }
@@ -99,7 +107,7 @@ export default function DashboardPage() {
     }));
   };
 
-  if (authLoading || !user) {
+  if (authLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />

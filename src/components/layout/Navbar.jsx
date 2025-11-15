@@ -39,9 +39,15 @@ export default function Navbar({ className = "" }) {
                 <Button variant="ghost" size="sm"><FolderOpen className="h-4 w-4 mr-2"/>Dokumen Admin</Button>
               </Link>
             )}
-            <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center text-white font-semibold">
-              {user?.name?.charAt(0) || "U"}
-            </div>
+            {user ? (
+              <Button variant="ghost" size="sm" className="font-semibold">
+                Halo, {user?.name || "User"}
+              </Button>
+            ) : (
+              <Link href="/login">
+                <Button variant="default" size="sm">Masuk</Button>
+              </Link>
+            )}
           </div>
         </div>
       </div>
