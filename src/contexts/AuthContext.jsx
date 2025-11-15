@@ -34,7 +34,15 @@ export const AuthProvider = ({ children }) => {
         setIsAuthenticated(true);
       }
     } catch (error) {
-      console.error("Auth check failed:", error);
+      // Only log error if it's not a simple "no token" case
+      if (apiClient.getAuthToken()) {
+        console.error("Auth check failed:", error);
+        console.error("Error details:", {
+          message: error.message,
+          status: error.status,
+          data: error.data,
+        });
+      }
       apiClient.removeAuthToken();
       setUser(null);
       setIsAuthenticated(false);
