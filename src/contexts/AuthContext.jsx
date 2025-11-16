@@ -42,17 +42,17 @@ export const AuthProvider = ({ children }) => {
           message: error?.message || "Unknown error",
           status: error?.status,
           data: error?.data,
-          
+
           // Network error flag
           isNetworkError: error?.isNetworkError || false,
-          
+
           // For standard Error objects
           name: error?.name,
           stack: error?.stack,
-          
+
           // Check if it's an object
           type: typeof error,
-          
+
           // Serialize the full error for debugging
           raw: (() => {
             try {
@@ -60,9 +60,9 @@ export const AuthProvider = ({ children }) => {
             } catch {
               return error?.toString() || String(error);
             }
-          })()
+          })(),
         };
-        
+
         console.error("Auth check failed:", errorInfo);
       }
       apiClient.removeAuthToken();
