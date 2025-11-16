@@ -1,5 +1,5 @@
-import apiClient from '@/lib/api-client';
-import endpoints from '@/lib/api-config';
+import apiClient from "@/lib/api-client";
+import { endpoints } from "@/lib/api-config";
 
 /**
  * AuthService Class
@@ -16,13 +16,24 @@ class AuthService {
       const response = await apiClient.post(endpoints.auth.register, userData);
       return {
         success: true,
-        message: response.message || 'Registrasi berhasil',
+        message: response.message || "Registrasi berhasil",
         data: response,
       };
     } catch (error) {
+      // Handle network errors
+      if (error.isNetworkError) {
+        return {
+          success: false,
+          error:
+            "Tidak dapat terhubung ke server. Periksa koneksi internet Anda.",
+          isNetworkError: true,
+        };
+      }
+
       return {
         success: false,
-        error: error.message || 'Registrasi gagal',
+        error: error.message || error.data?.message || "Registrasi gagal",
+        status: error.status,
       };
     }
   }
@@ -48,11 +59,22 @@ class AuthService {
         };
       }
 
-      throw new Error('Invalid response from server');
+      throw new Error("Invalid response from server");
     } catch (error) {
+      // Handle network errors
+      if (error.isNetworkError) {
+        return {
+          success: false,
+          error:
+            "Tidak dapat terhubung ke server. Periksa koneksi internet Anda.",
+          isNetworkError: true,
+        };
+      }
+
       return {
         success: false,
-        error: error.message || 'Login gagal',
+        error: error.message || error.data?.message || "Login gagal",
+        status: error.status,
       };
     }
   }
@@ -87,7 +109,7 @@ class AuthService {
     } catch (error) {
       return {
         success: false,
-        error: error.message || 'Failed to get user info',
+        error: error.message || "Failed to get user info",
       };
     }
   }
@@ -104,12 +126,12 @@ class AuthService {
       });
       return {
         success: true,
-        message: response.message || 'Reset link sent to email',
+        message: response.message || "Reset link sent to email",
       };
     } catch (error) {
       return {
         success: false,
-        error: error.message || 'Failed to send reset link',
+        error: error.message || "Failed to send reset link",
       };
     }
   }
@@ -130,12 +152,12 @@ class AuthService {
       });
       return {
         success: true,
-        message: response.message || 'Password reset successful',
+        message: response.message || "Password reset successful",
       };
     } catch (error) {
       return {
         success: false,
-        error: error.message || 'Password reset failed',
+        error: error.message || "Password reset failed",
       };
     }
   }
@@ -149,16 +171,18 @@ class AuthService {
   async verifyEmail(token, email) {
     try {
       const response = await apiClient.get(
-        `${endpoints.auth.verifyEmail}?token=${token}&email=${encodeURIComponent(email)}`
+        `${
+          endpoints.auth.verifyEmail
+        }?token=${token}&email=${encodeURIComponent(email)}`
       );
       return {
         success: true,
-        message: response.message || 'Email verified successfully',
+        message: response.message || "Email verified successfully",
       };
     } catch (error) {
       return {
         success: false,
-        error: error.message || 'Email verification failed',
+        error: error.message || "Email verification failed",
       };
     }
   }

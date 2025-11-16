@@ -7,10 +7,25 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { ArrowLeft, Loader2 } from "lucide-react";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { ArrowLeft, Loader2, Search } from "lucide-react";
 import Link from "next/link";
 import projectService from "@/services/ProjectService";
+import UserService from "@/services/UserService";
 import { useToast } from "@/hooks/use-toast";
+
+const TEMA_OPTIONS = [
+  { value: "kesehatan", label: "Kesehatan" },
+  { value: "pengelolaan-sampah", label: "Pengelolaan Sampah" },
+  { value: "smart-city", label: "Smart City" },
+  { value: "transportasi-ramah-lingkungan", label: "Transportasi Ramah Lingkungan" },
+];
 
 export default function EditProjectPage() {
   const router = useRouter();
@@ -18,19 +33,69 @@ export default function EditProjectPage() {
   const { toast } = useToast();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [groupInfo, setGroupInfo] = useState(null);
+  const [dosenList, setDosenList] = useState([]);
+  const [filteredDosenList, setFilteredDosenList] = useState([]);
+  const [loadingDosen, setLoadingDosen] = useState(true);
+  const [showDosenDropdown, setShowDosenDropdown] = useState(false);
+  const [dosenSearchQuery, setDosenSearchQuery] = useState("");
   const [formData, setFormData] = useState({
     title: "",
     description: "",
-    category: "",
+    tema: "",
     supervisor: "",
-    keywords: "",
+    supervisorName: "",
+    tags: "",
+    group: "",
   });
 
   useEffect(() => {
     if (params.id) {
       loadProject();
+      loadDosenList();
     }
   }, [params.id]);
+
+  const loadDosenList = async () => {
+    setLoadingDosen(true);
+    try {
+      // Fetch all users with role dosen
+      const result = await UserService.getAllUsers();
+      if (result.success && result.data) {
+        const dosenUsers = result.data.filter(user => user.role === 'dosen');
+        setDosenList(dosenUsers);
+        setFilteredDosenList(dosenUsers);
+      }
+    } catch (error) {
+      console.error("Failed to load dosen list:", error);
+    } finally {
+      setLoadingDosen(false);
+    }
+  };
+
+  const handleDosenSearch = (query) => {
+    setDosenSearchQuery(query);
+    if (!query.trim()) {
+      setFilteredDosenList(dosenList);
+      return;
+    }
+    const filtered = dosenList.filter(dosen =>
+      dosen.name.toLowerCase().includes(query.toLowerCase()) ||
+      dosen.email.toLowerCase().includes(query.toLowerCase())
+    );
+    setFilteredDosenList(filtered);
+  };
+
+  const selectDosen = (dosen) => {
+    setFormData(prev => ({
+      ...prev,
+      supervisor: dosen._id,
+      supervisorName: dosen.name,
+    }));
+    setShowDosenDropdown(false);
+    setDosenSearchQuery("");
+    setFilteredDosenList(dosenList);
+  };
 
   const loadProject = async () => {
     setLoading(true);
@@ -38,12 +103,23 @@ export default function EditProjectPage() {
       const result = await projectService.getProjectById(params.id);
       if (result.success) {
         const project = result.data;
+        
+        // Store group info for display
+        if (project.group) {
+          setGroupInfo({
+            id: project.group._id || project.group,
+            name: project.group.name || "Loading...",
+          });
+        }
+        
         setFormData({
           title: project.title || "",
           description: project.description || "",
-          category: project.category || "",
-          supervisor: project.supervisor || "",
-          keywords: project.keywords || "",
+          tema: project.tema || "",
+          supervisor: project.supervisor?._id || project.supervisor || "",
+          supervisorName: project.supervisor?.name || "",
+          tags: Array.isArray(project.tags) ? project.tags.join(", ") : "",
+          group: project.group?._id || project.group || "",
         });
       } else {
         // Mock data if API fails
@@ -86,14 +162,40 @@ export default function EditProjectPage() {
 
     setSaving(true);
     try {
-      const result = await projectService.updateProject(params.id, formData);
+      // Prepare update data - only send fields that should be updated
+      // Exclude group field as it cannot be changed via edit
+      const updateData = {
+        title: formData.title,
+        description: formData.description,
+      };
+
+      // Only include optional fields if they have values
+      if (formData.tema) updateData.tema = formData.tema;
+      if (formData.tags) {
+        // Convert comma-separated tags to array
+        updateData.tags = formData.tags.split(',').map(tag => tag.trim()).filter(tag => tag);
+      }
+      
+      // Only include supervisor if it's a valid ObjectId (24 hex characters)
+      if (formData.supervisor && /^[0-9a-fA-F]{24}$/.test(formData.supervisor)) {
+        updateData.supervisor = formData.supervisor;
+      }
+
+      console.log('📤 Attempting to update project:', {
+        projectId: params.id,
+        updateData: updateData,
+      });
+      
+      const result = await projectService.updateProject(params.id, updateData);
+
+      console.log('📥 Update result:', result);
 
       if (result.success) {
         toast({
           title: "Berhasil",
           description: "Proyek berhasil diupdate",
         });
-        router.push(`/projects/${params.id}`);
+        router.replace(`/projects/${params.id}`);
       } else {
         toast({
           title: "Error",
@@ -125,7 +227,7 @@ export default function EditProjectPage() {
     <div className="min-h-screen bg-gradient-to-br from-neutral-50 via-white to-neutral-50">
       <Navbar />
 
-      <div className="container mx-auto px-4 py-12">
+      <div className="container mx-auto px-4 py-8">
         <div className="max-w-3xl mx-auto">
           <div className="mb-8">
             <Button 
@@ -181,40 +283,70 @@ export default function EditProjectPage() {
                 </div>
 
                 <div>
-                  <Label htmlFor="category">Kategori</Label>
+                  <Label htmlFor="tema">
+                    Tema Proyek <span className="text-red-500">*</span>
+                  </Label>
+                  <Select
+                    value={formData.tema}
+                    onValueChange={(value) =>
+                      setFormData((prev) => ({ ...prev, tema: value }))
+                    }
+                  >
+                    <SelectTrigger className="mt-2">
+                      <SelectValue placeholder="Pilih tema proyek" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {TEMA_OPTIONS.map((option) => (
+                        <SelectItem key={option.value} value={option.value}>
+                          {option.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div>
+                  <Label htmlFor="supervisor">
+                    Dosen Pembimbing <span className="text-red-500">*</span>
+                  </Label>
+                  <div className="relative mt-2">
+                    <div 
+                      className="flex items-center gap-2 px-3 py-2 border border-neutral-300 rounded-md bg-neutral-50 cursor-not-allowed"
+                    >
+                      <Search className="h-4 w-4 text-neutral-400" />
+                      <span className="text-neutral-600">
+                        {formData.supervisorName || "Belum ada dosen pembimbing"}
+                      </span>
+                    </div>
+                  </div>
+                  <p className="text-xs text-blue-600 mt-2 font-medium">
+                    ℹ️ Nama dosen tidak dapat diubah. Jika ada kesalahan pengisian dosen, silahkan hubungi akademik.
+                  </p>
+                </div>
+
+                <div>
+                  <Label htmlFor="tags">Tags</Label>
                   <Input
-                    id="category"
-                    name="category"
-                    value={formData.category}
+                    id="tags"
+                    name="tags"
+                    value={formData.tags}
                     onChange={handleChange}
-                    placeholder="Contoh: IoT, Kesehatan, Transportasi"
+                    placeholder="Pisahkan dengan koma: iot, sensor, monitoring"
                     className="mt-2"
                   />
                 </div>
 
-                <div>
-                  <Label htmlFor="supervisor">Dosen Pembimbing</Label>
-                  <Input
-                    id="supervisor"
-                    name="supervisor"
-                    value={formData.supervisor}
-                    onChange={handleChange}
-                    placeholder="Nama dosen pembimbing (opsional)"
-                    className="mt-2"
-                  />
-                </div>
-
-                <div>
-                  <Label htmlFor="keywords">Kata Kunci</Label>
-                  <Input
-                    id="keywords"
-                    name="keywords"
-                    value={formData.keywords}
-                    onChange={handleChange}
-                    placeholder="Pisahkan dengan koma: IoT, sensor, monitoring"
-                    className="mt-2"
-                  />
-                </div>
+                {groupInfo && (
+                  <div>
+                    <Label>Grup</Label>
+                    <div className="mt-2 px-3 py-2 bg-neutral-50 border border-neutral-200 rounded-md text-neutral-700">
+                      {groupInfo.name}
+                    </div>
+                    <p className="text-xs text-neutral-500 mt-1">
+                      Grup otomatis terisi berdasarkan grup Anda saat ini
+                    </p>
+                  </div>
+                )}
 
                 <div className="flex gap-4 pt-4">
                   <Button

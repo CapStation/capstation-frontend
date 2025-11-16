@@ -14,14 +14,22 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { AlertCircle, Loader2, Lock, CheckCircle, ArrowLeft } from "lucide-react";
+import {
+  AlertCircle,
+  Loader2,
+  Lock,
+  CheckCircle,
+  ArrowLeft,
+  Eye,
+  EyeOff,
+} from "lucide-react";
 import apiClient from "@/lib/api-client";
 import endpoints from "@/lib/api-config";
 
 function ResetPasswordForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  
+
   const [formData, setFormData] = useState({
     newPassword: "",
     confirmPassword: "",
@@ -31,11 +39,13 @@ function ResetPasswordForm() {
   const [success, setSuccess] = useState(false);
   const [token, setToken] = useState("");
   const [email, setEmail] = useState("");
+  const [showNewPassword, setShowNewPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   useEffect(() => {
     const tokenParam = searchParams.get("token");
     const emailParam = searchParams.get("email");
-    
+
     if (!tokenParam || !emailParam) {
       setError("Link reset password tidak valid atau sudah kedaluwarsa");
     } else {
@@ -94,7 +104,7 @@ function ResetPasswordForm() {
       });
 
       setSuccess(true);
-      
+
       // Redirect to login after 3 seconds
       setTimeout(() => {
         router.push("/login");
@@ -157,7 +167,9 @@ function ResetPasswordForm() {
             <div className="bg-success/10 border border-success/30 text-success px-4 py-3 rounded-md flex items-start gap-3">
               <CheckCircle className="h-5 w-5 mt-0.5 flex-shrink-0" />
               <div>
-                <p className="text-sm font-semibold mb-1">Password berhasil direset!</p>
+                <p className="text-sm font-semibold mb-1">
+                  Password berhasil direset!
+                </p>
                 <p className="text-sm">
                   Anda akan diarahkan ke halaman login dalam beberapa detik...
                 </p>
@@ -191,14 +203,31 @@ function ResetPasswordForm() {
                   <Input
                     id="newPassword"
                     name="newPassword"
-                    type="password"
+                    type={showNewPassword ? "text" : "password"}
                     placeholder="Minimal 6 karakter"
                     value={formData.newPassword}
                     onChange={handleChange}
-                    className="pl-10"
+                    className="pl-10 pr-10"
                     required
                     disabled={loading}
                   />
+                  <button
+                    type="button"
+                    onClick={() => setShowNewPassword(!showNewPassword)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-neutral-400 hover:text-neutral-600 focus:outline-none focus:text-neutral-600 transition-colors"
+                    disabled={loading}
+                    aria-label={
+                      showNewPassword
+                        ? "Sembunyikan password"
+                        : "Tampilkan password"
+                    }
+                  >
+                    {showNewPassword ? (
+                      <EyeOff className="h-5 w-5" />
+                    ) : (
+                      <Eye className="h-5 w-5" />
+                    )}
+                  </button>
                 </div>
               </div>
 
@@ -209,14 +238,31 @@ function ResetPasswordForm() {
                   <Input
                     id="confirmPassword"
                     name="confirmPassword"
-                    type="password"
+                    type={showConfirmPassword ? "text" : "password"}
                     placeholder="Ulangi password baru"
                     value={formData.confirmPassword}
                     onChange={handleChange}
-                    className="pl-10"
+                    className="pl-10 pr-10"
                     required
                     disabled={loading}
                   />
+                  <button
+                    type="button"
+                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-neutral-400 hover:text-neutral-600 focus:outline-none focus:text-neutral-600 transition-colors"
+                    disabled={loading}
+                    aria-label={
+                      showConfirmPassword
+                        ? "Sembunyikan password"
+                        : "Tampilkan password"
+                    }
+                  >
+                    {showConfirmPassword ? (
+                      <EyeOff className="h-5 w-5" />
+                    ) : (
+                      <Eye className="h-5 w-5" />
+                    )}
+                  </button>
                 </div>
               </div>
             </CardContent>
@@ -257,11 +303,13 @@ function ResetPasswordForm() {
 
 export default function ResetPasswordPage() {
   return (
-    <Suspense fallback={
-      <div className="min-h-screen flex items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
-      </div>
-    }>
+    <Suspense
+      fallback={
+        <div className="min-h-screen flex items-center justify-center">
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        </div>
+      }
+    >
       <ResetPasswordForm />
     </Suspense>
   );
