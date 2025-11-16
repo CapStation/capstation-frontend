@@ -36,12 +36,34 @@ export const AuthProvider = ({ children }) => {
     } catch (error) {
       // Only log error if it's not a simple "no token" case
       if (apiClient.getAuthToken()) {
-        console.error("Auth check failed:", error);
-        console.error("Error details:", {
-          message: error.message,
-          status: error.status,
-          data: error.data,
-        });
+        // Safely extract error information
+        const errorInfo = {
+          // Direct error properties
+          message: error?.message || "Unknown error",
+          status: error?.status,
+          data: error?.data,
+          
+          // Network error flag
+          isNetworkError: error?.isNetworkError || false,
+          
+          // For standard Error objects
+          name: error?.name,
+          stack: error?.stack,
+          
+          // Check if it's an object
+          type: typeof error,
+          
+          // Serialize the full error for debugging
+          raw: (() => {
+            try {
+              return JSON.stringify(error);
+            } catch {
+              return error?.toString() || String(error);
+            }
+          })()
+        };
+        
+        console.error("Auth check failed:", errorInfo);
       }
       apiClient.removeAuthToken();
       setUser(null);
