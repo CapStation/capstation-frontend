@@ -18,19 +18,49 @@ module.exports = {
           DEFAULT: "#FF8730", // Orange gelap
           dark: "#E67620",
           light: "#FFB875",
+          50: "#FFF5F0",
+          100: "#FFEAD9",
+          200: "#FFD5B3",
+          300: "#FFC08C",
+          400: "#FFAB66",
+          500: "#FF8730",
+          600: "#E67620",
+          700: "#CC6510",
+          800: "#B35409",
+          900: "#991F03",
         },
         secondary: {
           DEFAULT: "#FFE49C", // Kuning terang
           dark: "#F5D270",
           light: "#FFF0C0",
+          50: "#FFFAF0",
+          100: "#FFF5E0",
+          200: "#FFE9C0",
+          300: "#FFDEA1",
+          400: "#FFD281",
+          500: "#FFE49C",
+          600: "#FFC966",
+          700: "#F5B850",
+          800: "#EBAA3A",
+          900: "#D99C24",
         },
         accent: {
           DEFAULT: "#B6EB75", // Hijau terang
           dark: "#9DD055",
           light: "#D0F5A0",
+          50: "#F8FCF3",
+          100: "#F0F8E6",
+          200: "#E1F0CC",
+          300: "#D0F5A0",
+          400: "#C0E87D",
+          500: "#B6EB75",
+          600: "#9DD055",
+          700: "#85B340",
+          800: "#6D962B",
+          900: "#557816",
         },
         neutral: {
-          50: "#F1F7FA", // Abu terang
+          50: "#F1F7FA", // Abu terang (Putih biru)
           100: "#FFFFFF", // Putih
           200: "#D9D9D9", // Abu tengah
           300: "#B8B8B8",

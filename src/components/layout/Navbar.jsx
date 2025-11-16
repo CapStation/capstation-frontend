@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
-import { BookOpen, Users, FileText, Search } from "lucide-react";
+import { BookOpen, Users, FileText, Search, Bell } from "lucide-react";
 
 export default function Navbar({ className = "" }) {
   const { user } = useAuth();
@@ -30,6 +30,9 @@ export default function Navbar({ className = "" }) {
             </Link>
             <Link href="/groups">
               <Button variant="ghost" size="sm"><Users className="h-4 w-4 mr-2"/>Group</Button>
+            </Link>
+            <Link href="/announcements">
+              <Button variant="ghost" size="sm"><Bell className="h-4 w-4 mr-2"/>Announcement</Button>
             </Link>
             <Link href="/browse/capstones">
               <Button variant="ghost" size="sm"><FileText className="h-4 w-4 mr-2"/>Browse</Button>

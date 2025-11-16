@@ -27,9 +27,9 @@ class ProjectService {
     }
   }
 
-  async getAllProjects(filters = {}) {
+  async getAllProjects(page = 1, limit = 50) {
     try {
-      const queryParams = new URLSearchParams(filters).toString();
+      const queryParams = new URLSearchParams({ page, limit }).toString();
       const url = queryParams 
         ? `${API_ENDPOINTS.projects.list}?${queryParams}` 
         : API_ENDPOINTS.projects.list;
