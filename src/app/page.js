@@ -11,13 +11,9 @@ export default function Home() {
 
   useEffect(() => {
     if (!loading) {
-      if (isAuthenticated) {
-        router.push("/dashboard");
-      } else {
-        router.push("/login");
-      }
+      router.push("/dashboard");
     }
-  }, [isAuthenticated, loading, router]);
+  }, [loading, router]);
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary/10 via-secondary/10 to-accent/10">

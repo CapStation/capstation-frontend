@@ -5,7 +5,9 @@ class ProjectService {
   async getMyProjects() {
     try {
       console.log('🔍 ProjectService: Fetching my projects from', API_ENDPOINTS.projects.my);
-      const response = await apiClient.get(API_ENDPOINTS.projects.my);
+      // Add populate parameter to get full owner and supervisor data
+      const url = `${API_ENDPOINTS.projects.my}?populate=owner,supervisor`;
+      const response = await apiClient.get(url);
       console.log('📦 ProjectService: Raw response:', response);
       
       // API returns { success: true, data: [...] }
@@ -29,32 +31,46 @@ class ProjectService {
 
   async getAllProjects(filters = {}) {
     try {
-      const queryParams = new URLSearchParams(filters).toString();
+      // Add populate parameter to get full owner and supervisor data
+      const params = {
+        ...filters,
+        populate: 'owner,supervisor'
+      };
+      const queryParams = new URLSearchParams(params).toString();
       const url = queryParams 
         ? `${API_ENDPOINTS.projects.list}?${queryParams}` 
         : API_ENDPOINTS.projects.list;
+      
+      console.log('🔍 ProjectService: Fetching all projects with populate from', url);
       const response = await apiClient.get(url);
+      console.log('📦 ProjectService: getAllProjects response:', response);
+      
       // API returns { success: true, data: [...] }
       return { 
         success: true, 
         data: response.data || response // Handle both formats
       };
     } catch (error) {
-      console.error("ProjectService.getAllProjects error:", error);
+      console.error("❌ ProjectService.getAllProjects error:", error);
       return { success: false, error: error.message };
     }
   }
 
   async getProjectById(id) {
     try {
-      const response = await apiClient.get(API_ENDPOINTS.projects.detail(id));
+      // Add populate parameter to get full owner, supervisor, group, and members data
+      const url = `${API_ENDPOINTS.projects.detail(id)}?populate=owner,supervisor,group,members`;
+      console.log('🔍 ProjectService: Fetching project detail from', url);
+      const response = await apiClient.get(url);
+      console.log('📦 ProjectService: getProjectById response:', response);
+      
       // API returns { success: true, data: {...} }
       return { 
         success: true, 
         data: response.data || response // Handle both formats
       };
     } catch (error) {
-      console.error("ProjectService.getProjectById error:", error);
+      console.error("❌ ProjectService.getProjectById error:", error);
       return { success: false, error: error.message };
     }
   }
@@ -71,11 +87,28 @@ class ProjectService {
 
   async updateProject(id, projectData) {
     try {
+      console.log('🔵 ProjectService.updateProject called with:', {
+        id,
+        projectData,
+        endpoint: API_ENDPOINTS.projects.update(id),
+      });
+      
       const response = await apiClient.put(API_ENDPOINTS.projects.update(id), projectData);
+      
+      console.log('✅ ProjectService.updateProject success:', response);
       return { success: true, data: response };
     } catch (error) {
-      console.error("ProjectService.updateProject error:", error);
-      return { success: false, error: error.message };
+      console.error('🔴 ProjectService.updateProject error:', {
+        message: error.message || 'Unknown error',
+        status: error.status,
+        data: error.data,
+        stack: error.stack,
+      });
+      console.error('🔴 Full error:', error);
+      return { 
+        success: false, 
+        error: error.message || error.data?.message || 'Gagal mengupdate project'
+      };
     }
   }
 
@@ -102,7 +135,7 @@ class ProjectService {
   async uploadDocument(projectId, formData) {
     try {
       const response = await apiClient.post(
-        API_ENDPOINTS.documents.upload(projectId), 
+        API_ENDPOINTS.documents.upload, 
         formData
       );
       return { success: true, data: response };
@@ -115,7 +148,7 @@ class ProjectService {
   async deleteDocument(projectId, documentId) {
     try {
       const response = await apiClient.delete(
-        API_ENDPOINTS.documents.delete(projectId, documentId)
+        API_ENDPOINTS.documents.delete(documentId)
       );
       return { success: true, data: response };
     } catch (error) {

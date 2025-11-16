@@ -56,12 +56,9 @@ class ApiClient {
         data: data,
       };
 
-      // Handle unauthorized
+      // Handle unauthorized - hanya remove token, tidak auto redirect
       if (response.status === 401) {
         this.removeAuthToken();
-        if (typeof window !== "undefined") {
-          window.location.href = "/login";
-        }
       }
 
       throw error;
@@ -245,22 +242,70 @@ class ApiClient {
         delete headers["Content-Type"];
       }
 
+      const fullUrl = `${this.baseURL}${endpoint}`;
+      
+      console.log('🟡 PUT Request:', {
+        endpoint,
+        fullUrl,
+        hasToken: !!this.getAuthToken(),
+        headers: { ...headers, Authorization: headers.Authorization ? '***REDACTED***' : 'MISSING' },
+        dataKeys: Object.keys(data),
+      });
+      console.log('🟡 PUT Request body:', data);
+
+      let bodyToSend;
+      try {
+        bodyToSend = isFormData ? data : JSON.stringify(data);
+      } catch (stringifyError) {
+        console.error('❌ JSON.stringify error:', stringifyError);
+        throw new Error(`Cannot serialize request body: ${stringifyError.message}`);
+      }
+
       const response = await fetch(fullUrl, {
-        method: "PUT",
+        method: 'PUT',
         headers,
-        body: isFormData ? data : JSON.stringify(data),
+        body: bodyToSend,
         signal: options.signal,
       });
 
-      return await this.handleResponse(response);
+      console.log('🟢 PUT Response:', {
+        endpoint,
+        status: response.status,
+        statusText: response.statusText,
+        ok: response.ok,
+      });
+
+      const result = await this.handleResponse(response);
+      console.log('✅ PUT Success:', result);
+      return result;
     } catch (error) {
-      if (process.env.NODE_ENV === "development") {
-        console.warn("⚠️ PUT Error:", {
-          endpoint,
-          status: error.status,
+      // Check if it's a fetch error (network error, CORS, etc)
+      if (error.message === 'Failed to fetch' || !error.status) {
+        console.error('🔴 PUT Network/CORS Error:', {
           message: error.message,
+          name: error.name,
+          endpoint: endpoint,
+          fullUrl: `${this.baseURL}${endpoint}`,
+          stack: error.stack,
         });
+        throw {
+          status: 0,
+          message: 'Tidak dapat terhubung ke server. Periksa koneksi internet Anda atau coba lagi nanti.',
+          data: null,
+          originalError: error
+        };
       }
+      
+      // Log error with all properties
+      console.error('🔴 PUT request error:', {
+        message: error.message || 'Unknown error',
+        status: error.status || 'No status',
+        endpoint: endpoint,
+        fullUrl: `${this.baseURL}${endpoint}`,
+        data: error.data,
+        stack: error.stack,
+      });
+      console.error('🔴 Full error object:', error);
       throw error;
     }
   }
