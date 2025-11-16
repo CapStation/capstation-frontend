@@ -1,33 +1,54 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useSearchParams, useRouter } from "next/navigation";
-import Navbar from "@/components/layout/Navbar";
+import { useRouter, useSearchParams } from "next/navigation";
+import Link from "next/link";
 
+import Navbar from "@/components/layout/Navbar";
 import { Card, CardContent } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Badge } from "@/components/ui/badge";
+import { Loader2 } from "lucide-react";
+import { ArrowLeft } from "lucide-react";
 
 import ProjectService from "@/services/ProjectService";
 import RequestService from "@/services/RequestService";
-import { Loader2 } from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
 
-export default function CreateRequestPage() {
-  const searchParams = useSearchParams();
+// kalau mau, pakai helper yang sama seperti di RequestPage
+const getThemeLabel = (tema) => {
+  const themeMap = {
+    kesehatan: "Kesehatan",
+    pengelolaan_sampah: "Pengelolaan Sampah",
+    smart_city: "Smart City",
+    "smart-city": "Smart City",
+    transportasi_ramah_lingkungan: "Transportasi Ramah Lingkungan",
+    iot: "IoT",
+    ai: "Artificial Intelligence",
+    mobile: "Mobile Development",
+  };
+
+  if (!tema) return "Lainnya";
+  return themeMap[tema] || tema.charAt(0).toUpperCase() + tema.slice(1);
+};
+
+export default function NewRequestPage() {
   const router = useRouter();
-  const { toast } = useToast();
-
+  const searchParams = useSearchParams();
   const projectId = searchParams.get("projectId");
 
   const [project, setProject] = useState(null);
   const [loadingProject, setLoadingProject] = useState(true);
-  const [submitting, setSubmitting] = useState(false);
 
   const [groupName, setGroupName] = useState("");
-  const [year, setYear] = useState(new Date().getFullYear());
+  const [submissionYear, setSubmissionYear] = useState(
+    new Date().getFullYear()
+  );
+  const [lecturerName, setLecturerName] = useState("");
+
+  const [submitting, setSubmitting] = useState(false);
+  const [errorMessage, setErrorMessage] = useState("");
 
   useEffect(() => {
     if (!projectId) {
@@ -35,141 +56,160 @@ export default function CreateRequestPage() {
       return;
     }
 
-    const loadProject = async () => {
+    const fetchProject = async () => {
       setLoadingProject(true);
       try {
-        const result = await ProjectService.getProjectById(projectId);
-        if (result.success) {
-          setProject(result.data);
-          // kalau backend punya field tahun, pakai sebagai default tahun pengajuan
-          const projYear =
-            result.data.year ||
-            (result.data.startedAt
-              ? new Date(result.data.startedAt).getFullYear()
-              : null);
-          if (projYear) setYear(projYear);
-        } else {
-          console.error(result.message);
+        const res = await ProjectService.getProjectById(projectId);
+        if (res.success && res.data) {
+          const p = res.data;
+
+          setProject(p);
+
+          // kalau mau autofill dari project
+          if (p.groupName) setGroupName(p.groupName);
+          if (p.supervisorName || p.dosenPembimbing) {
+            setLecturerName(p.supervisorName || p.dosenPembimbing);
+          }
         }
       } catch (err) {
-        console.error("Failed to load project:", err);
+        console.error("Failed to load project for new request:", err);
       } finally {
         setLoadingProject(false);
       }
     };
 
-    loadProject();
+    fetchProject();
   }, [projectId]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!projectId) return;
+    setErrorMessage("");
+
+    if (!projectId) {
+      setErrorMessage("Proyek tidak ditemukan.");
+      return;
+    }
+
+    if (!groupName.trim() || !submissionYear || !lecturerName.trim()) {
+      setErrorMessage("Mohon lengkapi semua field wajib.");
+      return;
+    }
+
+    const payload = {
+      capstoneId: projectId,
+      groupName: groupName.trim(),
+      tahunPengajuan: submissionYear,
+      namaDosenPembimbing: lecturerName.trim(),
+    };
 
     setSubmitting(true);
     try {
-      // sesuaikan payload dengan kontrak backend kamu
-      const payload = {
-        capstoneId: projectId,
-        groupName,
-        tahunPengajuan: year, 
-      };
-
-      const result = await RequestService.createRequest(payload);
-
-      if (result.success) {
-        toast({
-          title: "Pengajuan berhasil",
-          description: "Request capstone kamu sudah dikirim.",
-        });
+      const res = await RequestService.createRequest(payload);
+      if (res.success) {
+        // setelah sukses, balik ke Request page tab My Request
         router.push("/request?tab=my-request");
       } else {
-        toast({
-          variant: "destructive",
-          title: "Gagal mengirim pengajuan",
-          description: result.message || "Terjadi kesalahan.",
-        });
+        setErrorMessage(
+          res.error || "Gagal membuat pengajuan. Silakan coba lagi."
+        );
       }
     } catch (err) {
-      console.error(err);
-      toast({
-        variant: "destructive",
-        title: "Gagal mengirim pengajuan",
-        description: "Periksa koneksi atau coba beberapa saat lagi.",
-      });
+      console.error("Submit request error:", err);
+      setErrorMessage("Terjadi kesalahan. Silakan coba lagi.");
     } finally {
       setSubmitting(false);
     }
   };
 
-  const handleCancel = () => {
-    router.push("/request");
-  };
+  const projectTitle =
+    project?.title ||
+    "Smart City Dashboard untuk Monitoring Lingkungan Area Malioboro";
 
-  const getProjectYear = () => {
-    if (!project) return "-";
-    return (
-      project.year ||
-      (project.startedAt
-        ? new Date(project.startedAt).getFullYear()
-        : "2025")
-    );
-  };
+  const academicYearLabel =
+    project?.academicYear ||
+    (project?.createdAt
+      ? new Date(project.createdAt).getFullYear()
+      : "-");
+
+  const themeLabel = getThemeLabel(project?.tema);
 
   return (
     <div className="min-h-screen bg-[#EEF3F7]">
       <Navbar />
 
-      <main className="mx-auto max-w-[1956px] px-4 lg:px-[178px] py-10">
-        {/* tombol kembali */}
-        <Button
-          type="button"
-          variant="outline"
-          onClick={() => router.back()}
-          className="mb-6 rounded-full bg-[#CDEAAC] border-none text-sm font-semibold text-neutral-900 hover:bg-[#bfe193] px-8"
-        >
-          Kembali
-        </Button>
+      <main className="container mx-auto px-6 py-8">
+        <div className="max-w-6xl mx-auto">
+        {/* tombol kembali hijau */}
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              className="mb-4"
+              onClick={() => router.back()}
+            >
+              <ArrowLeft className="h-4 w-4 mr-2" />
+              Kembali
+            </Button>
 
-        <h1 className="text-3xl font-bold text-neutral-900">Buat Pengajuan</h1>
-        <p className="text-neutral-600 mb-8">
+
+        <h1 className="text-3xl font-bold text-neutral-900 mb-1">
+          Buat Pengajuan
+        </h1>
+        <p className="mb-6 text-neutral-600">
           Buat pengajuan untuk melanjutkan proyek capstone.
         </p>
 
         <Card className="rounded-2xl border border-neutral-200 bg-white shadow-sm">
-          <CardContent className="px-10 py-10">
+          <CardContent className="px-8 py-8">
             {loadingProject ? (
               <div className="flex items-center justify-center py-16">
-                <Loader2 className="h-6 w-6 animate-spin text-primary" />
+                <Loader2 className="h-6 w-6 animate-spin text-neutral-500" />
               </div>
             ) : !project ? (
-              <p className="text-sm text-neutral-500">
+              <div className="text-center text-sm text-neutral-600 py-10">
                 Proyek tidak ditemukan.
-              </p>
+              </div>
             ) : (
               <>
-                {/* judul dan info singkat proyek */}
-                <div className="mb-8 space-y-3">
-                  <h2 className="text-2xl font-semibold">
-                    {project.title}
+                {/* informasi proyek, mirip layout detail */}
+                <div className="mb-8">
+                  <h2 className="mb-3 text-2xl font-semibold text-neutral-900">
+                    {projectTitle}
                   </h2>
 
-                  <Badge
-                    variant="outline"
-                    className="rounded-full px-4 py-1 text-xs font-medium"
-                  >
-                    {project.category?.name || project.category || "Smart City"}
-                  </Badge>
+                  <div className="mb-4 flex flex-wrap items-center gap-2">
+                    {project.status && (
+                      <Badge className="rounded-full bg-[#22C55E] text-white text-xs font-medium">
+                        {project.statusLabel || "Sedang Berjalan"}
+                      </Badge>
+                    )}
+                    {themeLabel && (
+                      <Badge
+                        variant="outline"
+                        className="rounded-full border border-neutral-300 bg-white px-3 py-1 text-xs font-medium text-neutral-800"
+                      >
+                        {themeLabel}
+                      </Badge>
+                    )}
+                  </div>
 
-                  <div className="mt-4 text-sm text-neutral-800 space-y-1">
-                    <p className="font-semibold">Tahun</p>
-                    <p>{getProjectYear()}</p>
+                  <div className="space-y-1 text-sm text-neutral-700">
+                    <p className="pt-2">
+                      <span className="font-semibold text-neutral-900">
+                        Tahun Proyek{" "}
+                      </span>
+                      <br />
+                      {academicYearLabel}
+                    </p>
                   </div>
                 </div>
 
                 {/* form pengajuan */}
-                <form onSubmit={handleSubmit} className="space-y-6">
+                <form onSubmit={handleSubmit} className="space-y-5">
                   <div className="space-y-1">
-                    <Label htmlFor="groupName" className="text-sm font-semibold">
+                    <Label
+                      htmlFor="groupName"
+                      className="text-sm font-semibold"
+                    >
                       Nama Grup <span className="text-red-500">*</span>
                     </Label>
                     <Input
@@ -183,31 +223,62 @@ export default function CreateRequestPage() {
                   </div>
 
                   <div className="space-y-1">
-                    <Label htmlFor="year" className="text-sm font-semibold">
+                    <Label
+                      htmlFor="submissionYear"
+                      className="text-sm font-semibold"
+                    >
                       Tahun Pengajuan <span className="text-red-500">*</span>
                     </Label>
                     <Input
-                      id="year"
+                      id="submissionYear"
                       type="number"
-                      min="2020"
+                      min="2000"
                       max="2100"
-                      value={year}
-                      onChange={(e) => setYear(Number(e.target.value))}
+                      value={submissionYear}
+                      onChange={(e) =>
+                        setSubmissionYear(e.target.value)
+                      }
                       required
                       className="bg-[#F3F4F6] border border-neutral-200 focus-visible:ring-0 focus-visible:ring-offset-0"
                     />
                   </div>
 
-                  <div className="mt-10 flex flex-col sm:flex-row items-center justify-center gap-6">
+                  <div className="space-y-1">
+                    <Label
+                      htmlFor="lecturerName"
+                      className="text-sm font-semibold"
+                    >
+                      Nama Dosen Pembimbing{" "}
+                      <span className="text-red-500">*</span>
+                    </Label>
+                    <Input
+                      id="lecturerName"
+                      placeholder="Masukkan nama dosen pembimbing"
+                      value={lecturerName}
+                      onChange={(e) =>
+                        setLecturerName(e.target.value)
+                      }
+                      required
+                      className="bg-[#F3F4F6] border border-neutral-200 focus-visible:ring-0 focus-visible:ring-offset-0"
+                    />
+                  </div>
+
+                  {errorMessage && (
+                    <p className="text-sm text-red-600">
+                      {errorMessage}
+                    </p>
+                  )}
+
+                  <div className="mt-6 flex flex-wrap gap-4">
                     <Button
                       type="submit"
                       disabled={submitting}
-                      className="min-w-[200px] rounded-lg bg-[#FFD568] hover:bg-[#ffca3f] text-neutral-900 font-semibold border-none"
+                      className="min-w-[140px] rounded-lg bg-[#FFE196] font-semibold text-neutral-900 hover:bg-[#FFD86A]"
                     >
                       {submitting ? (
                         <>
                           <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                          Mengirim...
+                          Mengajukan...
                         </>
                       ) : (
                         "Ajukan"
@@ -217,8 +288,8 @@ export default function CreateRequestPage() {
                     <Button
                       type="button"
                       variant="outline"
-                      onClick={handleCancel}
-                      className="min-w-[200px] rounded-lg border-[#FF914D] text-[#FF914D] hover:bg-[#FFF3EA]"
+                      className="min-w-[140px] rounded-lg border border-[#FF9F5B] bg-white font-semibold text-[#FF9F5B] hover:bg-[#FFF4EC]"
+                      onClick={() => router.push("/request")}
                     >
                       Batal
                     </Button>
@@ -228,6 +299,7 @@ export default function CreateRequestPage() {
             )}
           </CardContent>
         </Card>
+        </div>
       </main>
     </div>
   );
