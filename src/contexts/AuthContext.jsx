@@ -29,7 +29,7 @@ export const AuthProvider = ({ children }) => {
     try {
       const token = apiClient.getAuthToken();
       if (token) {
-        const userData = await apiClient.get(endpoints.auth.me);
+        const userData = await apiClient.get(endpoints.users.profile);
         setUser(userData.user || userData);
         setIsAuthenticated(true);
       }
@@ -163,8 +163,16 @@ export const AuthProvider = ({ children }) => {
     try {
       await apiClient.post(endpoints.auth.logout);
     } catch (error) {
-      console.error("Logout error:", error);
+      // Safely log logout error - it's not critical if backend logout fails
+      const errorInfo = {
+        message: error?.message || "Unknown error",
+        status: error?.status,
+        data: error?.data,
+        type: typeof error,
+      };
+      console.error("Logout error:", errorInfo);
     } finally {
+      // Always clear local auth state regardless of backend response
       apiClient.removeAuthToken();
       setUser(null);
       setIsAuthenticated(false);

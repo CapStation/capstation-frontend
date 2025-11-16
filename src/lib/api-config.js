@@ -34,7 +34,8 @@ export const endpoints = {
   // Users
   users: {
     base: "/users",
-    profile: (id) => `/users/${id}`,
+    profile: "/users/profile",
+    userProfile: (id) => `/users/profile/${id}`,
     updateProfile: "/users/profile",
     changePassword: "/users/change-password",
     search: "/users/search",
