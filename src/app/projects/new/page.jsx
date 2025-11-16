@@ -1,28 +1,106 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Navbar from "@/components/layout/Navbar";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { ArrowLeft, Loader2 } from "lucide-react";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { ArrowLeft, Loader2, Search } from "lucide-react";
 import Link from "next/link";
 import projectService from "@/services/ProjectService";
+import UserService from "@/services/UserService";
 import { useToast } from "@/hooks/use-toast";
 
 export default function NewProjectPage() {
   const router = useRouter();
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
+  const [dosenList, setDosenList] = useState([]);
+  const [filteredDosenList, setFilteredDosenList] = useState([]);
+  const [loadingDosen, setLoadingDosen] = useState(true);
+  const [showDosenDropdown, setShowDosenDropdown] = useState(false);
+  const [dosenSearchQuery, setDosenSearchQuery] = useState("");
   const [formData, setFormData] = useState({
     title: "",
     description: "",
     category: "",
     supervisor: "",
+    supervisorName: "",
     keywords: "",
+    semester: "",
+    year: "",
+    academicYear: "",
   });
+
+  useEffect(() => {
+    loadDosenList();
+  }, []);
+
+  useEffect(() => {
+    // Auto-generate academicYear when semester and year are selected
+    if (formData.semester && formData.year) {
+      const academicYear = `${formData.semester}-${formData.year}`;
+      setFormData(prev => ({ ...prev, academicYear }));
+    }
+  }, [formData.semester, formData.year]);
+
+  const loadDosenList = async () => {
+    setLoadingDosen(true);
+    try {
+      const result = await UserService.getAllUsers();
+      if (result.success && result.data) {
+        const dosenUsers = result.data.filter(user => user.role === 'dosen');
+        setDosenList(dosenUsers);
+        setFilteredDosenList(dosenUsers);
+      }
+    } catch (error) {
+      console.error("Failed to load dosen list:", error);
+    } finally {
+      setLoadingDosen(false);
+    }
+  };
+
+  const handleDosenSearch = (query) => {
+    setDosenSearchQuery(query);
+    if (!query.trim()) {
+      setFilteredDosenList(dosenList);
+      return;
+    }
+    const filtered = dosenList.filter(dosen =>
+      dosen.name.toLowerCase().includes(query.toLowerCase()) ||
+      dosen.email.toLowerCase().includes(query.toLowerCase())
+    );
+    setFilteredDosenList(filtered);
+  };
+
+  const selectDosen = (dosen) => {
+    setFormData(prev => ({
+      ...prev,
+      supervisor: dosen._id,
+      supervisorName: dosen.name,
+    }));
+    setShowDosenDropdown(false);
+    setDosenSearchQuery("");
+    setFilteredDosenList(dosenList);
+  };
+
+  const generateYearOptions = () => {
+    const currentYear = new Date().getFullYear();
+    const years = [];
+    for (let i = currentYear - 2; i <= currentYear + 2; i++) {
+      years.push(i.toString());
+    }
+    return years;
+  };
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -43,7 +121,13 @@ export default function NewProjectPage() {
 
     setLoading(true);
     try {
-      const result = await projectService.createProject(formData);
+      // Prepare data to send
+      const submitData = {
+        ...formData,
+        academicYear: formData.academicYear || undefined, // Only send if filled
+      };
+      
+      const result = await projectService.createProject(submitData);
       
       if (result.success) {
         toast({
@@ -74,7 +158,7 @@ export default function NewProjectPage() {
     <div className="min-h-screen bg-gradient-to-br from-neutral-50 via-white to-neutral-50">
       <Navbar />
 
-      <div className="container mx-auto px-4 py-12">
+      <div className="container mx-auto px-4 py-8">
         <div className="max-w-3xl mx-auto">
           <div className="mb-8">
             <Button 
@@ -143,14 +227,105 @@ export default function NewProjectPage() {
 
                 <div>
                   <Label htmlFor="supervisor">Dosen Pembimbing</Label>
-                  <Input
-                    id="supervisor"
-                    name="supervisor"
-                    value={formData.supervisor}
-                    onChange={handleChange}
-                    placeholder="Nama dosen pembimbing (opsional)"
-                    className="mt-2"
-                  />
+                  <div className="relative mt-2">
+                    <div 
+                      className="flex items-center gap-2 px-3 py-2 border border-neutral-300 rounded-md cursor-pointer hover:bg-neutral-50"
+                      onClick={() => setShowDosenDropdown(!showDosenDropdown)}
+                    >
+                      <Search className="h-4 w-4 text-neutral-500" />
+                      <span className={formData.supervisorName ? "text-neutral-900" : "text-neutral-500"}>
+                        {formData.supervisorName || "Pilih dosen pembimbing..."}
+                      </span>
+                    </div>
+                    
+                    {showDosenDropdown && (
+                      <div className="absolute z-10 w-full mt-1 bg-white border border-neutral-300 rounded-md shadow-lg max-h-64 overflow-hidden">
+                        <div className="p-2 border-b">
+                          <Input
+                            type="text"
+                            placeholder="Cari dosen..."
+                            value={dosenSearchQuery}
+                            onChange={(e) => handleDosenSearch(e.target.value)}
+                            className="w-full"
+                            autoFocus
+                          />
+                        </div>
+                        <div className="max-h-48 overflow-y-auto">
+                          {loadingDosen ? (
+                            <div className="p-4 text-center text-neutral-500">
+                              <Loader2 className="h-4 w-4 animate-spin mx-auto" />
+                            </div>
+                          ) : filteredDosenList.length === 0 ? (
+                            <div className="p-4 text-center text-neutral-500 text-sm">
+                              Dosen tidak ditemukan
+                            </div>
+                          ) : (
+                            filteredDosenList.map((dosen) => (
+                              <div
+                                key={dosen._id}
+                                className={`px-3 py-2 hover:bg-neutral-100 cursor-pointer ${
+                                  formData.supervisor === dosen._id ? 'bg-neutral-50' : ''
+                                }`}
+                                onClick={() => selectDosen(dosen)}
+                              >
+                                <div className="font-medium text-neutral-900">{dosen.name}</div>
+                                <div className="text-xs text-neutral-500">{dosen.email}</div>
+                              </div>
+                            ))
+                          )}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                  <p className="text-xs text-amber-600 mt-2 font-medium">
+                    ⚠️ Pastikan Nama Dosen sesuai dengan plottingan yang sudah ada. Nama dosen tidak dapat diubah setelah proyek dibuat.
+                  </p>
+                </div>
+
+                <div>
+                  <Label>Tahun Ajaran</Label>
+                  <div className="grid grid-cols-2 gap-4 mt-2">
+                    <div>
+                      <Select
+                        value={formData.semester}
+                        onValueChange={(value) =>
+                          setFormData((prev) => ({ ...prev, semester: value }))
+                        }
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Pilih Semester" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="Gasal">Gasal</SelectItem>
+                          <SelectItem value="Genap">Genap</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div>
+                      <Select
+                        value={formData.year}
+                        onValueChange={(value) =>
+                          setFormData((prev) => ({ ...prev, year: value }))
+                        }
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Pilih Tahun" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {generateYearOptions().map((year) => (
+                            <SelectItem key={year} value={year}>
+                              {year}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+                  {formData.academicYear && (
+                    <p className="text-xs text-neutral-500 mt-2">
+                      Tahun Ajaran: <span className="font-semibold text-neutral-700">{formData.academicYear}</span>
+                    </p>
+                  )}
                 </div>
 
                 <div>
