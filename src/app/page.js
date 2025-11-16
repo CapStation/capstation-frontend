@@ -32,28 +32,73 @@ export default function Home() {
   // Show landing page if not authenticated
   return (
     <div className="min-h-screen bg-gradient-to-br from-neutral-50 via-white to-neutral-50 overflow-hidden relative">
+      <div 
+        className="absolute inset-0 opacity-30 pointer-events-none" 
+        style={{
+          backgroundImage: `
+            radial-gradient(circle, #D9D9D9 1.5px, transparent 1.5px),
+            radial-gradient(circle, #D9D9D9 1.5px, transparent 1.5px)
+          `,
+          backgroundSize: '10px 10px',
+          backgroundPosition: '0 0, 5px 5px'
+        }}
+      ></div>
 
-      {/* Floating Elements - Top Left */}
+        <svg 
+        className="absolute inset-0 w-full h-full opacity-15 pointer-events-none"
+        xmlns="http://www.w3.org/2000/svg"
+      >
+        <line x1="25%" y1="0" x2="25%" y2="100%" stroke="#B8B8B8" strokeWidth="1.5" />
+
+        <line x1="72%" y1="0" x2="72%" y2="100%" stroke="#B8B8B8" strokeWidth="1.5" />
+        
+        <line x1="0" y1="25%" x2="100%" y2="25%" stroke="#B8B8B8" strokeWidth="1.5" />
+
+        <line x1="0" y1="75%" x2="100%" y2="75%" stroke="#B8B8B8" strokeWidth="1.5" />
+      </svg>
+
       <div className="absolute top-20 left-10 hidden lg:block">
-       
-        <div className="bg-secondary p-6 rounded-2xl shadow-2xl transform rotate-[-5deg] w-64">
-          <p className="text-neutral-800 text-xl leading-relaxed">
+        <div className="bg-secondary p-6 rounded-sm transform rotate-[-5deg] w-64"
+          style={{
+            boxShadow: `
+              0px 1px 2px 0px rgba(0,0,0,0.20),
+              2px 3px 3px 0px rgba(0,0,0,0.17),
+              4px 7px 5px 0px rgba(0,0,0,0.10),
+              7px 12px 6px 0px rgba(0,0,0,0.03),
+              12px 18px 6px 0px rgba(0,0,0,0.00)
+                `
+              }}>
+          <p className="text-neutral-800 text-lg leading-relaxed">
             Kelola proyek capstone dengan mudah dan terorganisir
           </p>
-          <div className="absolute -top-2 -right-2 w-6 h-6 bg-primary rounded-full shadow-lg"></div>
+          <p className="text-neutral-800 text-lg leading-relaxed">
+            . . .
+          </p>
+          <p className="text-neutral-800 text-lg leading-relaxed">
+            . 
+          </p>
         </div>
       </div>
 
       <div className="flex gap-4 p-8">
         <Folder 
-          size={500} 
-          className="text-primary/0 fill-primary/80 absolute top-20 -left-40 drop-shadow-lg"
+          size={350} 
+          className="text-primary/0 fill-neutral-100/90 absolute top-30 -left-[100px] drop-shadow-lg hidden lg:block"
           style={{ transform: 'rotate(15deg)' }}
         />
       </div>
+      
+      <div className="absolute top-[220px] left-[170px] rotate-[5deg] hidden lg:block">
+        <div className="bg-white p-3 rounded-xl shadow-lg">
+          <CheckCircle2 className="w-10 h-10 text-accent" />
+        </div>
+      </div>
+
+      
+
 
       {/* Floating Elements - Top Right */}
-      <div className="absolute top-32 right-16 animate-float-delayed hidden lg:block">
+      <div className="absolute top-24 right-16  hidden lg:block rotate-[5deg] scale-110 ">
         <div className="bg-white p-5 rounded-2xl shadow-xl">
           <div className="flex items-center gap-2 mb-3">
             <Bell className="w-5 h-5 text-primary" />
@@ -70,7 +115,7 @@ export default function Home() {
       </div>
 
       {/* Floating Elements - Bottom Left */}
-      <div className="absolute bottom-24 left-16 animate-float-slow hidden lg:block">
+      <div className="absolute bottom-32 -left-[20px]  hidden lg:block rotate-[8deg] ">
         <div className="bg-white p-5 rounded-2xl shadow-xl w-72">
           <div className="flex items-center gap-2 mb-3">
             <span className="font-semibold text-neutral-800 text-sm">Today's Tasks</span>
@@ -99,7 +144,7 @@ export default function Home() {
       </div>
 
       {/* Floating Elements - Bottom Right */}
-      <div className="absolute bottom-32 right-20 animate-float-delayed hidden lg:block">
+      <div className="absolute bottom-32 right-20  hidden lg:block rotate-[-8deg] ">
         <div className="bg-white p-4 rounded-2xl shadow-xl">
           <div className="mb-2 text-xs font-semibold text-neutral-700">Integrations</div>
           <div className="flex gap-3">
@@ -116,67 +161,55 @@ export default function Home() {
         </div>
       </div>
 
-      {/* Checklist Card - Left Side */}
-      <div className="absolute top-1/3 left-8 hidden md:block animate-float-slow">
-        <div className="bg-white p-3 rounded-xl shadow-lg">
-          <CheckCircle2 className="w-10 h-10 text-accent" />
-        </div>
-      </div>
 
       {/* Main Content */}
       <div className="relative z-10 flex flex-col items-center justify-center min-h-screen px-4 py-20">
         <div className="text-center max-w-4xl mx-auto">
           {/* Main Heading */}
-          <h1 className="text-5xl md:text-7xl lg:text-8xl font-bold mb-6">
-            <span className="text-neutral-900">Capstone </span>
-            <span className="text-neutral-400">Station</span>
+          <h1 className="text-5xl md:text-6xl font-bold mb-3 leading-relaxed">
+            <span className="block text-primary mb-2">Share your capstone.</span>
+            <span className="block text-neutral-400">Continue the legacy.</span>
           </h1>
 
           {/* Subheading */}
-          <p className="text-lg md:text-xl text-neutral-600 mb-12 max-w-2xl mx-auto">
-            A Information portal for capstone projects
+          <p className="text-sm md:text-lg text-neutral-600 mb-12 max-w-xl mx-auto">
+            Streamline project uploads, browsing, and continuation everything in one centralized hub.
           </p>
 
           {/* Quick Action Buttons */}
-          <div className="flex flex-wrap items-center justify-center gap-6 mb-16">
+          <div className="flex flex-wrap items-center justify-center gap-10 mb-16">
             <Link 
               href="/login"
-              className="group flex flex-col items-center gap-3 transition-transform hover:scale-110"
+              className="group flex flex-col items-center gap-3 "
             >
-              <div className="w-40 h-40 md:w-24 md:h-24 bg-gradient-to-br from-primary to-primary-dark rounded-full flex items-center justify-center shadow-xl group-hover:shadow-2xl transition-all">
-                <LogIn size={10} className="text-white md:w-12 md:h-12" />
+              <div className="w-20 h-20 md:w-21 md:h-21 bg-gradient-to-br from-primary to-primary-dark rounded-full flex items-center justify-center shadow-xl group-hover:scale-110 group-hover:shadow-3xl transition-all">
+                <LogIn size={20} className="text-white md:w-9 md:h-9" />
               </div>
               <span className="text-sm font-medium text-neutral-700">Login</span>
             </Link>
 
             <Link 
               href="/dashboard"
-              className="group flex flex-col items-center gap-3 transition-transform hover:scale-110"
+              className="group flex flex-col items-center gap-3"
             >
-              <div className="w-20 h-20 md:w-24 md:h-24 bg-gradient-to-br from-secondary to-secondary-dark rounded-full flex items-center justify-center shadow-xl group-hover:shadow-2xl transition-all">
-                <LayoutDashboard size={40} className="text-neutral-700 md:w-12 md:h-12" />
+              <div className="w-20 h-20 md:w-21 md:h-21 bg-gradient-to-br from-secondary to-secondary-dark rounded-full flex items-center justify-center shadow-xl group-hover:scale-110 group-hover:shadow-3xl transition-all">
+                <LayoutDashboard size={40} className="text-neutral-100 md:w-9 md:h-9" />
               </div>
               <span className="text-sm font-medium text-neutral-700">Dashboard</span>
             </Link>
 
             <Link 
               href="/projects"
-              className="group flex flex-col items-center gap-3 transition-transform hover:scale-110"
+              className="group flex flex-col items-center gap-3 transition-transform "
             >
-              <div className="w-20 h-20 md:w-24 md:h-24 bg-gradient-to-br from-accent to-accent-dark rounded-full flex items-center justify-center shadow-xl group-hover:shadow-2xl transition-all">
-                <FolderKanban size={40} className="text-white md:w-12 md:h-12" />
+              <div className="w-20 h-20 md:w-21 md:h-21 bg-gradient-to-br from-accent to-accent-dark rounded-full flex items-center justify-center shadow-xl group-hover:scale-110 group-hover:shadow-3xl transition-all">
+                <FolderKanban size={40} className="text-white md:w-9 md:h-9" />
               </div>
               <span className="text-sm font-medium text-neutral-700">Projects</span>
             </Link>
           </div>
 
-          {/* CTA Button */}
-          <Link 
-            href="/login"
-            className="inline-block bg-primary hover:bg-primary-dark text-white font-semibold px-8 py-4 rounded-full shadow-lg hover:shadow-xl transition-all transform hover:scale-105"
-          >
-            Get Started
-          </Link>
+
         </div>
       </div>
 
