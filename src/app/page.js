@@ -12,11 +12,15 @@ export default function Home() {
   const { isAuthenticated, loading } = useAuth();
 
   useEffect(() => {
+<<<<<<< HEAD
     // Only redirect to dashboard if user is authenticated
     if (!loading && isAuthenticated) {
+=======
+    if (!loading) {
+>>>>>>> e1a61c5a409b1f0ffffc53e31572e628edf40e3c
       router.push("/dashboard");
     }
-  }, [isAuthenticated, loading, router]);
+  }, [loading, router]);
 
   // Show loading spinner while checking authentication
   if (loading) {
