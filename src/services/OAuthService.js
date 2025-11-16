@@ -46,11 +46,14 @@ class OAuthService {
       console.error("Error details:", {
         message: error.message,
         response: error.response?.data,
-        status: error.response?.status
+        status: error.response?.status,
       });
       return {
         success: false,
-        error: error.response?.data?.message || error.message || "Gagal menyelesaikan setup profil.",
+        error:
+          error.response?.data?.message ||
+          error.message ||
+          "Gagal menyelesaikan setup profil.",
       };
     }
   }
