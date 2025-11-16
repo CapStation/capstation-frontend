@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
 import { Loader2, LogIn, LayoutDashboard, FolderKanban, CheckCircle2, Bell, Calendar, Users, Folder } from "lucide-react";
 import Link from "next/link";
+import Image from "next/image";
 
 export default function Home() {
   const router = useRouter();
@@ -52,9 +53,9 @@ export default function Home() {
 
         <line x1="72%" y1="0" x2="72%" y2="100%" stroke="#B8B8B8" strokeWidth="1.5" />
         
-        <line x1="0" y1="25%" x2="100%" y2="25%" stroke="#B8B8B8" strokeWidth="1.5" />
+        <line x1="0" y1="22%" x2="100%" y2="22%" stroke="#B8B8B8" strokeWidth="1.5" />
 
-        <line x1="0" y1="75%" x2="100%" y2="75%" stroke="#B8B8B8" strokeWidth="1.5" />
+        <line x1="0" y1="77%" x2="100%" y2="77%" stroke="#B8B8B8" strokeWidth="1.5" />
       </svg>
 
       <div className="absolute top-20 left-10 hidden lg:block">
@@ -164,6 +165,26 @@ export default function Home() {
 
       {/* Main Content */}
       <div className="relative z-10 flex flex-col items-center justify-center min-h-screen px-4 py-20">
+
+        <div className="mb-2">
+          <div className="bg-white p-2 rounded-xl shadow-xl"  style={{
+            boxShadow: `
+              1px 1px 2px 0px rgba(0,0,0,0.10),
+              2px 3px 3px 0px rgba(0,0,0,0.09),
+              5px 6px 5px 0px rgba(0,0,0,0.05),
+              9px 11px 6px 0px rgba(0,0,0,0.01),
+              14px 17px 6px 0px rgba(0,0,0,0.00)
+                `
+              }} >
+            <Image 
+              src="/Logo.png" 
+              alt="CapStation Logo" 
+              width={50} 
+              height={50}
+            />
+          </div>
+        </div>
+
         <div className="text-center max-w-4xl mx-auto">
           {/* Main Heading */}
           <h1 className="text-5xl md:text-6xl font-bold mb-3 leading-relaxed">

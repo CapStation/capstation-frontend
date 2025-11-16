@@ -10,7 +10,7 @@ export default function Navbar({ className = "" }) {
 
   return (
     <nav className={`bg-white border-b border-neutral-200 sticky top-0 z-50 ${className}`}>
-      <div className="container mx-auto px-4">
+      <div className="container mx-auto px-24">
         <div className="flex items-center justify-between h-16">
           <div className="flex items-center gap-8">
             <Link href="/dashboard" className="text-2xl font-bold text-primary">CapStation</Link>

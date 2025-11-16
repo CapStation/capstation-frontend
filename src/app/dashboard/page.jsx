@@ -192,24 +192,24 @@ export default function DashboardPage() {
       {/* Header */}
       <div className="bg-gradient-to-r from-primary to-primary px-4 py-20">
         <div className="container mx-auto  text-center">
-          <h1 className="text-5xl md:text-7xl font-bold text-white pb-5">Dashboard Capstone</h1>
+          <h1 className="text-5xl md:text-6xl font-bold text-white pb-5">Dashboard Capstone</h1>
         </div>
       </div>
 
-      <div className="container mx-auto px-4 -mt-10">
+      <div className="container mx-auto px-20 -mt-10">
         {/* Stats */}
         <div className="grid grid-cols-[repeat(auto-fit,minmax(250px,1fr))] 
         md:grid-cols-[repeat(auto-fit,minmax(320px,1fr))]
         gap-4 mb-8 items-stretch">
 
-          <Card className="my-auto text-left overflow-hidden h-full">
+          <Card className="my-auto text-left overflow-hidden h-full ">
             <Link href="/projects">
-              <CardContent className="flex items-center justify-between p-4 gap-2 cursor-pointer group">
-                <div className="">
-                  <CardTitle className="text-sm md:text-lg font-medium text-neutral-600 mb-2">
+              <CardContent className="flex items-center justify-between p-4 gap-2 h-full cursor-pointer  group">
+                <div className="flex flex-col items-start justify-end h-full max-w-[50%]">
+                  <CardTitle className="text-sm md:text-lg  font-medium text-neutral-600 mb-2 h-full">
                     Total Proyek Capstone
                   </CardTitle>
-                  <div className="text-4xl md:text-5xl font-bold text-primary mb-1">
+                  <div className="text-5xl md:text-6xl font-bold text-primary">
                     {loading ? '...' : error ? '—' : totalProjects}
                   </div>
                   <p className="text-xs md:text-sm text-neutral-500">
@@ -219,7 +219,7 @@ export default function DashboardPage() {
                 
                 <div>
                   <div className="self-stretch pl-5 pr-4 pt-10 pb-2 relative inline-flex flex-col justify-end items-end">
-                    <div className="w-80 h-80 left-[-35px] top-[-30px] absolute bg-orange-400 rounded-full transition-all duration-300 group-hover:bg-secondary group-hover:scale-105" />
+                    <div className="w-80 h-80 left-[-35px] top-[-40px] absolute bg-primary rounded-full transition-all duration-300 group-hover:bg-secondary group-hover:scale-105" />
                     <Folder className="w-16 h-16 text-white relative transition-all duration-300 group-hover:scale-110 group-hover:text-primary" />  
                   </div>
                 </div>
@@ -229,12 +229,12 @@ export default function DashboardPage() {
 
           <Card className="my-auto text-left overflow-hidden h-full">
             <Link href="/projects">
-              <CardContent className="flex items-center justify-between p-4 gap-2 cursor-pointer group ">
-                <div>
-                  <CardTitle className="text-sm md:text-lg font-medium text-neutral-600 mb-2">
+              <CardContent className="flex items-center justify-between h-full p-4 gap-2 cursor-pointer group ">
+                <div className = "flex flex-col items-start justify-end h-full max-w-[50%]">
+                  <CardTitle className="text-sm md:text-lg  font-medium text-neutral-600 mb-2 h-full">
                     Proyek Dapat Dilanjutkan
                   </CardTitle>
-                  <div className="text-4xl md:text-5xl font-bold text-primary mb-1">
+                  <div className="text-5xl md:text-6xl font-bold text-primary mb-1">
                     {projectsLoading ? '...' : error ? '—' : availableProjects}
                   </div>
                   <p className="text-xs md:text-sm text-neutral-500">Proyek dapat dilanjut</p>
@@ -242,7 +242,7 @@ export default function DashboardPage() {
 
                 <div>
                   <div className="self-stretch pl-5 pr-4 pt-10 pb-2 relative inline-flex flex-col justify-end items-end">
-                    <div className="w-80 h-80 left-[-35px] top-[-30px] absolute bg-orange-400 rounded-full transition-all duration-300 group-hover:bg-secondary group-hover:scale-105" />
+                    <div className="w-80 h-80 left-[-35px] top-[-40px] absolute bg-orange-400 rounded-full transition-all duration-300 group-hover:bg-secondary group-hover:scale-105" />
                     <FolderPen className="w-16 h-16 text-white relative transition-all duration-300 group-hover:scale-110 group-hover:text-primary" />
                   </div>
                 </div>
@@ -252,12 +252,12 @@ export default function DashboardPage() {
 
           <Card className="my-auto text-left overflow-hidden h-full">
             <Link href="/group">
-              <CardContent className="flex items-center justify-between p-4 gap-2 cursor-pointer group">
-                <div>
-                  <CardTitle className="text-sm md:text-lg font-medium text-neutral-600 mb-2">
+              <CardContent className="flex items-center justify-between h-full p-4 gap-2 cursor-pointer group">
+                <div className= "flex flex-col items-start justify-end h-full max-w-[50%]">
+                  <CardTitle className="text-sm md:text-lg  font-medium text-neutral-600 mb-2 h-full">
                    Jumlah Tim Aktif
                   </CardTitle>
-                  <div className="text-4xl md:text-5xl font-bold text-primary mb-1">
+                  <div className="text-5xl md:text-6xl font-bold text-primary mb-1">
                      {projectsLoading ? '...' : error ? '—' : ongoingProjects}
                   </div>
                   <p className="text-xs md:text-sm text-neutral-500">Tim Capstone</p>
@@ -265,7 +265,7 @@ export default function DashboardPage() {
               
                 <div>
                   <div className="self-stretch pl-5 pr-4 pt-10 pb-2 relative inline-flex flex-col justify-end items-end">
-                    <div className="w-80 h-80 left-[-35px] top-[-30px] absolute bg-orange-400 rounded-full transition-all duration-300 group-hover:bg-secondary group-hover:scale-105" />
+                    <div className="w-80 h-80 left-[-35px] top-[-40px] absolute bg-orange-400 rounded-full transition-all duration-300 group-hover:bg-secondary group-hover:scale-105" />
                     <Users className="w-16 h-16 text-white relative transition-all duration-300 group-hover:scale-110 group-hover:text-primary" />
                   </div>
                 </div>
@@ -307,7 +307,6 @@ export default function DashboardPage() {
           </Card>
         </div>
 
-        {/* Proyek Saya
         <section className="mb-8">
           <div className="mb-4">
             <h2 className="text-xl font-semibold text-neutral-900 mb-2">Proyek Saya</h2>
@@ -321,7 +320,7 @@ export default function DashboardPage() {
               </Link>
             ))}
           </div>
-        </section> */}
+        </section>
 
         {/* Announcements */}
         <Card className="mb-8">
