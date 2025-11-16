@@ -115,12 +115,22 @@ export default function ProjectDetailPage() {
   
   // Set to dapat dilanjutkan dialog
   const [showSetContinuableDialog, setShowSetContinuableDialog] = useState(false);
+  
+  // State for checking user's active projects
+  const [userHasActiveProject, setUserHasActiveProject] = useState(false);
+  const [checkingActiveProject, setCheckingActiveProject] = useState(true);
 
   useEffect(() => {
     if (params.id) {
       loadProjectData();
     }
   }, [params.id]);
+  
+  useEffect(() => {
+    if (user && project && project.status === 'dapat_dilanjutkan') {
+      checkUserActiveProjects();
+    }
+  }, [user, project]);
 
   useEffect(() => {
     if (project) {
@@ -182,8 +192,10 @@ export default function ProjectDetailPage() {
         });
       }
 
-      // Load documents separately
-      await loadDocuments();
+      // Load documents only if user is logged in
+      if (user) {
+        await loadDocuments();
+      }
     } catch (error) {
       console.error("Error loading project:", error);
     } finally {
@@ -192,6 +204,11 @@ export default function ProjectDetailPage() {
   };
 
   const loadDocuments = async () => {
+    // Skip if user not logged in
+    if (!user) {
+      return;
+    }
+    
     try {
       const docsResult = await projectService.getProjectDocuments(params.id);
 
@@ -243,6 +260,35 @@ export default function ProjectDetailPage() {
     }
   };
 
+  // Helper function to check if user can edit/delete project
+  const canEditProject = () => {
+    if (!user || !project) return false;
+    
+    // Admin can edit any project
+    if (user.role === 'admin') return true;
+    
+    // Check if user is the owner
+    const isOwner = typeof project.owner === 'string' 
+      ? project.owner === user.id 
+      : project.owner?._id === user.id;
+    
+    if (isOwner) return true;
+    
+    // Check if user is a member of the project
+    if (project.members && Array.isArray(project.members)) {
+      const isMember = project.members.some(member => {
+        if (typeof member === 'string') {
+          return member === user.id;
+        }
+        return member?._id === user.id;
+      });
+      
+      if (isMember) return true;
+    }
+    
+    return false;
+  };
+
   const handleCompleteProject = async () => {
     if (confirmationText !== "SELESAI") {
       toast({
@@ -289,6 +335,60 @@ export default function ProjectDetailPage() {
     } finally {
       setCompletingProject(false);
     }
+  };
+
+  // Check if user has active projects
+  const checkUserActiveProjects = async () => {
+    if (!user) return;
+    
+    setCheckingActiveProject(true);
+    try {
+      const result = await projectService.getMyProjects();
+      if (result.success) {
+        const projects = result.data || [];
+        // Check if user has any active, selesai, or dapat_dilanjutkan project
+        const hasActiveOrCompleted = projects.some(p => 
+          p.status === 'active' || p.status === 'selesai' || p.status === 'dapat_dilanjutkan'
+        );
+        setUserHasActiveProject(hasActiveOrCompleted);
+      }
+    } catch (error) {
+      console.error('Error checking active projects:', error);
+    } finally {
+      setCheckingActiveProject(false);
+    }
+  };
+  
+  // Check if user can request to continue this project
+  const canRequestContinue = () => {
+    if (!user || !project) return false;
+    if (project.status !== 'dapat_dilanjutkan') return false;
+    if (userHasActiveProject) return false;
+    
+    // User shouldn't be the current owner or member
+    const isOwner = typeof project.owner === 'string' 
+      ? project.owner === user.id 
+      : project.owner?._id === user.id;
+    
+    if (isOwner) return false;
+    
+    if (project.members && Array.isArray(project.members)) {
+      const isMember = project.members.some(member => {
+        if (typeof member === 'string') {
+          return member === user.id;
+        }
+        return member?._id === user.id;
+      });
+      
+      if (isMember) return false;
+    }
+    
+    return true;
+  };
+  
+  // Handle request to continue project
+  const handleRequestContinue = () => {
+    router.push(`/projects/${params.id}/continue-request`);
   };
 
   const handleSetContinuable = async () => {
@@ -924,21 +1024,39 @@ export default function ProjectDetailPage() {
                   </div>
                 </div>
                 <div className="flex gap-2 flex-shrink-0 flex-wrap">
-                  <Link href={`/projects/${params.id}/edit`}>
-                    <Button variant="outline" size="sm">
-                      <Edit className="h-4 w-4 mr-2" />
-                      Edit
+                  {/* Tombol Ajukan Melanjutkan untuk proyek dapat_dilanjutkan jika user belum punya project aktif */}
+                  {!checkingActiveProject && canRequestContinue() && (
+                    <Button
+                      variant="default"
+                      size="sm"
+                      onClick={handleRequestContinue}
+                      className="bg-primary hover:bg-primary/90"
+                    >
+                      <CheckCircle2 className="h-4 w-4 mr-2" />
+                      Ajukan Melanjutkan
                     </Button>
-                  </Link>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={handleDelete}
-                    className="text-red-600 hover:text-red-700"
-                  >
-                    <Trash2 className="h-4 w-4 mr-2" />
-                    Hapus
-                  </Button>
+                  )}
+                  
+                  {/* Tombol Edit dan Hapus hanya untuk owner, member team, dan admin */}
+                  {canEditProject() && (
+                    <>
+                      <Link href={`/projects/${params.id}/edit`}>
+                        <Button variant="outline" size="sm">
+                          <Edit className="h-4 w-4 mr-1" />
+                          Edit
+                        </Button>
+                      </Link>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={handleDelete}
+                        className="text-red-600 hover:text-red-700"
+                      >
+                        <Trash2 className="h-4 w-4 mr-1" />
+                        Hapus
+                      </Button>
+                    </>
+                  )}
                 </div>
               </div>
             </CardHeader>
@@ -1029,6 +1147,15 @@ export default function ProjectDetailPage() {
                 </div>
               )}
 
+              {project.academicYear && (
+                <div>
+                  <h3 className="font-semibold text-neutral-900 mb-2">Tahun Ajaran</h3>
+                  <p className="text-neutral-700">
+                    {project.academicYear.replace('-', ' ')}
+                  </p>
+                </div>
+              )}
+
               <div>
                 <h3 className="font-semibold text-neutral-900 mb-2">Tanggal Dibuat</h3>
                 <p className="text-neutral-700">
@@ -1049,27 +1176,57 @@ export default function ProjectDetailPage() {
             <CardHeader>
               <div className="flex items-center justify-between">
                 <CardTitle>Dokumen Proyek</CardTitle>
-                <Button 
-                  size="sm" 
-                  onClick={() => setShowUploadDialog(true)}
-                  disabled={uploading}
-                >
-                  {uploading ? (
-                    <>
-                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                      Uploading...
-                    </>
-                  ) : (
-                    <>
-                      <Upload className="h-4 w-4 mr-2" />
-                      Upload Dokumen
-                    </>
-                  )}
-                </Button>
+                {canEditProject() && (
+                  <Button 
+                    size="sm" 
+                    onClick={() => setShowUploadDialog(true)}
+                    disabled={uploading}
+                    className="bg-[#FFE49C] text-neutral-900 border border-neutral-100 hover:bg-[#B6EB75]"
+                  >
+                    {uploading ? (
+                      <>
+                        <Loader2 className="h-4 w-4 mr-1 animate-spin" />
+                        Uploading...
+                      </>
+                    ) : (
+                      <>
+                        <Upload className="h-4 w-4 mr-1" />
+                        Upload Dokumen
+                      </>
+                    )}
+                  </Button>
+                )}
               </div>
             </CardHeader>
             <CardContent>
-              {documents.length === 0 ? (
+              {!user ? (
+                // Guest user - locked documents
+                <div className="text-center py-12 px-4">
+                  <div className="max-w-md mx-auto">
+                    <div className="w-20 h-20 bg-neutral-100 rounded-full flex items-center justify-center mx-auto mb-0">
+                      <FileText className="h-10 w-10 text-neutral-400" />
+                    </div>
+                    <h3 className="text-xl font-semibold text-neutral-900 mb-2">
+                      Dokumen Terkunci
+                    </h3>
+                    <p className="text-neutral-600 mb-6">
+                      Anda harus login terlebih dahulu untuk melihat dokumen proyek ini
+                    </p>
+                    <div className="flex gap-3 justify-center">
+                      <Link href="/login">
+                        <Button className="bg-primary hover:bg-primary/90">
+                          Login Sekarang
+                        </Button>
+                      </Link>
+                      <Link href="/register">
+                        <Button variant="outline">
+                          Daftar
+                        </Button>
+                      </Link>
+                    </div>
+                  </div>
+                </div>
+              ) : documents.length === 0 ? (
                 <div className="text-center py-8 text-neutral-500">
                   <FileText className="h-12 w-12 mx-auto mb-3 text-neutral-300" />
                   <p>Belum ada dokumen</p>
@@ -1128,15 +1285,17 @@ export default function ProjectDetailPage() {
                               >
                                 <Download className="h-4 w-4" />
                               </Button>
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => handleDeleteDocument(doc._id)}
-                                className="text-red-600 hover:text-red-700"
-                                title="Hapus"
-                              >
-                                <Trash2 className="h-4 w-4" />
-                              </Button>
+                              {canEditProject() && (
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => handleDeleteDocument(doc._id)}
+                                  className="text-red-600 hover:text-red-700"
+                                  title="Hapus"
+                                >
+                                  <Trash2 className="h-4 w-4" />
+                                </Button>
+                              )}
                             </div>
                           </div>
                         ))}
@@ -1157,7 +1316,7 @@ export default function ProjectDetailPage() {
                       onClick={() => setShowCompleteDialog(true)}
                       className="w-full bg-green-600 hover:bg-green-700 text-white font-semibold"
                     >
-                      <CheckCircle2 className="h-5 w-5 mr-2" />
+                      <CheckCircle2 className="h-5 w-5 mr-1" />
                       Konfirmasi Proyek telah Selesai
                     </Button>
                   )}
@@ -1169,7 +1328,7 @@ export default function ProjectDetailPage() {
                       onClick={() => setShowSetContinuableDialog(true)}
                       className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-semibold"
                     >
-                      <AlertCircle className="h-5 w-5 mr-2" />
+                      <AlertCircle className="h-5 w-5 mr-1" />
                       Tandai Dapat Dilanjutkan
                     </Button>
                   )}
@@ -1691,7 +1850,7 @@ export default function ProjectDetailPage() {
               <Button
                 onClick={handleCompleteProject}
                 disabled={confirmationText !== "SELESAI" || completingProject}
-                className="bg-green-600 hover:bg-green-700"
+                className="bg-green-400 hover:bg-green-500"
               >
                 {completingProject ? (
                   <>

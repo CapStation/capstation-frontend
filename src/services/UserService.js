@@ -7,10 +7,22 @@ class UserService {
 
   async getUserById(userId) {
     try {
+      // Validate userId
+      if (!userId) {
+        return { success: false, error: 'User ID is required' };
+      }
+
       // Check cache first
       if (UserService.userCache.has(userId)) {
         console.log('📦 UserService: Using cached user data for', userId);
         return { success: true, data: UserService.userCache.get(userId) };
+      }
+
+      // Check if user is logged in (has token)
+      const token = localStorage.getItem('token');
+      if (!token) {
+        console.log('⚠️ UserService: No token found, skipping user fetch');
+        return { success: false, error: 'Not authenticated' };
       }
 
       console.log('🔍 UserService: Fetching user by ID:', userId);
@@ -32,6 +44,18 @@ class UserService {
   async getUsersByIds(userIds) {
     try {
       console.log('🔍 UserService: Fetching multiple users:', userIds);
+      
+      // Validate userIds
+      if (!userIds || userIds.length === 0) {
+        return { success: true, data: [] };
+      }
+
+      // Check if user is logged in (has token)
+      const token = localStorage.getItem('token');
+      if (!token) {
+        console.log('⚠️ UserService: No token found, skipping users fetch');
+        return { success: false, error: 'Not authenticated' };
+      }
       
       // Fetch users yang belum ada di cache
       const uncachedIds = userIds.filter(id => !UserService.userCache.has(id));
@@ -90,3 +114,4 @@ class UserService {
 
 const userService = new UserService();
 export default userService;
+

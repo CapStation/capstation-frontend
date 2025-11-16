@@ -42,9 +42,9 @@ export default function ProjectsPage() {
           : result.data?.projects || result.data?.data || [];
         
         // Pisahkan project aktif dan request history
-        // Project aktif: status = 'active' atau 'selesai', capstoneStatus = 'new' atau 'accepted'
+        // Project aktif: status = 'active', 'selesai', atau 'dapat_dilanjutkan', capstoneStatus = 'new' atau 'accepted'
         const activeProjects = projectsData.filter(p => 
-          (p.status === 'active' || p.status === 'selesai') && 
+          (p.status === 'active' || p.status === 'selesai' || p.status === 'dapat_dilanjutkan') && 
           (p.capstoneStatus === 'new' || p.capstoneStatus === 'accepted')
         );
         
@@ -185,7 +185,7 @@ export default function ProjectsPage() {
           {!myProject && (
             <Link href="/projects/new">
               <Button className="bg-[#FF8730] hover:bg-[#FF8730]/90 text-white font-medium shadow-md hover:shadow-lg transition-all">
-                <Plus className="h-4 w-4 mr-2" />
+                <Plus className="h-4 w-4 mr-1" />
                 Buat Proyek Baru
               </Button>
             </Link>
@@ -220,7 +220,7 @@ export default function ProjectsPage() {
                   )}
                 </div>
                 <Link href={`/projects/${myProject._id}`}>
-                  <Button className="bg-neutral-900 hover:bg-neutral-800 text-white">
+                  <Button className="bg-black hover:bg-neutral-700 text-white shadow-sm transition-all">
                     Lihat Detail
                   </Button>
                 </Link>
@@ -290,16 +290,42 @@ export default function ProjectsPage() {
 
               {/* Action Buttons */}
               <div className="flex gap-3 mt-6 pt-6 border-t border-neutral-200">
-                <Link href={`/projects/${myProject._id}/edit`} className="flex-1">
-                  <Button variant="outline" className="w-full">
-                    Edit Proyek
-                  </Button>
-                </Link>
-                <Link href={`/projects/${myProject._id}/documents`} className="flex-1">
-                  <Button variant="outline" className="w-full">
-                    Kelola Dokumen
-                  </Button>
-                </Link>
+                {myProject.status === 'active' ? (
+                  // Tombol untuk project yang masih aktif
+                  <>
+                    <Link href={`/projects/${myProject._id}/edit`} className="flex-1">
+                      <Button variant="outline" className="w-full">
+                        Edit Proyek
+                      </Button>
+                    </Link>
+                    <Link href={`/projects/${myProject._id}/documents`} className="flex-1">
+                      <Button variant="outline" className="w-full">
+                        Detail Grup
+                      </Button>
+                    </Link>
+                  </>
+                ) : myProject.status === 'dapat_dilanjutkan' ? (
+                  // Tombol untuk project yang dapat dilanjutkan
+                  <>
+                    <Link href={`/projects/${myProject._id}/documents`} className="flex-1">
+                      <Button variant="outline" className="w-full">
+                        Lihat Grup
+                      </Button>
+                    </Link>
+                    <Link href={`/projects/${myProject._id}/requests`} className="flex-1">
+                      <Button className="w-full bg-[#FF8730] hover:bg-[#FF8730]/90 text-white">
+                        Lihat Request
+                      </Button>
+                    </Link>
+                  </>
+                ) : (
+                  // Tombol untuk project yang sudah selesai
+                  <Link href={`/projects/${myProject._id}/documents`} className="w-full">
+                    <Button variant="outline" className="w-full">
+                      Lihat Grup
+                    </Button>
+                  </Link>
+                )}
               </div>
             </CardContent>
           </Card>
@@ -318,7 +344,7 @@ export default function ProjectsPage() {
               <div className="flex gap-3 justify-center">
                 <Link href="/projects/new">
                   <Button className="bg-[#FF8730] hover:bg-[#FF8730]/90 text-white font-medium shadow-md hover:shadow-lg transition-all">
-                    <Plus className="h-4 w-4 mr-2" />
+                    <Plus className="h-4 w-4 mr-1" />
                     Buat Proyek Baru
                   </Button>
                 </Link>
@@ -345,11 +371,13 @@ export default function ProjectsPage() {
           {requestHistory.length === 0 ? (
             <Card className="p-8 text-center border-dashed border-2">
               <p className="text-neutral-500">Anda belum pernah mengajukan request untuk melanjutkan proyek lain.</p>
-              <Link href="/browse/capstones">
-                <Button variant="outline" className="mt-4">
-                  Cari Proyek untuk Dilanjutkan
-                </Button>
-              </Link>
+              {!myProject && (
+                <Link href="/browse/capstones">
+                  <Button variant="outline" className="mt-4">
+                    Cari Proyek untuk Dilanjutkan
+                  </Button>
+                </Link>
+              )}
             </Card>
           ) : (
             <div className="space-y-4">
@@ -392,3 +420,5 @@ export default function ProjectsPage() {
     </div>
   );
 }
+
+
