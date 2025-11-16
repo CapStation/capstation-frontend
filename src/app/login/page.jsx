@@ -34,12 +34,23 @@ export default function LoginPage() {
   useEffect(() => {
     const checkApi = async () => {
       try {
-        const response = await fetch(
+        const apiUrl =
           process.env.NEXT_PUBLIC_API_URL ||
-            "https://capstation-backend.vercel.app/api"
-        );
+          "https://capstation-backend.vercel.app/api";
+        const response = await fetch(`${apiUrl}/health`, {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+          },
+        });
+
         if (response.ok) {
-          setApiStatus("connected");
+          const data = await response.json();
+          if (data.success) {
+            setApiStatus("connected");
+          } else {
+            setApiStatus("error");
+          }
         } else {
           setApiStatus("error");
         }
