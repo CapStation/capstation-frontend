@@ -10,29 +10,27 @@ import Navbar from "@/components/layout/Navbar";
 import ProjectCard from "@/components/project/ProjectCard";
 import DashboardService from "@/services/DashboardService";
 import ProjectService from "@/services/ProjectService";
-import { Folder, FolderPen, Users, Bell } from 'lucide-react'; 
-
-
+import { Folder, FolderPen, Users, Bell, LogIn } from 'lucide-react'; 
 
 export default function DashboardPage() {
   const { user, loading: authLoading } = useAuth();
   const router = useRouter();
   const loadedRef = useRef(false);
   
-  const [stats, setStats] = useState(null);
-  const [announcements, setAnnouncements] = useState([]);
+  // State for all dashboard data
   const [myProjects, setMyProjects] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
+  // Stats state
   const [totalProjects, setTotalProjects] = useState(0);
   const [waitingApproval, setWaitingApproval] = useState(0);
   const [ongoingProjects, setOngoingProjects] = useState(0);
   const [closedProjects, setClosedProjects] = useState(0);
+  const [availableProjects, setAvailableProjects] = useState(0);
   const [perCategory, setPerCategory] = useState([]);
-  const [availableProjects, setAvailableProjects] = useState(0); // ADD THIS
   const [groupsPerCategory, setGroupsPerCategory] = useState([]);
-  const [projectsLoading, setProjectsLoading] = useState(true);
-  const [error, setError] = useState(null);
+  const [announcements, setAnnouncements] = useState([]);
 
   const formatThemeName = (theme) => {
     const themeNames = {
@@ -50,7 +48,7 @@ export default function DashboardPage() {
   };
 
   const formatDate = (dateString) => {
-  const date = new Date(dateString);
+    const date = new Date(dateString);
     return date.toLocaleDateString('id-ID', { 
       day: 'numeric', 
       month: 'long', 
@@ -59,135 +57,75 @@ export default function DashboardPage() {
   };
 
   useEffect(() => {
-    if (!authLoading && !user) {
-      router.push("/login");
-    }
-  }, [user, authLoading, router]);
-
-  useEffect(() => {
-    if (user) {
+    if (!authLoading && !loadedRef.current) {
+      loadedRef.current = true;
       loadDashboardData();
     }
-  }, [user]);
-  
-  useEffect(() => {
-    const fetchDashboardStats = async () => {
-      try {
-        setProjectsLoading(true);
-        const response = await fetch('https://capstation-backend.vercel.app/api/dashboard/', {
-          headers: {
-            'Authorization': `Bearer ${localStorage.getItem('accessToken')}`,
-            'Content-Type': 'application/json'
-          }
-        });
-        
-        if (!response.ok) {
-          throw new Error('Failed to fetch data');
-        }
-        
-        const data = await response.json();
-        
-        setTotalProjects(data.totalProjects);
-        setWaitingApproval(data.waitingApproval);
-        setOngoingProjects(data.ongoingProjects);
-        setClosedProjects(data.closedProjects);
-        setPerCategory(data.perCategory);
-        setGroupsPerCategory(data.groupsPerCategory);
-        setAnnouncements(data.announcements || []);
-      
-        const available = data.totalProjects - data.closedProjects - data.ongoingProjects;
-        setAvailableProjects(available);
-
-      } catch (err) {
-        setError(err.message);
-      } finally {
-        setProjectsLoading(false);
-      }
-    };
-
-    if (user) {
-      fetchDashboardStats();
-    }
-  }, [user]);
-  
+  }, [authLoading, user]);
 
   const loadDashboardData = async () => {
     setLoading(true);
+    setError(null);
+    
     try {
-      console.log('📊 Loading dashboard data...');
-      console.log('🔑 Auth token:', localStorage.getItem('accessToken') ? 'Present' : 'Missing');
-      console.log('🌐 API URL:', process.env.NEXT_PUBLIC_API_URL);
-      console.log('👤 User:', user ? 'Logged in' : 'Guest');
+      console.log('📊 Loading dashboard data using DashboardService...');
+      console.log('👤 User status:', user ? 'Authenticated' : 'Guest');
       
-      // Hanya load data yang tidak memerlukan autentikasi
-      const [statsResult, announcementsResult] = await Promise.all([
-        DashboardService.getStats(),
-        DashboardService.getRecentAnnouncements(5),
-      ]);
-
-      console.log('📈 Stats result:', statsResult);
-      console.log('📢 Announcements result:', announcementsResult);
-
-      if (statsResult.success) {
-        setStats(statsResult.data);
-      }
-
-      if (announcementsResult.success) {
-        setAnnouncements(announcementsResult.data);
+      const dashboardResult = await DashboardService.getDashboardData();
+      
+      if (dashboardResult.success) {
+        const data = dashboardResult.data;
+        
+        console.log('✅ Dashboard data loaded:', data);
+        
+        setTotalProjects(data.totalProjects || 0);
+        setWaitingApproval(data.waitingApproval || 0);
+        setOngoingProjects(data.ongoingProjects || 0);
+        setClosedProjects(data.closedProjects || 0);
+        setPerCategory(data.perCategory || []);
+        setGroupsPerCategory(data.groupsPerCategory || []);
+        setAnnouncements(data.announcements || []);
+      } else {
+        console.error('❌ Failed to load dashboard data:', dashboardResult.error);
+        setError(dashboardResult.error);
       }
       
-      // Hanya load my projects jika user sudah login
+      console.log('📁 Loading available projects...');
+      const availableResult = await ProjectService.getAvailableProjects();
+      if (availableResult.success) {
+        console.log('✅ Available projects loaded:', availableResult.count);
+        setAvailableProjects(availableResult.count);
+      } else {
+        console.error('❌ Failed to load available projects:', availableResult.error);
+        setAvailableProjects(0);
+      }
+      
       if (user) {
+        console.log('📁 Loading user projects...');
         const projectsResult = await ProjectService.getMyProjects();
-        console.log('📁 Projects result:', projectsResult);
         
         if (projectsResult.success && Array.isArray(projectsResult.data)) {
-          console.log('✅ Using API projects:', projectsResult.data.length, 'projects');
+          console.log('✅ User projects loaded:', projectsResult.data.length, 'projects');
           setMyProjects(projectsResult.data);
         } else {
-          console.log('⚠️ API failed, using mock data');
-          setMyProjects(generateMockProjects(6, "my"));
+          console.log('⚠️ Failed to load user projects');
+          setMyProjects([]);
         }
       } else {
-        // Guest user - tampilkan mock projects atau kosong
-        console.log('👤 Guest user - showing empty projects');
+        console.log('👤 Guest user - skipping user projects');
         setMyProjects([]);
       }
+      
     } catch (error) {
-      console.error("❌ Failed to load dashboard data:", error);
-      // Fallback to empty projects on error for guest
-      if (!user) {
-        setMyProjects([]);
-      } else {
-        setMyProjects(generateMockProjects(6, "my"));
-      }
+      console.error("❌ Error loading dashboard data:", error);
+      setError(error.message || 'Gagal memuat data dashboard');
+      
+      setMyProjects([]);
+      setAnnouncements([]);
+      setAvailableProjects(0);
     } finally {
       setLoading(false);
     }
-  };
-
-  const generateMockProjects = (count, type) => {
-    const titles = [
-      "Sistem Monitoring Tekanan Darah Pasien Penyakit Jantung Berbasis IoT",
-      "Sarang Tenggiri Untuk Finger Therapy Bagi Lansia Pasca Stroke Berbasis IoT",
-      "Alat Pengolah Sampah Otomatis di SGLC Fakultas Teknik Berbasis IoT",
-      "Aplikasi Monitoring Kadar Emisi Gas Buang Peda Kendaraan Pribadi",
-      "Sistem Peniruan Tahsinsan Otomatis Berbasis IoT Pada Ketua Sidoarjo",
-      "Artifisial Monitoring Kadar Emisi Beracun Pada Pabrik Tekstil",
-      "Pengembangan Aplikasi Mobile untuk Edukasi Gizi Seimbang pada Ibu Hamil",
-      "Smart City Dashboard untuk Monitoring Lingkungan Area Malioboro",
-    ];
-
-    const statuses = ["Sedang Proses", "Disetujui"];
-    
-    return Array.from({ length: count }, (_, i) => ({
-      _id: `project-${type}-${i}`,
-      title: titles[i % titles.length],
-      author: type === "my" ? (user?.name || "User") : "Azka rio Rizky Pratama, ST, M.Eng., Ph.D",
-      createdAt: type === "new" ? "2026-06-01T10:00:00Z" : type === "my" ? "2026-05-27T10:00:00Z" : "2025-08-10T10:00:00Z",
-      status: statuses[Math.floor(Math.random() * statuses.length)],
-      supervisor: "Dosen Pembimbing: Prof. Dr.Eng. I. F. Danung Wijaya, S.T., M.T., IPM.",
-    }));
   };
 
   if (authLoading) {
@@ -204,8 +142,13 @@ export default function DashboardPage() {
 
       {/* Header */}
       <div className="bg-gradient-to-r from-primary to-primary px-4 py-20">
-        <div className="container mx-auto  text-center">
+        <div className="container mx-auto text-center">
           <h1 className="text-5xl md:text-6xl font-bold text-white pb-5">Dashboard Capstone</h1>
+          {!user && (
+            <p className="text-white/90 text-lg mt-2">
+              Viewing as guest. <Link href="/login" className="underline font-semibold hover:text-white">Login</Link> to see your projects.
+            </p>
+          )}
         </div>
       </div>
 
@@ -215,11 +158,11 @@ export default function DashboardPage() {
         md:grid-cols-[repeat(auto-fit,minmax(320px,1fr))]
         gap-4 mb-8 items-stretch">
 
-          <Card className="my-auto text-left overflow-hidden h-full ">
-            <Link href="/projects">
-              <CardContent className="flex items-center justify-between p-4 gap-2 h-full cursor-pointer  group">
+          <Card className="my-auto text-left overflow-hidden h-full">
+            <Link href="/browse/capstones">
+              <CardContent className="flex items-center justify-between p-4 gap-2 h-full cursor-pointer group">
                 <div className="flex flex-col items-start justify-end h-full max-w-[50%]">
-                  <CardTitle className="text-sm md:text-lg  font-medium text-neutral-600 mb-2 h-full">
+                  <CardTitle className="text-sm md:text-lg font-medium text-neutral-600 mb-2 h-full">
                     Total Proyek Capstone
                   </CardTitle>
                   <div className="text-5xl md:text-6xl font-bold text-primary">
@@ -241,14 +184,14 @@ export default function DashboardPage() {
           </Card>
 
           <Card className="my-auto text-left overflow-hidden h-full">
-            <Link href="/projects">
-              <CardContent className="flex items-center justify-between h-full p-4 gap-2 cursor-pointer group ">
-                <div className = "flex flex-col items-start justify-end h-full max-w-[50%]">
-                  <CardTitle className="text-sm md:text-lg  font-medium text-neutral-600 mb-2 h-full">
+            <Link href="/browse/capstones?availability=tersedia">
+              <CardContent className="flex items-center justify-between h-full p-4 gap-2 cursor-pointer group">
+                <div className="flex flex-col items-start justify-end h-full max-w-[50%]">
+                  <CardTitle className="text-sm md:text-lg font-medium text-neutral-600 mb-2 h-full">
                     Proyek Dapat Dilanjutkan
                   </CardTitle>
                   <div className="text-5xl md:text-6xl font-bold text-primary mb-1">
-                    {projectsLoading ? '...' : error ? '—' : availableProjects}
+                    {loading ? '...' : error ? '—' : availableProjects}
                   </div>
                   <p className="text-xs md:text-sm text-neutral-500">Proyek dapat dilanjut</p>
                 </div>
@@ -266,12 +209,12 @@ export default function DashboardPage() {
           <Card className="my-auto text-left overflow-hidden h-full">
             <Link href="/group">
               <CardContent className="flex items-center justify-between h-full p-4 gap-2 cursor-pointer group">
-                <div className= "flex flex-col items-start justify-end h-full max-w-[50%]">
-                  <CardTitle className="text-sm md:text-lg  font-medium text-neutral-600 mb-2 h-full">
+                <div className="flex flex-col items-start justify-end h-full max-w-[50%]">
+                  <CardTitle className="text-sm md:text-lg font-medium text-neutral-600 mb-2 h-full">
                    Jumlah Tim Aktif
                   </CardTitle>
                   <div className="text-5xl md:text-6xl font-bold text-primary mb-1">
-                     {projectsLoading ? '...' : error ? '—' : ongoingProjects}
+                     {loading ? '...' : error ? '—' : ongoingProjects}
                   </div>
                   <p className="text-xs md:text-sm text-neutral-500">Tim Capstone</p>
                 </div>
@@ -291,49 +234,82 @@ export default function DashboardPage() {
               <CardTitle className="text-sm md:text-lg font-medium text-neutral-600">Jumlah Proyek per Kategori</CardTitle>
             </CardHeader>
             <CardContent className="space-y-2">
-              {projectsLoading ? (
-                  <div className="text-center text-sm text-neutral-500">Loading...</div>
-                ) : error ? (
-                  <div className="text-center text-sm text-red-500">Failed to load</div>
-                ) : perCategory.length > 0 ? (
-                  perCategory.map((category, index) => {
-                    const percentage = totalProjects > 0 
-                      ? (category.count / totalProjects * 100).toFixed(0) 
-                      : 0;
-                    
-                    return (
-                      <div key={category._id} className="flex items-center gap-2 text-xs">
-                        <div 
-                          className={`h-2 rounded-full ${getThemeColor(index)}`} 
-                          style={{ width: `${percentage}%` }}
-                        ></div>
-                        <span className="text-neutral-600 whitespace-nowrap">
-                          {formatThemeName(category._id)} - {category.count}
-                        </span>
-                      </div>
-                    );
-                  })
-                ) : (
-                  <div className="text-center text-sm text-neutral-500">No data available</div>
-                )}
+              {loading ? (
+                <div className="text-center text-sm text-neutral-500">Loading...</div>
+              ) : error ? (
+                <div className="text-center text-sm text-red-500">Failed to load</div>
+              ) : perCategory.length > 0 ? (
+                perCategory.map((category, index) => {
+                  const percentage = totalProjects > 0 
+                    ? (category.count / totalProjects * 100).toFixed(0) 
+                    : 0;
+                  
+                  return (
+                    <div key={category._id} className="flex items-center gap-2 text-xs">
+                      <div 
+                        className={`h-2 rounded-full ${getThemeColor(index)}`} 
+                        style={{ width: `${percentage}%` }}
+                      ></div>
+                      <span className="text-neutral-600 whitespace-nowrap">
+                        {formatThemeName(category._id)} - {category.count}
+                      </span>
+                    </div>
+                  );
+                })
+              ) : (
+                <div className="text-center text-sm text-neutral-500">No data available</div>
+              )}
             </CardContent>
           </Card>
         </div>
 
-        <section className="mb-8">
-          <div className="mb-4">
-            <h2 className="text-xl font-semibold text-neutral-900 mb-2">Proyek Saya</h2>
-            <p className="text-neutral-600">Daftar proyek capstone yang Anda miliki / ikuti.</p>
-          </div>
+        {/* My Projects Section - Only show if authenticated */}
+        {user ? (
+          <section className="mb-8">
+            <div className="mb-4">
+              <h2 className="text-xl font-semibold text-neutral-900 mb-2">Proyek Saya</h2>
+              <p className="text-neutral-600">Daftar proyek capstone yang Anda miliki / ikuti.</p>
+            </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {myProjects.map((project) => (
-              <Link key={project._id} href={`/projects/${project._id}`}>
-                <ProjectCard project={project} />
-              </Link>
-            ))}
-          </div>
-        </section>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {loading ? (
+                <div className="col-span-full text-center py-8">
+                  <Loader2 className="h-8 w-8 animate-spin text-primary mx-auto" />
+                </div>
+              ) : myProjects.length > 0 ? (
+                myProjects.map((project) => (
+                  <Link key={project._id} href={`/projects/${project._id}`}>
+                    <ProjectCard project={project} />
+                  </Link>
+                ))
+              ) : (
+                <div className="col-span-full text-center py-8 text-neutral-500">
+                  Anda belum memiliki proyek
+                </div>
+              )}
+            </div>
+          </section>
+        ) : (
+          /* Guest CTA for Projects */
+          <section className="mb-8">
+            <Card className="bg-gradient-to-br from-primary/5 to-secondary/5 border-2 border-dashed border-primary/20">
+              <CardContent className="p-12 text-center">
+                <LogIn className="w-16 h-16 text-primary mx-auto mb-4" />
+                <h3 className="text-2xl font-bold text-neutral-900 mb-2">Login untuk Melihat Proyek Anda</h3>
+                <p className="text-neutral-600 mb-6">
+                  Login untuk mengakses proyek capstone yang Anda ikuti dan kelola.
+                </p>
+                <Link 
+                  href="/login"
+                  className="inline-flex items-center gap-2 bg-primary text-white px-6 py-3 rounded-lg font-medium hover:bg-primary/90 transition-colors"
+                >
+                  <LogIn className="w-5 h-5" />
+                  Login Sekarang
+                </Link>
+              </CardContent>
+            </Card>
+          </section>
+        )}
 
         {/* Announcements */}
         <Card className="mb-8">
@@ -341,11 +317,10 @@ export default function DashboardPage() {
             <CardTitle className="text-primary">
               <Bell className="inline-block w-6 h-6 mr-2 mb-1" />
               Pengumuman Terbaru
-              
             </CardTitle>
           </CardHeader>
           <CardContent className="px-6 pt-3 pb-2 space-y-4">
-            {projectsLoading ? (
+            {loading ? (
               <div className="text-center text-sm text-neutral-500">Loading...</div>
             ) : error ? (
               <div className="text-center text-sm text-red-500">Failed to load announcements</div>

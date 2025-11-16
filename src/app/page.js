@@ -12,29 +12,27 @@ export default function Home() {
   const { isAuthenticated, loading } = useAuth();
 
   useEffect(() => {
-<<<<<<< HEAD
     // Only redirect to dashboard if user is authenticated
     if (!loading && isAuthenticated) {
-=======
-    if (!loading) {
->>>>>>> e1a61c5a409b1f0ffffc53e31572e628edf40e3c
       router.push("/dashboard");
     }
-  }, [loading, router]);
+  }, [isAuthenticated, loading, router]);
 
-  // Show loading spinner while checking authentication
-  if (loading) {
+  // Show loading spinner while checking authentication OR if authenticated (during redirect)
+  if (loading || isAuthenticated) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary/10 via-secondary/10 to-accent/10">
         <div className="text-center">
           <Loader2 className="h-12 w-12 animate-spin text-primary mx-auto mb-4" />
-          <p className="text-neutral-600">Memuat CapStation...</p>
+          <p className="text-neutral-600">
+            {loading ? "Memuat CapStation..." : "Mengarahkan ke dashboard..."}
+          </p>
         </div>
       </div>
     );
   }
 
-  // Show landing page if not authenticated
+  // Show landing page ONLY if not authenticated and not loading
   return (
     <div className="min-h-screen bg-gradient-to-br from-neutral-50 via-white to-neutral-50 overflow-hidden relative">
       <div 
