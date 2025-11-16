@@ -34,6 +34,9 @@ export default function Navbar({ className = "" }) {
             <Link href="/browse/capstones">
               <Button variant="ghost" size="sm"><FileText className="h-4 w-4 mr-2"/>Browse</Button>
             </Link>
+            <Link href="/request">
+              <Button variant="ghost" size="sm"><FileText className="h-4 w-4 mr-2"/>Request</Button>
+            </Link>
             <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center text-white font-semibold">
               {user?.name?.charAt(0) || "U"}
             </div>
