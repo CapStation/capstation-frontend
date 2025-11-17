@@ -288,8 +288,8 @@ const payload = {
                         className="text-sm font-semibold"
                       >
                         {targetStatus === "rejected"
-                          ? "Alasan Penolakan *"
-                          : "Alasan Persetujuan *"}
+                          ? "Alasan Ditolak *"
+                          : "Alasan Diterima *"}
                       </Label>
                       <Textarea
                         id="reason"
@@ -297,10 +297,10 @@ const payload = {
                         onChange={(e) => setReason(e.target.value)}
                         placeholder={
                           targetStatus === "rejected"
-                            ? "Tuliskan alasan penolakan secara singkat dan jelas."
-                            : "Tuliskan alasan persetujuan secara singkat dan jelas."
+                            ? "Tuliskan alasan pengajuan ditolak secara singkat dan jelas."
+                            : "Tuliskan alasan pengajuan diterima secara singkat dan jelas."
                         }
-                        className="min-h-[96px] bg-[#F3F4F6] border border-neutral-200 focus-visible:ring-0 focus-visible:ring-offset-0"
+                        className="min-h-[96px] bg-white border border-neutral-200 focus-visible:ring-0 focus-visible:ring-offset-0"
                       />
                     </div>
 

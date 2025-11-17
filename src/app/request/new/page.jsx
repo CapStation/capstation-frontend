@@ -218,7 +218,7 @@ export default function NewRequestPage() {
                       value={groupName}
                       onChange={(e) => setGroupName(e.target.value)}
                       required
-                      className="bg-[#F3F4F6] border border-neutral-200 focus-visible:ring-0 focus-visible:ring-offset-0"
+                      className="bg-white border border-neutral-200 focus-visible:ring-0 focus-visible:ring-offset-0"
                     />
                   </div>
 
@@ -239,7 +239,7 @@ export default function NewRequestPage() {
                         setSubmissionYear(e.target.value)
                       }
                       required
-                      className="bg-[#F3F4F6] border border-neutral-200 focus-visible:ring-0 focus-visible:ring-offset-0"
+                      className="bg-white border border-neutral-200 focus-visible:ring-0 focus-visible:ring-offset-0"
                     />
                   </div>
 
@@ -259,7 +259,7 @@ export default function NewRequestPage() {
                         setLecturerName(e.target.value)
                       }
                       required
-                      className="bg-[#F3F4F6] border border-neutral-200 focus-visible:ring-0 focus-visible:ring-offset-0"
+                      className="bg-white border border-neutral-200 focus-visible:ring-0 focus-visible:ring-offset-0"
                     />
                   </div>
 
@@ -269,15 +269,15 @@ export default function NewRequestPage() {
                     </p>
                   )}
 
-                  <div className="mt-6 flex flex-wrap gap-4">
+                  <div className="flex gap-4 pt-4">
                     <Button
                       type="submit"
                       disabled={submitting}
-                      className="min-w-[140px] rounded-lg bg-[#FFE196] font-semibold text-neutral-900 hover:bg-[#FFD86A]"
+                      className="bg-primary hover:bg-primary/90 flex-1"
                     >
                       {submitting ? (
                         <>
-                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                          <Loader2 className="h-4 w-4 mr-2 animate-spin" />
                           Mengajukan...
                         </>
                       ) : (
@@ -288,11 +288,12 @@ export default function NewRequestPage() {
                     <Button
                       type="button"
                       variant="outline"
-                      className="min-w-[140px] rounded-lg border border-[#FF9F5B] bg-white font-semibold text-[#FF9F5B] hover:bg-[#FFF4EC]"
+                      className="bg-white hover:bg-[#C4F58C] flex-1"
                       onClick={() => router.push("/request")}
                     >
                       Batal
                     </Button>
+
                   </div>
                 </form>
               </>

@@ -72,13 +72,13 @@ const getThemeLabel = (tema) => {
 };
 
 const getStatusLabel = (status) => {
-  if (!status) return "Pending";
+  if (!status) return "Menunggu";
   const lower = status.toLowerCase();
 
-  if (lower === "accepted") return "Accepted";
-  if (lower === "rejected") return "Rejected";
-  if (lower === "cancelled" || lower === "canceled") return "Cancelled";
-  return "Pending";
+  if (lower === "accepted") return "Diterima";
+  if (lower === "rejected") return "Ditolak";
+  if (lower === "cancelled" || lower === "canceled") return "Dibatalkan";
+  return "Menunggu";
 };
 
 const getStatusClass = (status) => {
@@ -508,7 +508,7 @@ const renderProjectCard = (project) => {
             "
           >
             <Link href={`/request/new?projectId=${project._id}`}>
-              Detail
+              Ajukan Request
             </Link>
           </Button>
         </div>
@@ -690,19 +690,34 @@ const renderInboxCard = (req) => {
             type="button"
             variant="outline"
             disabled={isDeciding}
-            className="min-w-[96px] rounded-lg border border-[#F97373] bg-white text-sm font-semibold text-[#F97373] hover:bg-[#FFF5F5]"
+            className="
+              w-full rounded-lg font-semibold text-neutral-900
+              bg-white
+              transition-all duration-200 ease-out
+              hover:bg-[#F97373]
+              active:bg-[#FFD86A]
+              active:scale-[0.99]
+            "
             onClick={() => router.push(buildDecisionUrl("rejected"))}
           >
-            {isDeciding ? "Memproses..." : "Reject"}
+            {isDeciding ? "Memproses..." : "Tolak"}
           </Button>
 
           <Button
             type="button"
+            variant="outline" 
             disabled={isDeciding}
-            className="min-w-[96px] rounded-lg bg-[#BBF7D0] text-sm font-semibold text-neutral-900 hover:bg-[#86EFAC]"
+           className="
+              w-full rounded-lg font-semibold text-neutral-900
+              bg-white
+              transition-all duration-200 ease-out
+              hover:bg-[#C4F58C]
+              active:bg-[#FFD86A]
+              active:scale-[0.99]
+            "
             onClick={() => router.push(buildDecisionUrl("accepted"))}
           >
-            {isDeciding ? "Memproses..." : "Accept"}
+            {isDeciding ? "Memproses..." : "Setuju"}
           </Button>
         </div>
       </CardContent>
@@ -928,14 +943,14 @@ const renderInboxCard = (req) => {
               })
             : "-";
 
-          const getDecisionStatusLabel = (s) => {
-            const normalized = String(s || "").toLowerCase();
-            if (normalized === "accepted") return "Accepted";
-            if (normalized === "rejected") return "Rejected";
-            if (normalized === "cancelled" || normalized === "canceled")
-              return "Cancelled";
-            return "Pending";
-          };
+            const getDecisionStatusLabel = (s) => {
+              const normalized = String(s || "").toLowerCase();
+              if (normalized === "accepted") return "Diterima";
+              if (normalized === "rejected") return "Ditolak";
+              if (normalized === "cancelled" || normalized === "canceled")
+                return "Dibatalkan";
+              return "Pending";
+            };
 
           const getDecisionStatusClass = (s) => {
             const normalized = String(s || "").toLowerCase();
