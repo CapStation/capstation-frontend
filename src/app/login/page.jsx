@@ -89,7 +89,7 @@ export default function LoginPage() {
         router.push("/dashboard");
       } else {
         setError(result.error || "Login gagal. Silakan coba lagi.");
-        
+
         // Redirect to account-pending page for specific errors
         if (result.error?.includes("belum diverifikasi")) {
           toast({

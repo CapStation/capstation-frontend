@@ -127,11 +127,14 @@ export const AuthProvider = ({ children }) => {
       else if (error.status === 403) {
         // Check for specific error codes
         if (error.data?.code === "EMAIL_NOT_VERIFIED") {
-          errorMessage = "Email Anda belum diverifikasi. Silakan cek email Anda untuk melakukan verifikasi.";
+          errorMessage =
+            "Email Anda belum diverifikasi. Silakan cek email Anda untuk melakukan verifikasi.";
         } else if (error.data?.code === "ROLE_NOT_APPROVED") {
-          errorMessage = "Akun Anda belum divalidasi oleh admin. Mohon tunggu hingga admin memvalidasi akun Anda.";
+          errorMessage =
+            "Akun Anda belum divalidasi oleh admin. Mohon tunggu hingga admin memvalidasi akun Anda.";
         } else {
-          errorMessage = error.message || error.data?.message || "Akses ditolak.";
+          errorMessage =
+            error.message || error.data?.message || "Akses ditolak.";
         }
       }
       // Handle 401 Unauthorized
