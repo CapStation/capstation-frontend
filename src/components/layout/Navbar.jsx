@@ -97,6 +97,12 @@ export default function Navbar({ className = "" }) {
                 Browse
               </Button>
             </Link>
+            <Link href="/request">
+              <Button variant="ghost" size="sm">
+                <History className="h-4 w-4 mr-2"/>
+                Request
+                </Button>
+            </Link>
             {user?.role === "admin" && (
               <Link href="/admin">
                 <Button variant="ghost" size="sm">

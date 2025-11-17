@@ -16,13 +16,13 @@ const getStatusLabel = (status) => {
   if (!status) return "-";
   switch (status) {
     case "accepted":
-      return "Accepted";
+      return "Diterima";
     case "rejected":
-      return "Rejected";
+      return "Ditolak";
     case "pending":
-      return "Pending";
+      return "Menunggu";
     case "cancelled":
-      return "Cancelled";
+      return "Dibatalkan";
     default:
       return status;
   }
@@ -203,35 +203,35 @@ export default function EditDecisionPage() {
                     </div>
 
                     {/* keputusan baru */}
-                    <div className="space-y-2 text-sm">
-                      <p className="font-semibold text-neutral-900">
-                        Keputusan Baru
-                      </p>
-                      <div className="flex gap-3">
-                        <button
-                          type="button"
-                          onClick={() => setNewStatus("accepted")}
-                          className={`rounded-full px-4 py-1 text-xs font-semibold ${
-                            newStatus === "accepted"
-                              ? "bg-[#22C55E] text-white"
-                              : "bg-neutral-100 text-neutral-800"
-                          }`}
-                        >
-                          Accepted
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => setNewStatus("rejected")}
-                          className={`rounded-full px-4 py-1 text-xs font-semibold ${
-                            newStatus === "rejected"
-                              ? "bg-[#F97373] text-white"
-                              : "bg-neutral-100 text-neutral-800"
-                          }`}
-                        >
-                          Rejected
-                        </button>
+                      <div className="space-y-2 text-sm">
+                        <p className="font-semibold text-neutral-900">
+                          Keputusan Baru
+                        </p>
+                        <div className="flex gap-3">
+                          <button
+                            type="button"
+                            onClick={() => setNewStatus("accepted")}
+                            className={`rounded-full px-4 py-1 text-xs font-semibold ${
+                              newStatus === "accepted"
+                                ? "bg-[#22C55E] text-white"
+                                : "bg-neutral-100 text-neutral-800"
+                            }`}
+                          >
+                            Diterima
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setNewStatus("rejected")}
+                            className={`rounded-full px-4 py-1 text-xs font-semibold ${
+                              newStatus === "rejected"
+                                ? "bg-[#F97373] text-white"
+                                : "bg-neutral-100 text-neutral-800"
+                            }`}
+                          >
+                            Ditolak
+                          </button>
+                        </div>
                       </div>
-                    </div>
 
                     {/* alasan perubahan */}
                     <div className="space-y-1 text-sm">
@@ -240,7 +240,7 @@ export default function EditDecisionPage() {
                       </p>
                       <textarea
                         rows={3}
-                        className="w-full rounded-lg border border-neutral-200 bg-[#F3F4F6] px-3 py-2 text-sm text-neutral-900 outline-none focus-visible:ring-0 focus-visible:ring-offset-0"
+                        className="w-full rounded-lg border border-neutral-200 bg-white px-3 py-2 text-sm text-neutral-900 outline-none focus-visible:ring-0 focus-visible:ring-offset-0"
                         placeholder="Tuliskan alasan perubahan keputusan"
                         value={changeReason}
                         onChange={(e) => setChangeReason(e.target.value)}

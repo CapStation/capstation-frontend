@@ -246,11 +246,11 @@ const payload = {
                               lastStatus
                             )}`}
                           >
-                            {lastStatus === "accepted"
-                              ? "Accepted"
-                              : lastStatus === "rejected"
-                              ? "Rejected"
-                              : "Pending"}
+                          {lastStatus === "accepted"
+                            ? "Diterima"
+                            : lastStatus === "rejected"
+                            ? "Ditolak"
+                            : "Menunggu"}
                           </span>
                         </div>
                       )}
@@ -276,9 +276,9 @@ const payload = {
                           targetStatus
                         )}`}
                       >
-                        {targetStatus === "accepted"
-                          ? "Accepted"
-                          : "Rejected"}
+                      {targetStatus === "accepted"
+                        ? "Diterima"
+                        : "Ditolak"}
                       </span>
                     </div>
 
@@ -288,8 +288,8 @@ const payload = {
                         className="text-sm font-semibold"
                       >
                         {targetStatus === "rejected"
-                          ? "Alasan Ditolak *"
-                          : "Alasan Diterima *"}
+                          ? "Alasan Ditolak" 
+                          : "Alasan Diterima"}
                       </Label>
                       <Textarea
                         id="reason"
