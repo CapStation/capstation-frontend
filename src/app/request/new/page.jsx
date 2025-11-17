@@ -429,6 +429,9 @@ useEffect(() => {
                           </div>
                         </div>
                       )}
+                      <p className="text-xs text-amber-600 mt-2 font-medium">
+                    ⚠️ Pastikan Nama Dosen sesuai dengan plottingan yang sudah ada.
+                  </p>
                     </div>
 
                     {errorMessage && (
