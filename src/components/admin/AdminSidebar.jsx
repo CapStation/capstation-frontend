@@ -52,7 +52,6 @@ const menuItems = [
     title: "Kompetensi",
     href: "/admin/competencies",
     icon: Award,
-    disabled: true,
   },
 ];
 
