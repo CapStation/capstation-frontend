@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useAuth } from "@/contexts/AuthContext";
+import apiClient from "@/lib/api-client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -34,31 +35,30 @@ export default function LoginPage() {
   useEffect(() => {
     const checkApi = async () => {
       try {
-        const apiUrl =
-          process.env.NEXT_PUBLIC_API_URL ||
-          "https://capstation-backend.vercel.app/api";
-        const response = await fetch(`${apiUrl}/health`, {
-          method: "GET",
-          headers: {
-            "Content-Type": "application/json",
-          },
-        });
+        // Use apiClient instead of fetch for consistent CORS handling
+        const response = await apiClient.get("/health");
 
-        if (response.ok) {
-          const data = await response.json();
-          if (data.success) {
-            setApiStatus("connected");
-          } else {
-            setApiStatus("error");
-          }
+        if (response && response.success) {
+          setApiStatus("connected");
         } else {
           setApiStatus("error");
         }
       } catch (err) {
-        console.error("API check failed:", err);
-        setApiStatus("offline");
+        console.error("API health check failed:", {
+          message: err?.message || "Unknown error",
+          status: err?.status,
+          isNetworkError: err?.isNetworkError,
+        });
+
+        // Determine specific error status
+        if (err?.isNetworkError || err?.message?.includes("fetch")) {
+          setApiStatus("offline");
+        } else {
+          setApiStatus("error");
+        }
       }
     };
+
     checkApi();
   }, []);
 
