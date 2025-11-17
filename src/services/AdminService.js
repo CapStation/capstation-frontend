@@ -179,6 +179,87 @@ class AdminService {
       };
     }
   }
+
+  /**
+   * Get all competencies
+   * @param {Object} params - Query parameters (page, limit, search, category)
+   * @returns {Promise<Object>} Competencies data
+   */
+  async getAllCompetencies(params = {}) {
+    try {
+      const response = await apiClient.get('/competencies', { params });
+      return {
+        success: true,
+        data: response, // apiClient.get already returns the data directly
+      };
+    } catch (error) {
+      return {
+        success: false,
+        error: error.response?.data?.message || error.message || 'Gagal mengambil data kompetensi',
+      };
+    }
+  }
+
+  /**
+   * Create new competency (admin only)
+   * @param {Object} data - Competency data
+   * @returns {Promise<Object>} Created competency
+   */
+  async createCompetency(data) {
+    try {
+      const response = await apiClient.post('/competencies', data);
+      return {
+        success: true,
+        data: response, // apiClient.post already returns the data directly
+      };
+    } catch (error) {
+      return {
+        success: false,
+        error: error.response?.data?.message || error.message || 'Gagal membuat kompetensi',
+      };
+    }
+  }
+
+  /**
+   * Update competency (admin only)
+   * @param {string} id - Competency ID
+   * @param {Object} data - Updated competency data
+   * @returns {Promise<Object>} Updated competency
+   */
+  async updateCompetency(id, data) {
+    try {
+      const response = await apiClient.put(`/competencies/${id}`, data);
+      return {
+        success: true,
+        data: response, // apiClient.put already returns the data directly
+      };
+    } catch (error) {
+      return {
+        success: false,
+        error: error.response?.data?.message || error.message || 'Gagal memperbarui kompetensi',
+      };
+    }
+  }
+
+  /**
+   * Delete/deactivate competency (admin only)
+   * @param {string} id - Competency ID
+   * @returns {Promise<Object>} Result
+   */
+  async deleteCompetency(id) {
+    try {
+      const response = await apiClient.delete(`/competencies/${id}`);
+      return {
+        success: true,
+        data: response, // apiClient.delete already returns the data directly
+      };
+    } catch (error) {
+      return {
+        success: false,
+        error: error.response?.data?.message || error.message || 'Gagal menghapus kompetensi',
+      };
+    }
+  }
 }
 
 const adminService = new AdminService();
