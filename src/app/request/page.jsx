@@ -56,19 +56,32 @@ import {
 const OBJECT_ID_REGEX = /^[a-f0-9]{24}$/i;
 
 const getThemeLabel = (tema) => {
+  if (!tema) return "Lainnya";
+
+  const raw = String(tema).toLowerCase();
+
+  const normalizedKey = raw.replace(/[-_]/g, "");
+
   const themeMap = {
     kesehatan: "Kesehatan",
-    pengelolaan_sampah: "Pengelolaan Sampah",
-    smart_city: "Smart City",
-    "smart-city": "Smart City",
-    transportasi_ramah_lingkungan: "Transportasi Ramah Lingkungan",
+    pengelolaansampah: "Pengelolaan Sampah",
+    smartcity: "Smart City",
+    transportasiramahlingkungan: "Transportasi Ramah Lingkungan",
     iot: "IoT",
     ai: "Artificial Intelligence",
     mobile: "Mobile Development",
   };
 
-  if (!tema) return "Lainnya";
-  return themeMap[tema] || tema.charAt(0).toUpperCase() + tema.slice(1);
+  if (themeMap[normalizedKey]) {
+    return themeMap[normalizedKey];
+  }
+
+  return String(tema)
+    .replace(/[-_]/g, " ")
+    .split(" ")
+    .filter(Boolean)
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+    .join(" ");
 };
 
 const getStatusLabel = (status) => {
