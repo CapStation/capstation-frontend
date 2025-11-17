@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { ArrowLeft, Loader2 } from "lucide-react";
 
@@ -43,7 +43,7 @@ const getStatusClass = (status) => {
   }
 };
 
-export default function EditDecisionPage() {
+function EditDecisionPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
 
@@ -175,9 +175,7 @@ export default function EditDecisionPage() {
                         {groupName || "-"}
                       </p>
                       <p>
-                        <span className="font-semibold">
-                          Tahun Pengajuan:
-                        </span>{" "}
+                        <span className="font-semibold">Tahun Pengajuan:</span>{" "}
                         {tahunPengajuan || "-"}
                       </p>
                     </div>
@@ -204,35 +202,35 @@ export default function EditDecisionPage() {
                     </div>
 
                     {/* keputusan baru */}
-                      <div className="space-y-2 text-sm">
-                        <p className="font-semibold text-neutral-900">
-                          Keputusan Baru
-                        </p>
-                        <div className="flex gap-3">
-                          <button
-                            type="button"
-                            onClick={() => setNewStatus("accepted")}
-                            className={`rounded-full px-4 py-1 text-xs font-semibold ${
-                              newStatus === "accepted"
-                                ? "bg-[#22C55E] text-white"
-                                : "bg-neutral-100 text-neutral-800"
-                            }`}
-                          >
-                            Diterima
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => setNewStatus("rejected")}
-                            className={`rounded-full px-4 py-1 text-xs font-semibold ${
-                              newStatus === "rejected"
-                                ? "bg-[#F97373] text-white"
-                                : "bg-neutral-100 text-neutral-800"
-                            }`}
-                          >
-                            Ditolak
-                          </button>
-                        </div>
+                    <div className="space-y-2 text-sm">
+                      <p className="font-semibold text-neutral-900">
+                        Keputusan Baru
+                      </p>
+                      <div className="flex gap-3">
+                        <button
+                          type="button"
+                          onClick={() => setNewStatus("accepted")}
+                          className={`rounded-full px-4 py-1 text-xs font-semibold ${
+                            newStatus === "accepted"
+                              ? "bg-[#22C55E] text-white"
+                              : "bg-neutral-100 text-neutral-800"
+                          }`}
+                        >
+                          Diterima
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setNewStatus("rejected")}
+                          className={`rounded-full px-4 py-1 text-xs font-semibold ${
+                            newStatus === "rejected"
+                              ? "bg-[#F97373] text-white"
+                              : "bg-neutral-100 text-neutral-800"
+                          }`}
+                        >
+                          Ditolak
+                        </button>
                       </div>
+                    </div>
 
                     {/* alasan perubahan */}
                     <div className="space-y-1 text-sm">
@@ -249,9 +247,7 @@ export default function EditDecisionPage() {
                     </div>
 
                     {errorMessage && (
-                      <p className="text-sm text-red-600">
-                        {errorMessage}
-                      </p>
+                      <p className="text-sm text-red-600">{errorMessage}</p>
                     )}
 
                     <div className="mt-4 flex flex-wrap gap-4">
@@ -287,5 +283,19 @@ export default function EditDecisionPage() {
         </div>
       </main>
     </div>
+  );
+}
+
+export default function EditDecisionPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen flex items-center justify-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-900"></div>
+        </div>
+      }
+    >
+      <EditDecisionPageContent />
+    </Suspense>
   );
 }

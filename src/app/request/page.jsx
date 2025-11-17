@@ -1,20 +1,12 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, Suspense } from "react";
 import Link from "next/link";
 import Navbar from "@/components/layout/Navbar";
 import UserService from "@/services/UserService";
 
-import {
-  Tabs,
-  TabsList,
-  TabsTrigger,
-  TabsContent,
-} from "@/components/ui/tabs";
-import {
-  Card,
-  CardContent,
-} from "@/components/ui/card";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 
@@ -109,7 +101,7 @@ const getStatusClass = (status) => {
   return "bg-neutral-200 text-neutral-800";
 };
 
-export default function RequestPage() {
+function RequestPageContent() {
   const [availableProjects, setAvailableProjects] = useState([]);
   const [myRequests, setMyRequests] = useState([]);
 
@@ -279,10 +271,8 @@ export default function RequestPage() {
 
             const getDecisionStatusClass = (status) => {
               const s = String(status || "").toLowerCase();
-              if (s === "accepted")
-                return "bg-[#BBF7D0] text-[#166534]";
-              if (s === "rejected")
-                return "bg-[#FECACA] text-[#991B1B]";
+              if (s === "accepted") return "bg-[#BBF7D0] text-[#166534]";
+              if (s === "rejected") return "bg-[#FECACA] text-[#991B1B]";
               if (s === "cancelled" || s === "canceled")
                 return "bg-neutral-900 text-white";
               return "bg-neutral-200 text-neutral-700";
@@ -335,10 +325,7 @@ export default function RequestPage() {
 
         list = list.map((req) => {
           const capId = String(
-            req.capstoneId ||
-              req.capstone?.id ||
-              req.capstone?._id ||
-              ""
+            req.capstoneId || req.capstone?.id || req.capstone?._id || ""
           );
 
           const project = req.capstone || projectMap.get(capId) || null;
@@ -362,9 +349,7 @@ export default function RequestPage() {
   };
 
   const handleDecision = (requestId, action) => {
-    router.push(
-      `/request/decision?requestId=${requestId}&action=${action}`
-    );
+    router.push(`/request/decision?requestId=${requestId}&action=${action}`);
   };
 
   const loadDecisionHistory = async () => {
@@ -385,9 +370,7 @@ export default function RequestPage() {
           rawItems
             .map(
               (item) =>
-                item.capstoneId ||
-                item.capstone?.id ||
-                item.capstone?._id
+                item.capstoneId || item.capstone?.id || item.capstone?._id
             )
             .filter(Boolean)
         ),
@@ -413,10 +396,7 @@ export default function RequestPage() {
       );
 
       const withTitles = rawItems.map((item) => {
-        const cid =
-          item.capstoneId ||
-          item.capstone?.id ||
-          item.capstone?._id;
+        const cid = item.capstoneId || item.capstone?.id || item.capstone?._id;
         const capstone = cid ? capstoneMap[cid] : item.capstone;
 
         return {
@@ -459,14 +439,13 @@ export default function RequestPage() {
       project.tema || project.category?.name || project.category
     );
 
-    const yearLabel =
-    project.academicYear
-    ? String(project.academicYear).replace("-", " ")
-    : project.startedAt
-    ? new Date(project.startedAt).getFullYear()
-    : project.createdAt
-    ? new Date(project.createdAt).getFullYear()
-    : "2024";
+    const yearLabel = project.academicYear
+      ? String(project.academicYear).replace("-", " ")
+      : project.startedAt
+      ? new Date(project.startedAt).getFullYear()
+      : project.createdAt
+      ? new Date(project.createdAt).getFullYear()
+      : "2024";
 
     const ownerLabel = project.ownerName || "Pemilik Proyek";
 
@@ -484,9 +463,7 @@ export default function RequestPage() {
         <CardContent className="flex flex-1 flex-col justify-between px-6 pt-6 pb-6">
           <div className="space-y-3">
             <div className="min-h-[48px]">
-              <h3
-                className={`${titleSizeClass} font-semibold leading-tight`}
-              >
+              <h3 className={`${titleSizeClass} font-semibold leading-tight`}>
                 {title}
               </h3>
             </div>
@@ -505,9 +482,7 @@ export default function RequestPage() {
                 {ownerLabel}
               </p>
               <p>
-                <span className="font-semibold text-neutral-800">
-                  Tahun:{" "}
-                </span>
+                <span className="font-semibold text-neutral-800">Tahun: </span>
                 {yearLabel}
               </p>
             </div>
@@ -584,8 +559,7 @@ export default function RequestPage() {
 
     const group = req.groupName || "-";
 
-    const year =
-      req.tahunPengajuan || req.capstone?.academicYear || "-";
+    const year = req.tahunPengajuan || req.capstone?.academicYear || "-";
 
     const statusLabel = getStatusLabel(req.status);
     const statusClass = getStatusClass(req.status);
@@ -659,7 +633,6 @@ export default function RequestPage() {
                 onClick={() => openCancelDialog(req)}
               >
                 <X className="h-3 w-3" />
-                
               </Button>
             )}
           </div>
@@ -682,10 +655,8 @@ export default function RequestPage() {
 
     const tahun =
       req.tahunPengajuan ||
-      (req.createdAt ? new Date(req.createdAt).getFullYear() : "-")
-   ;
-    
-      const categoryLabel = getThemeLabel(
+      (req.createdAt ? new Date(req.createdAt).getFullYear() : "-");
+    const categoryLabel = getThemeLabel(
       req.capstoneProject?.tema ||
         req.capstone?.tema ||
         req.tema ||
@@ -750,22 +721,22 @@ export default function RequestPage() {
           "
       >
         <CardContent className="flex flex-col justify-between gap-4 px-6 py-5 md:flex-row md:items-center">
-            <div className="space-y-3">
-              <h3 className="text-base font-bold text-neutral-900">
-                {projectTitle}
-              </h3>
+          <div className="space-y-3">
+            <h3 className="text-base font-bold text-neutral-900">
+              {projectTitle}
+            </h3>
 
-              <Badge
-                variant="outline"
-                className="inline-flex rounded-full px-3 py-1 text-xs font-medium"
-              >
-                {categoryLabel}
-              </Badge>
+            <Badge
+              variant="outline"
+              className="inline-flex rounded-full px-3 py-1 text-xs font-medium"
+            >
+              {categoryLabel}
+            </Badge>
 
-              <p className="text-sm text-neutral-700">
-                <span className="font-semibold">Nama Grup: </span>
-                {groupName}
-              </p>
+            <p className="text-sm text-neutral-700">
+              <span className="font-semibold">Nama Grup: </span>
+              {groupName}
+            </p>
             <p className="text-sm text-neutral-700">
               <span className="font-semibold">Tahun: </span>
               {tahun}
@@ -815,7 +786,6 @@ export default function RequestPage() {
       </Card>
     );
   };
-
 
   const getDecisionStatusLabel = (s) => {
     const normalized = String(s || "").toLowerCase();
@@ -933,9 +903,7 @@ export default function RequestPage() {
                 </div>
               ) : (
                 <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
-                  {submitProjects.map((project) =>
-                    renderProjectCard(project)
-                  )}
+                  {submitProjects.map((project) => renderProjectCard(project))}
                 </div>
               )}
             </TabsContent>
@@ -1049,14 +1017,11 @@ export default function RequestPage() {
                         item.status || item.decisionStatus || "pending";
 
                       const decidedDate = item.decidedAt
-                        ? new Date(item.decidedAt).toLocaleDateString(
-                            "id-ID",
-                            {
-                              day: "2-digit",
-                              month: "2-digit",
-                              year: "numeric",
-                            }
-                          )
+                        ? new Date(item.decidedAt).toLocaleDateString("id-ID", {
+                            day: "2-digit",
+                            month: "2-digit",
+                            year: "numeric",
+                          })
                         : "-";
 
                       return (
@@ -1103,9 +1068,7 @@ export default function RequestPage() {
                                     title
                                   )}&groupName=${encodeURIComponent(
                                     item.groupName || ""
-                                  )}&year=${
-                                    item.tahunPengajuan || ""
-                                  }&status=${
+                                  )}&year=${item.tahunPengajuan || ""}&status=${
                                     item.status || ""
                                   }&reason=${encodeURIComponent(
                                     item.reason || ""
@@ -1204,5 +1167,19 @@ export default function RequestPage() {
         )}
       </main>
     </div>
+  );
+}
+
+export default function RequestPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen flex items-center justify-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-900"></div>
+        </div>
+      }
+    >
+      <RequestPageContent />
+    </Suspense>
   );
 }

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 
@@ -22,9 +22,7 @@ if (typeof window !== "undefined") {
 
   console.error = (...args) => {
     const text = args
-      .map((arg) =>
-        typeof arg === "string" ? arg : JSON.stringify(arg)
-      )
+      .map((arg) => (typeof arg === "string" ? arg : JSON.stringify(arg)))
       .join(" ");
 
     const shouldIgnore =
@@ -70,7 +68,7 @@ const getThemeLabel = (tema) => {
     .join(" ");
 };
 
-export default function NewRequestPage() {
+function NewRequestPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const projectId = searchParams.get("projectId");
@@ -104,7 +102,9 @@ export default function NewRequestPage() {
       try {
         const result = await UserService.getAllUsers();
         if (result.success && result.data) {
-          const dosenUsers = result.data.filter((user) => user.role === "dosen");
+          const dosenUsers = result.data.filter(
+            (user) => user.role === "dosen"
+          );
           setDosenList(dosenUsers);
           setFilteredDosenList(dosenUsers);
         }
@@ -118,36 +118,36 @@ export default function NewRequestPage() {
     loadDosenList();
   }, []);
 
-// load grup saya
-useEffect(() => {
-  const loadGroup = async () => {
-    setLoadingGroup(true);
-    try {
-      const res = await GroupService.getUserGroups();
+  // load grup saya
+  useEffect(() => {
+    const loadGroup = async () => {
+      setLoadingGroup(true);
+      try {
+        const res = await GroupService.getUserGroups();
 
-      if (res.success && Array.isArray(res.data) && res.data.length > 0) {
-        // user sudah punya grup
-        const g = res.data[0];
-        setGroup(g);
-        setGroupName(g.name || g.groupName || "");
-      } else {
-        // tidak punya grup atau gagal ambil grup
+        if (res.success && Array.isArray(res.data) && res.data.length > 0) {
+          // user sudah punya grup
+          const g = res.data[0];
+          setGroup(g);
+          setGroupName(g.name || g.groupName || "");
+        } else {
+          // tidak punya grup atau gagal ambil grup
+          setGroup(null);
+          setGroupName("");
+          console.log("User belum punya grup atau gagal ambil grup:", res);
+        }
+      } catch (err) {
+        // jaga jaga kalau sampai throw
+        console.error("Gagal load group di halaman request:", err);
         setGroup(null);
         setGroupName("");
-        console.log("User belum punya grup atau gagal ambil grup:", res);
+      } finally {
+        setLoadingGroup(false);
       }
-    } catch (err) {
-      // jaga jaga kalau sampai throw
-      console.error("Gagal load group di halaman request:", err);
-      setGroup(null);
-      setGroupName("");
-    } finally {
-      setLoadingGroup(false);
-    }
-  };
+    };
 
-  loadGroup();
-}, []);
+    loadGroup();
+  }, []);
 
   const handleDosenSearch = (query) => {
     setDosenSearchQuery(query);
@@ -243,8 +243,7 @@ useEffect(() => {
     project?.title ||
     "Smart City Dashboard untuk Monitoring Lingkungan Area Malioboro";
 
-  const academicYearLabel =
-  project?.academicYear
+  const academicYearLabel = project?.academicYear
     ? String(project.academicYear).replace("-", " ")
     : project?.createdAt
     ? new Date(project.createdAt).getFullYear()
@@ -333,7 +332,8 @@ useEffect(() => {
                           groupName
                         ) : (
                           <span className="text-red-600">
-                            Anda belum tergabung dalam grup. Silakan bergabung dalam grup terlebih dahulu sebelum mengajukan.
+                            Anda belum tergabung dalam grup. Silakan bergabung
+                            dalam grup terlebih dahulu sebelum mengajukan.
                           </span>
                         )}
                       </p>
@@ -430,8 +430,9 @@ useEffect(() => {
                         </div>
                       )}
                       <p className="text-xs text-amber-600 mt-2 font-medium">
-                    ⚠️ Pastikan Nama Dosen sesuai dengan plottingan yang sudah ada.
-                  </p>
+                        ⚠️ Pastikan Nama Dosen sesuai dengan plottingan yang
+                        sudah ada.
+                      </p>
                     </div>
 
                     {errorMessage && (
@@ -471,5 +472,19 @@ useEffect(() => {
         </div>
       </main>
     </div>
+  );
+}
+
+export default function NewRequestPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen flex items-center justify-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-900"></div>
+        </div>
+      }
+    >
+      <NewRequestPageContent />
+    </Suspense>
   );
 }

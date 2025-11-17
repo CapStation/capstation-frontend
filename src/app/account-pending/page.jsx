@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import {
@@ -13,7 +13,7 @@ import {
 } from "@/components/ui/card";
 import { AlertCircle, Mail, Clock, ArrowLeft } from "lucide-react";
 
-export default function AccountPendingPage() {
+function AccountPendingPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [reason, setReason] = useState("unknown");
@@ -145,5 +145,19 @@ export default function AccountPendingPage() {
         </CardFooter>
       </Card>
     </div>
+  );
+}
+
+export default function AccountPendingPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen flex items-center justify-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-900"></div>
+        </div>
+      }
+    >
+      <AccountPendingPageContent />
+    </Suspense>
   );
 }

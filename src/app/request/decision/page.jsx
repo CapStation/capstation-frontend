@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 
 import Navbar from "@/components/layout/Navbar";
@@ -14,7 +14,7 @@ import { Loader2, ArrowLeft } from "lucide-react";
 import RequestService from "@/services/RequestService";
 
 const getThemeLabel = (tema) => {
-    const themeMap = {
+  const themeMap = {
     kesehatan: "Kesehatan",
     pengelolaansampah: "Pengelolaan Sampah",
     smartcity: "Smart City",
@@ -38,7 +38,7 @@ const getStatusBadgeClass = (status) => {
   return "bg-neutral-300 text-neutral-800";
 };
 
-export default function RequestDecisionPage() {
+function RequestDecisionPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
 
@@ -114,11 +114,10 @@ export default function RequestDecisionPage() {
     try {
       const decisionValue = action === "rejected" ? "reject" : "accept";
 
-const payload = {
-  decision: decisionValue,      // "accept" atau "reject" persis seperti Postman
-  reason: reason.trim(),
-};
-
+      const payload = {
+        decision: decisionValue, // "accept" atau "reject" persis seperti Postman
+        reason: reason.trim(),
+      };
 
       const res = await RequestService.decideRequest(requestId, payload);
 
@@ -196,9 +195,7 @@ const payload = {
           <h1 className="mb-1 text-3xl font-bold text-neutral-900">
             {pageTitle}
           </h1>
-          <p className="mb-6 text-sm text-neutral-600">
-            {pageDescription}
-          </p>
+          <p className="mb-6 text-sm text-neutral-600">{pageDescription}</p>
 
           <Card className="rounded-2xl border border-neutral-200 bg-white shadow-sm">
             <CardContent className="px-8 py-8">
@@ -237,7 +234,7 @@ const payload = {
                         <p className="font-semibold">Tahun Pengajuan</p>
                         <p>{tahunProyek}</p>
                       </div>
-                      
+
                       {lastStatus && (
                         <div>
                           <p className="font-semibold">Status Sebelumnya</p>
@@ -246,11 +243,11 @@ const payload = {
                               lastStatus
                             )}`}
                           >
-                          {lastStatus === "accepted"
-                            ? "Diterima"
-                            : lastStatus === "rejected"
-                            ? "Ditolak"
-                            : "Menunggu"}
+                            {lastStatus === "accepted"
+                              ? "Diterima"
+                              : lastStatus === "rejected"
+                              ? "Ditolak"
+                              : "Menunggu"}
                           </span>
                         </div>
                       )}
@@ -276,19 +273,14 @@ const payload = {
                           targetStatus
                         )}`}
                       >
-                      {targetStatus === "accepted"
-                        ? "Diterima"
-                        : "Ditolak"}
+                        {targetStatus === "accepted" ? "Diterima" : "Ditolak"}
                       </span>
                     </div>
 
                     <div className="space-y-1">
-                      <Label
-                        htmlFor="reason"
-                        className="text-sm font-semibold"
-                      >
+                      <Label htmlFor="reason" className="text-sm font-semibold">
                         {targetStatus === "rejected"
-                          ? "Alasan Ditolak" 
+                          ? "Alasan Ditolak"
                           : "Alasan Diterima"}
                       </Label>
                       <Textarea
@@ -341,5 +333,19 @@ const payload = {
         </div>
       </main>
     </div>
+  );
+}
+
+export default function RequestDecisionPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen flex items-center justify-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-900"></div>
+        </div>
+      }
+    >
+      <RequestDecisionPageContent />
+    </Suspense>
   );
 }
