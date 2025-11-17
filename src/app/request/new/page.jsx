@@ -17,6 +17,30 @@ import RequestService from "@/services/RequestService";
 import UserService from "@/services/UserService";
 import GroupService from "@/services/GroupService";
 
+if (typeof window !== "undefined") {
+  const originalConsoleError = console.error;
+
+  console.error = (...args) => {
+    const text = args
+      .map((arg) =>
+        typeof arg === "string" ? arg : JSON.stringify(arg)
+      )
+      .join(" ");
+
+    const shouldIgnore =
+      text.includes("getUserGroups error") ||
+      text.includes("User belum bergabung dalam grup manapun") ||
+      text.includes("No response data") ||
+      text.includes("Gagal mengambil data grup");
+
+    if (shouldIgnore) {
+      return;
+    }
+
+    originalConsoleError(...args);
+  };
+}
+
 const getThemeLabel = (tema) => {
   if (!tema) return "Lainnya";
 
@@ -99,25 +123,24 @@ useEffect(() => {
   const loadGroup = async () => {
     setLoadingGroup(true);
     try {
-      // method yang tersedia di GroupService setelah merge
-      const res = await GroupService.getUserGroups(); 
+      const res = await GroupService.getUserGroups();
 
       if (res.success && Array.isArray(res.data) && res.data.length > 0) {
-        // backend kirim 1 grup, tapi GroupService bungkus jadi array
+        // user sudah punya grup
         const g = res.data[0];
         setGroup(g);
-        setGroupName(
-          g.name ||
-          g.groupName ||
-          ""
-        );
+        setGroupName(g.name || g.groupName || "");
       } else {
-        // tidak punya grup
+        // tidak punya grup atau gagal ambil grup
         setGroup(null);
+        setGroupName("");
+        console.log("User belum punya grup atau gagal ambil grup:", res);
       }
     } catch (err) {
-      console.error("Gagal load grup:", err);
+      // jaga jaga kalau sampai throw
+      console.error("Gagal load group di halaman request:", err);
       setGroup(null);
+      setGroupName("");
     } finally {
       setLoadingGroup(false);
     }
