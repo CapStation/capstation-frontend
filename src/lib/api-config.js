@@ -33,13 +33,27 @@ export const endpoints = {
 
   // Users
   users: {
-    base: "/users",
-    profile: "/users/profile",
-    userProfile: (id) => `/users/profile/${id}`,
-    updateProfile: "/users/profile",
-    changePassword: "/users/change-password",
-    search: "/users/search",
-    competencies: (id) => `/users/${id}/competencies`,
+  base: "/users",
+  profile: "/users/profile",
+  userProfile: (id) => `/users/profile/${id}`,
+  updateProfile: "/users/profile",
+  changePassword: "/users/change-password",
+  search: "/users/search",
+  myCompetencies: "/users/competencies", // REMOVE THE /me
+  addCompetency: "/users/competencies",
+  updateCompetency: (index) => `/users/competencies/${index}`,
+  deleteCompetency: (index) => `/users/competencies/${index}`,
+  },  
+
+  competencies: {
+    base: "/competencies",
+    detail: (id) => `/competencies/${id}`,
+    create: "/competencies",
+    update: (id) => `/competencies/${id}`,
+    delete: (id) => `/competencies/${id}`,
+    search: "/competencies/search",
+    byCategory: "/competencies/by-category",
+    categories: "/competencies/categories",
   },
 
   // Projects
