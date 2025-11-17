@@ -60,6 +60,26 @@ class AdminService {
   }
 
   /**
+   * Create new user (admin only)
+   * @param {Object} userData - User data (name, email, password, role, isVerified, roleApproved)
+   * @returns {Promise<Object>} Created user data
+   */
+  async createUser(userData) {
+    try {
+      const response = await apiClient.post('/users', userData);
+      return {
+        success: true,
+        data: response,
+      };
+    } catch (error) {
+      return {
+        success: false,
+        error: error.response?.data?.message || error.message || 'Gagal membuat pengguna',
+      };
+    }
+  }
+
+  /**
    * Get all projects (admin only)
    * @param {Object} params - Query parameters
    * @returns {Promise<Object>} Projects data

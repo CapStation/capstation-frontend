@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useToast } from "@/hooks/use-toast";
+import AdminService from "@/services/AdminService";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -68,20 +69,10 @@ export default function NewUserPage() {
 
     setSaving(true);
     try {
-      const token = localStorage.getItem("token");
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/users/register`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify(formData),
-      });
+      const result = await AdminService.createUser(formData);
 
-      const result = await response.json();
-
-      if (!response.ok) {
-        throw new Error(result.message || "Gagal membuat pengguna");
+      if (!result.success) {
+        throw new Error(result.error || "Gagal membuat pengguna");
       }
 
       toast({
