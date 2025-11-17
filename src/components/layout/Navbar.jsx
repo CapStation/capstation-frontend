@@ -32,6 +32,7 @@ import {
   LogOut,
   UserCircle,
   ChevronDown,
+  Bell,
 } from "lucide-react";
 
 import Image from "next/image";
@@ -59,6 +60,7 @@ export default function Navbar({ className = "" }) {
     <nav className={`bg-white border-b border-neutral-200 sticky top-0 z-50 ${className}`}>
       <div className="container mx-auto px-20">
         <div className="flex items-center justify-between h-16">
+          {/* Logo + Search */}
           <div className="flex items-center gap-8">
             <Link href="/dashboard" className="text-2xl font-bold text-primary">
               <Image 
@@ -70,6 +72,7 @@ export default function Navbar({ className = "" }) {
             </Link>
           </div>
 
+          {/* Menu kanan */}
           <div className="flex items-center gap-4">
             <Link href="/projects">
               <Button variant="ghost" size="sm">
@@ -77,18 +80,37 @@ export default function Navbar({ className = "" }) {
                 Project
               </Button>
             </Link>
+
             <Link href="/groups">
               <Button variant="ghost" size="sm">
                 <Users className="h-4 w-4 mr-2" />
                 Group
               </Button>
             </Link>
+
             <Link href="/browse/capstones">
               <Button variant="ghost" size="sm">
                 <FileText className="h-4 w-4 mr-2" />
                 Browse
               </Button>
             </Link>
+
+            <Link href="/announcements">
+              <Button variant="ghost" size="sm">
+                <Bell className="h-4 w-4 mr-2" />
+                Announcement
+              </Button>
+            </Link>
+
+            {(user?.role === "admin" || user?.role === "dosen") && (
+              <Link href="/documents">
+                <Button variant="ghost" size="sm">
+                  <FolderOpen className="h-4 w-4 mr-2" />
+                  Documents
+                </Button>
+              </Link>
+            )}
+
             <Link href="/request">
               <Button variant="ghost" size="sm">
                 <History className="h-4 w-4 mr-2"/>
@@ -103,6 +125,7 @@ export default function Navbar({ className = "" }) {
                 </Button>
               </Link>
             )}
+
             {user ? (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
@@ -129,7 +152,6 @@ export default function Navbar({ className = "" }) {
                   </DropdownMenuLabel>
                   <DropdownMenuSeparator />
 
-                  {/* User Profile Menu Item */}
                   <DropdownMenuItem
                     className="cursor-pointer"
                     onSelect={() => router.push("/profile")}
@@ -140,7 +162,6 @@ export default function Navbar({ className = "" }) {
 
                   <DropdownMenuSeparator />
 
-                  {/* Logout Action */}
                   <DropdownMenuItem
                     className="text-destructive focus:text-destructive cursor-pointer"
                     onSelect={() => setShowLogoutDialog(true)}
