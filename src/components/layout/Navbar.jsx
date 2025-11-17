@@ -32,6 +32,7 @@ import {
   LogOut,
   UserCircle,
   ChevronDown,
+  Bell,
 } from "lucide-react";
 
 import Image from "next/image";
@@ -47,7 +48,7 @@ export default function Navbar({ className = "" }) {
     try {
       await logout();
       setShowLogoutDialog(false);
-      router.push("/login");
+      router.push("/");
     } catch (error) {
       console.error("Logout error:", error);
     } finally {
@@ -57,8 +58,9 @@ export default function Navbar({ className = "" }) {
 
   return (
     <nav className={`bg-white border-b border-neutral-200 sticky top-0 z-50 ${className}`}>
-      <div className="container mx-auto px-24">
+      <div className="container mx-auto px-20">
         <div className="flex items-center justify-between h-16">
+          {/* Logo + Search */}
           <div className="flex items-center gap-8">
             <Link href="/dashboard" className="text-2xl font-bold text-primary">
               <Image 
@@ -68,103 +70,156 @@ export default function Navbar({ className = "" }) {
                 height={150}
                 />
             </Link>
-            <div className="relative hidden md:block">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-neutral-400" />
-              <input
-                type="text"
-                placeholder="Search..."
-                className="pl-10 pr-4 py-2 border border-neutral-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary w-64"
-              />
-            </div>
           </div>
 
+          {/* Menu kanan */}
           <div className="flex items-center gap-4">
-            <Link href="/projects">
-              <Button variant="ghost" size="sm">
-                <BookOpen className="h-4 w-4 mr-2" />
-                Project
-              </Button>
-            </Link>
-            <Link href="/groups">
-              <Button variant="ghost" size="sm">
-                <Users className="h-4 w-4 mr-2" />
-                Group
-              </Button>
-            </Link>
-            <Link href="/browse/capstones">
-              <Button variant="ghost" size="sm">
-                <FileText className="h-4 w-4 mr-2" />
-                Browse
-              </Button>
-            </Link>
-            <Link href="/request">
-              <Button variant="ghost" size="sm">
-                <History className="h-4 w-4 mr-2"/>
-                Request
-                </Button>
-            </Link>
-            {user?.role === "admin" && (
-              <Link href="/admin">
-                <Button variant="ghost" size="sm">
-                  <FolderOpen className="h-4 w-4 mr-2" />
-                  Dashboard Admin
-                </Button>
-              </Link>
-            )}
-            {user ? (
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="font-semibold flex items-center gap-2 hover:bg-primary/10"
-                  >
-                    <UserCircle className="h-4 w-4" />
-                    Halo, {user?.name || "User"}
-                    <ChevronDown className="h-3 w-3 opacity-50" />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-56">
-                  <DropdownMenuLabel className="font-normal">
-                    <div className="flex flex-col space-y-1">
-                      <p className="text-sm font-medium leading-none">
-                        {user?.name || "User"}
-                      </p>
-                      <p className="text-xs leading-none text-muted-foreground">
-                        {user?.email || "Loading..."}
-                      </p>
-                    </div>
-                  </DropdownMenuLabel>
-                  <DropdownMenuSeparator />
+            {(() => {
+              const isAdmin = user?.role === "admin";
+              const firstName = (user?.name || "User").split(" ")[0];
 
-                  {/* User Profile Menu Item */}
-                  <DropdownMenuItem
-                    className="cursor-pointer"
-                    onSelect={() => router.push("/profile")}
-                  >
-                    <User className="mr-2 h-4 w-4" />
-                    <span>User Profile</span>
-                  </DropdownMenuItem>
+              if (isAdmin) {
+                return (
+                  <>
+                    <Link href="/admin">
+                      <Button variant="ghost" size="sm">
+                        <FolderOpen className="h-4 w-4 mr-2" />
+                        Dashboard Admin
+                      </Button>
+                    </Link>
 
-                  <DropdownMenuSeparator />
+                    {user ? (
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="font-semibold flex items-center gap-2 hover:bg-primary/10"
+                          >
+                            <UserCircle className="h-4 w-4" />
+                            Halo, {firstName}
+                            <ChevronDown className="h-3 w-3 opacity-50" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end" className="w-56">
+                          <DropdownMenuLabel className="font-normal">
+                            <div className="flex flex-col space-y-1">
+                              <p className="text-sm font-medium leading-none">{firstName}</p>
+                              <p className="text-xs leading-none text-muted-foreground">{user?.email || "Loading..."}</p>
+                            </div>
+                          </DropdownMenuLabel>
+                          <DropdownMenuSeparator />
+                          <DropdownMenuItem className="text-destructive focus:text-destructive cursor-pointer" onSelect={() => setShowLogoutDialog(true)}>
+                            <LogOut className="mr-2 h-4 w-4" />
+                            <span>Logout</span>
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    ) : (
+                      <Link href="/login">
+                        <Button variant="default" size="sm">Masuk</Button>
+                      </Link>
+                    )}
+                  </>
+                );
+              }
 
-                  {/* Logout Action */}
-                  <DropdownMenuItem
-                    className="text-destructive focus:text-destructive cursor-pointer"
-                    onSelect={() => setShowLogoutDialog(true)}
-                  >
-                    <LogOut className="mr-2 h-4 w-4" />
-                    <span>Logout</span>
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            ) : (
-              <Link href="/login">
-                <Button variant="default" size="sm">
-                  Masuk
-                </Button>
-              </Link>
-            )}
+              // Non-admin view: show regular links but hide admin dashboard
+              return (
+                <>
+                  <Link href="/projects">
+                    <Button variant="ghost" size="sm">
+                      <BookOpen className="h-4 w-4 mr-2" />
+                      Project
+                    </Button>
+                  </Link>
+
+                  <Link href="/groups">
+                    <Button variant="ghost" size="sm">
+                      <Users className="h-4 w-4 mr-2" />
+                      Group
+                    </Button>
+                  </Link>
+
+                  <Link href="/browse/capstones">
+                    <Button variant="ghost" size="sm">
+                      <FileText className="h-4 w-4 mr-2" />
+                      Browse
+                    </Button>
+                  </Link>
+
+                  <Link href="/announcements">
+                    <Button variant="ghost" size="sm">
+                      <Bell className="h-4 w-4 mr-2" />
+                      Announcement
+                    </Button>
+                  </Link>
+
+                  {(user?.role === "admin" || user?.role === "dosen") && (
+                    <Link href="/documents">
+                      <Button variant="ghost" size="sm">
+                        <FolderOpen className="h-4 w-4 mr-2" />
+                        Documents
+                      </Button>
+                    </Link>
+                  )}
+
+                  <Link href="/request">
+                    <Button variant="ghost" size="sm">
+                      <History className="h-4 w-4 mr-2"/>
+                      Request
+                    </Button>
+                  </Link>
+
+                  {user ? (
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="font-semibold flex items-center gap-2 hover:bg-primary/10"
+                        >
+                          <UserCircle className="h-4 w-4" />
+                          Halo, {firstName}
+                          <ChevronDown className="h-3 w-3 opacity-50" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end" className="w-56">
+                        <DropdownMenuLabel className="font-normal">
+                          <div className="flex flex-col space-y-1">
+                            <p className="text-sm font-medium leading-none">{firstName}</p>
+                            <p className="text-xs leading-none text-muted-foreground">{user?.email || "Loading..."}</p>
+                          </div>
+                        </DropdownMenuLabel>
+                        <DropdownMenuSeparator />
+
+                        <DropdownMenuItem
+                          className="cursor-pointer"
+                          onSelect={() => router.push("/profile")}
+                        >
+                          <User className="mr-2 h-4 w-4" />
+                          <span>User Profile</span>
+                        </DropdownMenuItem>
+
+                        <DropdownMenuSeparator />
+
+                        <DropdownMenuItem
+                          className="text-destructive focus:text-destructive cursor-pointer"
+                          onSelect={() => setShowLogoutDialog(true)}
+                        >
+                          <LogOut className="mr-2 h-4 w-4" />
+                          <span>Logout</span>
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  ) : (
+                    <Link href="/login">
+                      <Button variant="default" size="sm">Masuk</Button>
+                    </Link>
+                  )}
+                </>
+              );
+            })()}
           </div>
         </div>
       </div>

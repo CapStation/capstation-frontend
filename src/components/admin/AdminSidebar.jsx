@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 import {
@@ -43,16 +44,14 @@ const menuItems = [
     icon: FileText,
   },
   {
-    title: "Pengumuman",
+    title: "Kelola Pengumuman",
     href: "/admin/announcements",
     icon: Megaphone,
-    disabled: true,
   },
   {
     title: "Kompetensi",
     href: "/admin/competencies",
     icon: Award,
-    disabled: true,
   },
 ];
 
@@ -62,10 +61,14 @@ export default function AdminSidebar() {
   return (
     <div className="w-64 bg-white border-r border-neutral-200 h-screen sticky top-0 flex flex-col">
       {/* Logo/Header */}
-      <div className="p-6">
-        <h1 className="text-2xl font-bold text-neutral-900">
-          <span className="text-primary">Cap</span>Station
-        </h1>
+      <div className="p-6 flex flex-col items-center">
+        <Image 
+          src="/LogoVertical.png" 
+          alt="CapStation Logo" 
+          width={300} 
+          height={300}
+          className="mb-2"
+        />
         <p className="text-sm text-neutral-500 mt-1">Admin Panel</p>
       </div>
 

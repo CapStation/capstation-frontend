@@ -81,7 +81,7 @@ export default function DocumentsAdminPage() {
     search: '',
     documentType: 'all',
     capstoneCategory: 'all',
-    sortOrder: 'desc'
+    sortOrder: 'newest'
   });
   const [pagination, setPagination] = useState({
     page: 1,
@@ -128,7 +128,7 @@ export default function DocumentsAdminPage() {
   const limitOptions = [10, 25, 50, 100];
   
   // Check if any filter is active
-  const hasActiveFilters = filters.search || filters.documentType !== 'all' || filters.capstoneCategory !== 'all' || filters.sortOrder !== 'desc';
+  const hasActiveFilters = filters.search || filters.documentType !== 'all' || filters.capstoneCategory !== 'all' || filters.sortOrder !== 'newest';
   
   // Reset all filters
   const resetFilters = () => {
@@ -136,17 +136,8 @@ export default function DocumentsAdminPage() {
       search: '',
       documentType: 'all',
       capstoneCategory: 'all',
-      sortOrder: 'desc'
+      sortOrder: 'newest'
     });
-    setPagination(prev => ({ ...prev, page: 1 }));
-  };
-
-  // Toggle sort order
-  const toggleSortOrder = () => {
-    setFilters(prev => ({
-      ...prev,
-      sortOrder: prev.sortOrder === 'asc' ? 'desc' : 'asc'
-    }));
     setPagination(prev => ({ ...prev, page: 1 }));
   };
 
@@ -183,7 +174,14 @@ export default function DocumentsAdminPage() {
       params.append('limit', pagination.limit);
       // Sort by createdAt with user-selected order
       params.append('sortBy', 'createdAt');
-      params.append('sortOrder', filters.sortOrder);
+      
+      // Convert sortOrder format
+      let backendSortOrder = 'desc';
+      if (filters.sortOrder === 'newest') backendSortOrder = 'desc';
+      else if (filters.sortOrder === 'oldest') backendSortOrder = 'asc';
+      else if (filters.sortOrder === 'alphabetical') backendSortOrder = 'asc';
+      
+      params.append('sortOrder', backendSortOrder);
       
       const response = await fetch(`${API_URL}/documents?${params.toString()}`, {
         method: 'GET',
@@ -563,110 +561,100 @@ export default function DocumentsAdminPage() {
       </div>
 
       {/* Filter Section */}
-          <Card className="mb-6">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Filter className="h-5 w-5" />
-                Filter & Pencarian
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              {/* Search Bar */}
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-neutral-400" />
-                <Input
-                  placeholder="Cari berdasarkan nama file, proyek, atau mahasiswa..."
-                  value={filters.search}
-                  onChange={(e) => handleFilterChange('search', e.target.value)}
-                  className="pl-10"
-                />
+      <Card className="mb-6 border-neutral-200">
+        <CardContent className="pt-6">
+          <div className="space-y-4">
+            {/* Search Bar */}
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-neutral-400" />
+              <Input
+                placeholder="Cari berdasarkan nama file, proyek, atau mahasiswa..."
+                value={filters.search}
+                onChange={(e) => handleFilterChange('search', e.target.value)}
+                className="pl-10 border-neutral-300"
+              />
+            </div>
+
+            {/* Filter Row */}
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+              {/* Document Type Filter */}
+              <div className="space-y-2">
+                <Label>Tipe Dokumen</Label>
+                <Select
+                  value={filters.documentType}
+                  onValueChange={(value) => handleFilterChange('documentType', value)}
+                >
+                  <SelectTrigger className="border-neutral-300">
+                    <SelectValue placeholder="Pilih tipe" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {documentTypeOptions.map(option => (
+                      <SelectItem key={option.value} value={option.value}>
+                        {option.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
 
-              {/* Filter Row */}
-              <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                {/* Document Type Filter */}
-                <div className="space-y-2">
-                  <Label>Tipe Dokumen</Label>
-                  <Select
-                    value={filters.documentType}
-                    onValueChange={(value) => handleFilterChange('documentType', value)}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Pilih tipe" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {documentTypeOptions.map(option => (
-                        <SelectItem key={option.value} value={option.value}>
-                          {option.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
+              {/* Capstone Category Filter */}
+              <div className="space-y-2">
+                <Label>Kategori Capstone</Label>
+                <Select
+                  value={filters.capstoneCategory}
+                  onValueChange={(value) => handleFilterChange('capstoneCategory', value)}
+                >
+                  <SelectTrigger className="border-neutral-300">
+                    <SelectValue placeholder="Pilih kategori" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {capstoneCategoryOptions.map(option => (
+                      <SelectItem key={option.value} value={option.value}>
+                        {option.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
 
-                {/* Capstone Category Filter */}
-                <div className="space-y-2">
-                  <Label>Kategori Capstone</Label>
-                  <Select
-                    value={filters.capstoneCategory}
-                    onValueChange={(value) => handleFilterChange('capstoneCategory', value)}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Pilih kategori" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {capstoneCategoryOptions.map(option => (
-                        <SelectItem key={option.value} value={option.value}>
-                          {option.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
+              {/* Sort Order */}
+              <div className="space-y-2">
+                <Label>Urutkan</Label>
+                <Select
+                  value={filters.sortOrder}
+                  onValueChange={(value) => handleFilterChange('sortOrder', value)}
+                >
+                  <SelectTrigger className="border-neutral-300">
+                    <SelectValue placeholder="Urutkan" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="newest">Terbaru</SelectItem>
+                    <SelectItem value="oldest">Terlama</SelectItem>
+                    <SelectItem value="alphabetical">A-Z</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
 
-                {/* Sort Order Toggle */}
-                <div className="space-y-2">
-                  <Label>Urutan Tanggal</Label>
+              {/* Reset Filters Button */}
+              <div className="space-y-2">
+                <Label>&nbsp;</Label>
+                {hasActiveFilters ? (
                   <Button
                     variant="outline"
-                    onClick={toggleSortOrder}
-                    className="w-full justify-start"
+                    onClick={resetFilters}
+                    className="w-full border-neutral-300"
                   >
-                    {filters.sortOrder === 'asc' ? (
-                      <>
-                        <ArrowUp className="h-4 w-4 mr-2" />
-                        Terlama
-                      </>
-                    ) : (
-                      <>
-                        <ArrowDown className="h-4 w-4 mr-2" />
-                        Terbaru
-                      </>
-                    )}
+                    <RotateCcw className="h-4 w-4 mr-2" />
+                    Reset Filter
                   </Button>
-                </div>
-
-                {/* Reset Filters Button */}
-                <div className="space-y-2">
-                  <Label>&nbsp;</Label>
-                  {hasActiveFilters ? (
-                    <Button
-                      variant="outline"
-                      onClick={resetFilters}
-                      className="w-full"
-                    >
-                      <RotateCcw className="h-4 w-4 mr-2" />
-                      Reset Filter
-                    </Button>
-                  ) : (
-                    <div className="h-10" />
-                  )}
-                </div>
+                ) : (
+                  <div className="h-10" />
+                )}
               </div>
-
-
-            </CardContent>
-          </Card>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
 
           {/* Documents Table */}
           <Card>
@@ -689,16 +677,18 @@ export default function DocumentsAdminPage() {
                 </div>
               ) : (
                 <>
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead className="w-[150px]">Nama Dokumen</TableHead>
-                        <TableHead className="w-[300px]">Proyek</TableHead>
-                        <TableHead className="text-center w-[140px]">Tipe</TableHead>
-                        <TableHead className="text-center w-[140px]">Kategori</TableHead>
-                        <TableHead>Tanggal Upload</TableHead>
-                        <TableHead>Ukuran</TableHead>
-                        <TableHead className="text-center">Aksi</TableHead>
+                  <div className="overflow-hidden rounded-lg">
+                    <div className="overflow-x-auto">
+                      <Table>
+                        <TableHeader>
+                          <TableRow className="bg-[#F1F7FA] hover:bg-[#F1F7FA]">
+                        <TableHead className="w-[150px] font-bold text-black">Nama Dokumen</TableHead>
+                        <TableHead className="w-[300px] font-bold text-black">Proyek</TableHead>
+                        <TableHead className="text-center w-[140px] font-bold text-black">Tipe</TableHead>
+                        <TableHead className="text-center w-[140px] font-bold text-black">Kategori</TableHead>
+                        <TableHead className="font-bold text-black">Tanggal Upload</TableHead>
+                        <TableHead className="font-bold text-black">Ukuran</TableHead>
+                        <TableHead className="text-center font-bold text-black">Aksi</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -738,8 +728,8 @@ export default function DocumentsAdminPage() {
                           <TableCell className="text-sm text-neutral-600">
                             {formatFileSize(doc.fileSize)}
                           </TableCell>
-                          <TableCell className="text-right">
-                            <div className="flex items-center justify-end gap-2">
+                          <TableCell className="text-center">
+                            <div className="flex items-center justify-center gap-2">
                               <Button
                                 variant="ghost"
                                 size="sm"
@@ -768,11 +758,12 @@ export default function DocumentsAdminPage() {
                           </TableCell>
                         </TableRow>
                       ))}
-                    </TableBody>
-                  </Table>
+                        </TableBody>
+                      </Table>
+                    </div>
 
-                  {/* Pagination */}
-                  <div className="flex items-center justify-between px-6 py-3 border-t bg-neutral-50">
+                    {/* Pagination */}
+                    <div className="flex items-center justify-between px-6 py-3 border-t bg-neutral-50">
                     <div className="text-sm text-neutral-600">
                       Menampilkan {((pagination.page - 1) * pagination.limit) + 1} - {Math.min(pagination.page * pagination.limit, pagination.total)} dari {pagination.total} dokumen
                     </div>
@@ -847,6 +838,7 @@ export default function DocumentsAdminPage() {
                           </Button>
                         </div>
                       )}
+                      </div>
                     </div>
                   </div>
                 </>

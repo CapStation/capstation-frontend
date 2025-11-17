@@ -161,6 +161,25 @@ export default function ProjectsPage() {
     return themeMap[tema?.toLowerCase()] || tema?.replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase()) || 'Lainnya';
   };
 
+  const getCategoryColor = (category) => {
+    const colors = {
+      'Programming Languages': 'bg-blue-100 text-blue-800',
+      'Web Development': 'bg-green-100 text-green-800',
+      'Mobile Development': 'bg-purple-100 text-purple-800',
+      'Data Science': 'bg-orange-100 text-orange-800',
+      'UI/UX Design': 'bg-pink-100 text-pink-800',
+      'DevOps': 'bg-indigo-100 text-indigo-800',
+      'Database': 'bg-yellow-100 text-yellow-800',
+      'Cloud Computing': 'bg-cyan-100 text-cyan-800',
+      'Artificial Intelligence': 'bg-red-100 text-red-800',
+      'Cybersecurity': 'bg-gray-100 text-gray-800',
+      'Project Management': 'bg-teal-100 text-teal-800',
+      'Soft Skills': 'bg-lime-100 text-lime-800',
+      'Others': 'bg-neutral-100 text-neutral-800',
+    };
+    return colors[category] || 'bg-neutral-100 text-neutral-800';
+  };
+
   if (authLoading || loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -173,7 +192,7 @@ export default function ProjectsPage() {
     <div className="min-h-screen bg-gradient-to-br from-neutral-50 via-white to-neutral-50">
       <Navbar />
 
-      <div className="container mx-auto px-4 py-5">
+      <div className="container mx-auto px-20 py-5">
         {/* Header */}
         <div className="flex items-center justify-between mb-8">
           <div>
@@ -273,7 +292,22 @@ export default function ProjectsPage() {
                     </div>
                     <p className="font-medium text-neutral-900">{formatDate(myProject.updatedAt)}</p>
                   </div>
-                  {myProject.tags && myProject.tags.length > 0 && (
+                  {myProject.competencies && myProject.competencies.length > 0 ? (
+                    <div>
+                      <div className="text-sm text-neutral-500 mb-2">Kompetensi</div>
+                      <div className="flex flex-wrap gap-1">
+                        {myProject.competencies.map((comp, idx) => {
+                          const name = typeof comp === 'string' ? comp : comp.name || comp.title || comp._id;
+                          const category = typeof comp === 'object' ? comp.category : undefined;
+                          return (
+                            <Badge key={idx} className={`${getCategoryColor(category)} text-xs`}>
+                              {name}
+                            </Badge>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  ) : myProject.tags && myProject.tags.length > 0 && (
                     <div>
                       <div className="text-sm text-neutral-500 mb-2">Tags</div>
                       <div className="flex flex-wrap gap-1">
@@ -298,7 +332,7 @@ export default function ProjectsPage() {
                         Edit Proyek
                       </Button>
                     </Link>
-                    <Link href={`/projects/${myProject._id}/documents`} className="flex-1">
+                    <Link href={`/groups/${typeof myProject.group === 'string' ? myProject.group : myProject.group?._id}`} className="flex-1">
                       <Button variant="outline" className="w-full">
                         Detail Grup
                       </Button>
@@ -307,7 +341,7 @@ export default function ProjectsPage() {
                 ) : myProject.status === 'dapat_dilanjutkan' ? (
                   // Tombol untuk project yang dapat dilanjutkan
                   <>
-                    <Link href={`/projects/${myProject._id}/documents`} className="flex-1">
+                    <Link href={`/groups/${typeof myProject.group === 'string' ? myProject.group : myProject.group?._id}`} className="flex-1">
                       <Button variant="outline" className="w-full">
                         Lihat Grup
                       </Button>
@@ -320,7 +354,7 @@ export default function ProjectsPage() {
                   </>
                 ) : (
                   // Tombol untuk project yang sudah selesai
-                  <Link href={`/projects/${myProject._id}/documents`} className="w-full">
+                  <Link href={`/groups/${typeof myProject.group === 'string' ? myProject.group : myProject.group?._id}`} className="w-full">
                     <Button variant="outline" className="w-full">
                       Lihat Grup
                     </Button>
