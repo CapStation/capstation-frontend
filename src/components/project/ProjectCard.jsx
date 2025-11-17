@@ -2,6 +2,7 @@ import * as React from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import Image from "next/image";
 import UserService from "@/services/UserService";
 
 export default function ProjectCard({ project, showStatus = false }) {
@@ -20,11 +21,11 @@ export default function ProjectCard({ project, showStatus = false }) {
     
     // Fetch owner name
     if (project.owner) {
-      if (typeof project.owner === 'object' && (project.owner.name || project.owner.username)) {
-        // Already populated
-        const name = project.owner.fullName || project.owner.name || project.owner.username;
+      if (typeof project.owner === 'object' && project.owner !== null) {
+        // Already populated - prioritize fullName
+        const name = project.owner.fullName || project.owner.name || project.owner.username || project.owner.email;
         console.log('✅ Owner populated:', name);
-        setOwnerName(name);
+        setOwnerName(name || 'Pemilik Proyek');
       } else if (typeof project.owner === 'string' && /^[a-f0-9]{24}$/i.test(project.owner)) {
         // It's an ID, fetch from API
         console.log('🌐 Fetching owner by ID:', project.owner);
@@ -33,9 +34,9 @@ export default function ProjectCard({ project, showStatus = false }) {
         if (result.success && result.data) {
           const name = result.data.fullName || result.data.name || result.data.username || result.data.email;
           console.log('✅ Owner fetched:', name);
-          setOwnerName(name);
+          setOwnerName(name || 'Pemilik Proyek');
         } else {
-          console.log('❌ Owner fetch failed');
+          console.log('❌ Owner fetch failed:', result.error);
           setOwnerName('Pemilik Proyek');
         }
       } else if (typeof project.owner === 'string') {
@@ -50,11 +51,11 @@ export default function ProjectCard({ project, showStatus = false }) {
 
     // Fetch supervisor name
     if (project.supervisor) {
-      if (typeof project.supervisor === 'object' && (project.supervisor.name || project.supervisor.username)) {
-        // Already populated
-        const name = project.supervisor.fullName || project.supervisor.name || project.supervisor.username;
+      if (typeof project.supervisor === 'object' && project.supervisor !== null) {
+        // Already populated - prioritize fullName
+        const name = project.supervisor.fullName || project.supervisor.name || project.supervisor.username || project.supervisor.email;
         console.log('✅ Supervisor populated:', name);
-        setSupervisorName(name);
+        setSupervisorName(name || 'Dosen Pembimbing');
       } else if (typeof project.supervisor === 'string' && /^[a-f0-9]{24}$/i.test(project.supervisor)) {
         // It's an ID, fetch from API
         console.log('🌐 Fetching supervisor by ID:', project.supervisor);
@@ -63,9 +64,9 @@ export default function ProjectCard({ project, showStatus = false }) {
         if (result.success && result.data) {
           const name = result.data.fullName || result.data.name || result.data.username || result.data.email;
           console.log('✅ Supervisor fetched:', name);
-          setSupervisorName(name);
+          setSupervisorName(name || 'Dosen Pembimbing');
         } else {
-          console.log('❌ Supervisor fetch failed');
+          console.log('❌ Supervisor fetch failed:', result.error);
           setSupervisorName('Dosen Pembimbing');
         }
       } else if (typeof project.supervisor === 'string') {
@@ -76,7 +77,7 @@ export default function ProjectCard({ project, showStatus = false }) {
       }
     } else {
       console.log('⚠️ No supervisor data');
-      setSupervisorName(null);
+      setSupervisorName('Dosen Pembimbing');
     }
 
     setLoading(false);
@@ -175,9 +176,11 @@ export default function ProjectCard({ project, showStatus = false }) {
     const themeMap = {
       'kesehatan': 'Kesehatan',
       'pengelolaan_sampah': 'Pengelolaan Sampah',
+      'pengelolaan-sampah': 'Pengelolaan Sampah',
       'smart_city': 'Smart City',
       'smart-city': 'Smart City',
       'transportasi_ramah_lingkungan': 'Transportasi Ramah Lingkungan',
+      'transportasi-ramah-lingkungan': 'Transportasi Ramah Lingkungan',
       'iot': 'IoT',
       'ai': 'Artificial Intelligence',
       'mobile': 'Mobile Development',
@@ -185,21 +188,81 @@ export default function ProjectCard({ project, showStatus = false }) {
     return themeMap[tema?.toLowerCase()] || tema || 'Smart City';
   };
 
+  // Check if project is new (created within last 2 weeks)
+  const isNewProject = () => {
+    if (!project.createdAt) return false;
+    
+    const twoWeeksAgo = new Date();
+    twoWeeksAgo.setDate(twoWeeksAgo.getDate() - 14);
+    const createdDate = new Date(project.createdAt);
+    
+    return createdDate >= twoWeeksAgo;
+  };
+
+  // Get theme image path based on project tema
+  const getThemeImage = (tema) => {
+    const normalizedTema = tema?.toLowerCase().replace(/_/g, '-');
+    
+    switch (normalizedTema) {
+      case 'kesehatan':
+        return '/images/themes/kesehatan.jpg';
+      case 'pengelolaan-sampah':
+        return '/images/themes/pengelolaan-sampah.jpg';
+      case 'smart-city':
+        return '/images/themes/smart-city.jpg';
+      case 'transportasi-ramah-lingkungan':
+        return '/images/themes/transportasi-ramah-lingkungan.jpg';
+      default:
+        return '/images/themes/default.png';
+    }
+  };
+
   return (
     <Card className="overflow-hidden hover:shadow-xl hover:scale-[1.02] hover:-translate-y-1 transition-all duration-300 ease-out border border-neutral-200 cursor-pointer group">
-      {/* Image placeholder with gradient - mimicking screenshot */}
-      <div className="relative w-full h-40 bg-gradient-to-br from-neutral-200 to-neutral-300 flex items-center justify-center group-hover:from-neutral-300 group-hover:to-neutral-400 transition-all duration-300">
-        {/* Status Badge - top right (only show if showStatus is true) */}
-        {showStatus && (
-          <div className="absolute top-3 right-3">
+      {/* Gambar placeholder*/}
+      <div className="relative w-full h-40 bg-gradient-to-br from-neutral-200 to-neutral-300 overflow-hidden">
+        {/* Gambar dari tema */}
+        <Image
+          src={getThemeImage(project.tema)}
+          alt={getThemeLabel(project.tema)}
+          fill
+          className="object-cover group-hover:scale-105 transition-transform duration-300"
+          sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+        />
+        
+        {/* Gradient shadow overlay gambar */}
+        <div className="absolute inset-0 bg-gradient-to-t from-black/40 from-0% via-transparent via-30% to-transparent pointer-events-none"></div>
+        
+        {/* Badges - top right */}
+        <div className="absolute top-3 right-3 flex flex-col gap-2 items-end z-10">
+          {/* NEW Badge (only for projects < 2 weeks old) */}
+          {isNewProject() && (
+            <Badge 
+              className="bg-red-500 text-white border-none rounded-full px-3 py-1 text-xs font-bold shadow-md"
+            >
+              BARU
+            </Badge>
+          )}
+          
+          {/* Dapat Dilanjutkan Badge */}
+          {project.status === 'dapat_dilanjutkan' && (
+            <Badge 
+              className="bg-emerald-500 text-white border-none rounded-full px-3 py-1 text-xs font-bold shadow-md"
+            >
+              DAPAT DILANJUTKAN
+            </Badge>
+          )}
+          
+          {/* Status Badge (only show if showStatus is true) */}
+          {showStatus && (
             <Badge 
               variant="secondary" 
               className={`${getStatusColor(project.capstoneStatus || project.status)} border rounded-full px-3 py-1 text-xs font-medium shadow-md`}
             >
               {getStatusLabel(project.capstoneStatus || project.status)}
             </Badge>
-          </div>
-        )}
+          )}
+        </div>
       </div>
 
       <CardContent className="p-6 space-y-3">
@@ -239,3 +302,4 @@ export default function ProjectCard({ project, showStatus = false }) {
     </Card>
   );
 }
+

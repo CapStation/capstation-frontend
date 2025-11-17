@@ -1,8 +1,12 @@
 import apiClient from "@/lib/api-client";
 
 class UserService {
+  // Cache untuk menyimpan user data agar tidak fetch berulang kali
   static userCache = new Map();
 
+  /**
+   * Normalisasi error dari API
+   */
   static handleError(error) {
     const errorMessage =
       error?.response?.data?.message ||
@@ -17,21 +21,18 @@ class UserService {
     };
   }
 
-    /**
+  /**
    * Search user by email
-   * 1. Coba hit /users/search-by-email
-   * 2. Kalau error / {} → fallback ke /users lalu filter di frontend
    */
   async searchByEmail(email) {
     const normalizedEmail = email.toLowerCase().trim();
 
-    // 1️⃣ Coba pakai endpoint khusus dulu
     try {
       const res = await apiClient.get("/users/search-by-email", {
         params: { email: normalizedEmail },
       });
 
-      const payload = res?.data || res; // antisipasi bentuk response
+      const payload = res?.data || res; 
 
       // Kalau backend sudah mengembalikan { success, data }
       if (payload && payload.success && payload.data) {
@@ -56,29 +57,29 @@ class UserService {
         data: null,
       };
     } catch (error) {
-      // Jangan panik kalau error, kita fallback ke /users
-      console.warn("⚠️ searchByEmail via /users/search-by-email gagal, fallback ke /users:", error);
+      console.warn(
+        "⚠️ searchByEmail via /users/search-by-email gagal, fallback ke /users:",
+        error
+      );
     }
 
-    // 2️⃣ Fallback: ambil semua user lalu filter di frontend
+    // Fallback: ambil semua user lalu filter di frontend
     try {
       const resAll = await apiClient.get("/users");
       const payloadAll = resAll?.data || resAll;
 
       // Bentuk backend getUsers: { success: true, data: users }
-      const users =
-        Array.isArray(payloadAll)
-          ? payloadAll
-          : Array.isArray(payloadAll?.data)
-          ? payloadAll.data
-          : Array.isArray(payloadAll?.users)
-          ? payloadAll.users
-          : [];
+      const users = Array.isArray(payloadAll)
+        ? payloadAll
+        : Array.isArray(payloadAll?.data)
+        ? payloadAll.data
+        : Array.isArray(payloadAll?.users)
+        ? payloadAll.users
+        : [];
 
       const found = users.find(
         (u) =>
-          u.email &&
-          u.email.toLowerCase().trim() === normalizedEmail
+          u.email && u.email.toLowerCase().trim() === normalizedEmail
       );
 
       if (found) {
@@ -104,7 +105,6 @@ class UserService {
     }
   }
 
-
   /**
    * Get current user (profil user yang sedang login)
    */
@@ -122,10 +122,25 @@ class UserService {
    */
   async getUserById(userId) {
     try {
+      // Validate userId
+      if (!userId) {
+        return { success: false, error: "User ID is required" };
+      }
+
       // Check cache first
       if (UserService.userCache.has(userId)) {
         console.log("📦 UserService: Using cached user data for", userId);
         return { success: true, data: UserService.userCache.get(userId) };
+      }
+
+      // Check if user is logged in (has token)
+      const token =
+        typeof window !== "undefined" ? localStorage.getItem("token") : null;
+      if (!token) {
+        console.log(
+          "⚠️ UserService: No token found, skipping user fetch"
+        );
+        return { success: false, error: "Not authenticated" };
       }
 
       console.log("🔍 UserService: Fetching user by ID:", userId);
@@ -152,6 +167,21 @@ class UserService {
   async getUsersByIds(userIds) {
     try {
       console.log("🔍 UserService: Fetching multiple users:", userIds);
+
+      // Validate userIds
+      if (!userIds || userIds.length === 0) {
+        return { success: true, data: [] };
+      }
+
+      // Check if user is logged in (has token)
+      const token =
+        typeof window !== "undefined" ? localStorage.getItem("token") : null;
+      if (!token) {
+        console.log(
+          "⚠️ UserService: No token found, skipping users fetch"
+        );
+        return { success: false, error: "Not authenticated" };
+      }
 
       // Fetch users yang belum ada di cache
       const uncachedIds = userIds.filter(
@@ -191,7 +221,7 @@ class UserService {
    */
   async getAllUsers() {
     try {
-      console.log("🔍 UserService: Fetching all users");
+      console.log("UserService: Fetching all users");
       const response = await apiClient.get("/users");
 
       // Backend returns array of users or { users: [...] }
