@@ -46,7 +46,7 @@ export default function Navbar({ className = "" }) {
     try {
       await logout();
       setShowLogoutDialog(false);
-      router.push("/login");
+      router.push("/");
     } catch (error) {
       console.error("Logout error:", error);
     } finally {

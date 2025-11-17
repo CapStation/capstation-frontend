@@ -32,8 +32,8 @@ export default function BrowseCapstonesPage() {
   const [filteredProjects, setFilteredProjects] = useState([]);
   const [loading, setLoading] = useState(true);
   
-  // Filter & Search states
-  const [activeTab, setActiveTab] = useState("all"); // "new", "available", "all"
+  
+  const [activeTab, setActiveTab] = useState("all"); 
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("all");
   const [selectedStatus, setSelectedStatus] = useState("all");
@@ -41,10 +41,38 @@ export default function BrowseCapstonesPage() {
   const [sortBy, setSortBy] = useState("newest");
   const [showFilters, setShowFilters] = useState(false);
 
-  // Pagination states
+  
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 9;
-
+  useEffect(() => {
+  
+  const savedFilter = localStorage.getItem('browseFilter');
+    if (savedFilter) {
+      try {
+        const filter = JSON.parse(savedFilter);
+        
+        
+        if (filter.status) {
+          setSelectedStatus(filter.status);
+        }
+        if (filter.category) {
+          setSelectedCategory(filter.category);
+        }
+        if (filter.academicYear) {
+          setSelectedAcademicYear(filter.academicYear);
+        }
+        if (filter.tab) {
+          setActiveTab(filter.tab);
+        }
+        
+        
+        localStorage.removeItem('browseFilter');
+      } catch (error) {
+        console.error('Failed to parse saved filter:', error);
+        localStorage.removeItem('browseFilter');
+      }
+    }
+  }, []); 
   useEffect(() => {
     loadProjects();
   }, []);
@@ -59,18 +87,18 @@ export default function BrowseCapstonesPage() {
       const result = await ProjectService.getAllProjects();
       
       if (result.success && Array.isArray(result.data)) {
-        // Filter hanya project dengan status: active, selesai, dapat_dilanjutkan
+        
         const filteredData = result.data.filter(p => 
           p.status === 'active' || p.status === 'selesai' || p.status === 'dapat_dilanjutkan'
         );
         setAllProjects(filteredData);
       } else {
-        // Fallback to mock data
+        
         setAllProjects(generateMockProjects(30));
       }
     } catch (error) {
       console.error("Failed to load projects:", error);
-      // Fallback to mock data
+      
       setAllProjects(generateMockProjects(30));
     } finally {
       setLoading(false);
@@ -80,9 +108,9 @@ export default function BrowseCapstonesPage() {
   const applyFilters = () => {
     let result = [...allProjects];
 
-    // Tab filter
+    
     if (activeTab === "new") {
-      // Filter projects created within last 2 weeks (14 days)
+      
       const twoWeeksAgo = new Date();
       twoWeeksAgo.setDate(twoWeeksAgo.getDate() - 14);
       
@@ -91,7 +119,7 @@ export default function BrowseCapstonesPage() {
         return createdDate >= twoWeeksAgo;
       });
       
-      // Sort by newest first
+      
       result.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
     } else if (activeTab === "available") {
       result = result.filter(p => 
@@ -99,44 +127,44 @@ export default function BrowseCapstonesPage() {
       );
     }
 
-    // Search filter
+    
     if (searchQuery.trim()) {
       const query = searchQuery.toLowerCase();
       result = result.filter(p => {
-        // Search in title
+        
         const titleMatch = p.title?.toLowerCase().includes(query);
         
-        // Search in keywords
+        
         const keywordsMatch = p.keywords?.toLowerCase().includes(query);
         
-        // Search in supervisor (bisa object atau string)
+        
         let supervisorMatch = false;
         if (p.supervisor) {
           if (typeof p.supervisor === 'object' && p.supervisor !== null) {
-            // Supervisor adalah object, cek di field name, fullName, username
+            
             supervisorMatch = 
               p.supervisor.fullName?.toLowerCase().includes(query) ||
               p.supervisor.name?.toLowerCase().includes(query) ||
               p.supervisor.username?.toLowerCase().includes(query) ||
               p.supervisor.email?.toLowerCase().includes(query);
           } else if (typeof p.supervisor === 'string') {
-            // Supervisor adalah string
+            
             supervisorMatch = p.supervisor.toLowerCase().includes(query);
           }
         }
         
-        // Search in owner (bisa object atau string)
+        
         let ownerMatch = false;
         if (p.owner) {
           if (typeof p.owner === 'object' && p.owner !== null) {
-            // Owner adalah object, cek di field name, fullName, username
+            
             ownerMatch = 
               p.owner.fullName?.toLowerCase().includes(query) ||
               p.owner.name?.toLowerCase().includes(query) ||
               p.owner.username?.toLowerCase().includes(query) ||
               p.owner.email?.toLowerCase().includes(query);
           } else if (typeof p.owner === 'string') {
-            // Owner adalah string
+            
             ownerMatch = p.owner.toLowerCase().includes(query);
           }
         }
@@ -145,24 +173,24 @@ export default function BrowseCapstonesPage() {
       });
     }
 
-    // Tema filter
+    
     if (selectedCategory && selectedCategory !== "all") {
       result = result.filter(p => 
         p.tema?.toLowerCase() === selectedCategory.toLowerCase()
       );
     }
 
-    // Status filter
+    
     if (selectedStatus && selectedStatus !== "all") {
       result = result.filter(p => p.status === selectedStatus);
     }
 
-    // Academic Year filter
+    
     if (selectedAcademicYear && selectedAcademicYear !== "all") {
       result = result.filter(p => p.academicYear === selectedAcademicYear);
     }
 
-    // Sort
+    
     switch (sortBy) {
       case "newest":
         result.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
@@ -176,7 +204,7 @@ export default function BrowseCapstonesPage() {
     }
 
     setFilteredProjects(result);
-    setCurrentPage(1); // Reset to first page when filters change
+    setCurrentPage(1); 
   };
 
   const clearFilters = () => {
@@ -191,7 +219,7 @@ export default function BrowseCapstonesPage() {
 
   const hasActiveFilters = searchQuery || selectedCategory !== "all" || selectedStatus !== "all" || selectedAcademicYear !== "all" || sortBy !== "newest";
 
-  // Pagination calculations
+  
   const totalPages = Math.ceil(filteredProjects.length / itemsPerPage);
   const startIndex = (currentPage - 1) * itemsPerPage;
   const endIndex = startIndex + itemsPerPage;
