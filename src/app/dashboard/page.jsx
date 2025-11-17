@@ -17,12 +17,12 @@ export default function DashboardPage() {
   const router = useRouter();
   const loadedRef = useRef(false);
   
-  // State for all dashboard data
+  
   const [myProjects, setMyProjects] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  // Stats state
+  
   const [totalProjects, setTotalProjects] = useState(0);
   const [waitingApproval, setWaitingApproval] = useState(0);
   const [ongoingProjects, setOngoingProjects] = useState(0);
@@ -184,7 +184,12 @@ export default function DashboardPage() {
           </Card>
 
           <Card className="my-auto text-left overflow-hidden h-full">
-            <Link href="/browse/capstones?availability=tersedia">
+            <Link href="/browse/capstones"
+                onClick={() => {
+                  localStorage.setItem('browseFilter', JSON.stringify({
+                    status: 'dapat_dilanjutkan'
+                  }));
+                }}>
               <CardContent className="flex items-center justify-between h-full p-4 gap-2 cursor-pointer group">
                 <div className="flex flex-col items-start justify-end h-full max-w-[50%]">
                   <CardTitle className="text-sm md:text-lg font-medium text-neutral-600 mb-2 h-full">
@@ -325,10 +330,10 @@ export default function DashboardPage() {
             ) : error ? (
               <div className="text-center text-sm text-red-500">Failed to load announcements</div>
             ) : announcements.length > 0 ? (
-              announcements.slice(0, 4).map((announcement, index) => (
+              announcements.slice(0, 3).map((announcement, index) => (
                 <div 
                   key={announcement._id} 
-                  className={`pb-4 ${index !== announcements.slice(0, 4).length - 1 ? 'border-b border-neutral-200' : ''}`}
+                  className={`pb-4 ${index !== announcements.slice(0, 3).length - 1 ? 'border-b border-neutral-200' : ''}`}
                 >
                   <h3 className="text-xl font-semibold text-neutral-900 mb-2">
                     {announcement.title}

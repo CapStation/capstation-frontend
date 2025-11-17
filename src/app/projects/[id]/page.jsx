@@ -959,6 +959,25 @@ export default function ProjectDetailPage() {
     return status;
   };
 
+  const getCategoryColor = (category) => {
+    const colors = {
+      'Programming Languages': 'bg-blue-100 text-blue-800',
+      'Web Development': 'bg-green-100 text-green-800',
+      'Mobile Development': 'bg-purple-100 text-purple-800',
+      'Data Science': 'bg-orange-100 text-orange-800',
+      'UI/UX Design': 'bg-pink-100 text-pink-800',
+      'DevOps': 'bg-indigo-100 text-indigo-800',
+      'Database': 'bg-yellow-100 text-yellow-800',
+      'Cloud Computing': 'bg-cyan-100 text-cyan-800',
+      'Artificial Intelligence': 'bg-red-100 text-red-800',
+      'Cybersecurity': 'bg-gray-100 text-gray-800',
+      'Project Management': 'bg-teal-100 text-teal-800',
+      'Soft Skills': 'bg-lime-100 text-lime-800',
+      'Others': 'bg-neutral-100 text-neutral-800',
+    };
+    return colors[category] || 'bg-neutral-100 text-neutral-800';
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -1014,13 +1033,23 @@ export default function ProjectDetailPage() {
                         {project.tema.replace(/-/g, ' ')}
                       </Badge>
                     )}
-                    {project.tags && project.tags.length > 0 && (
+                    {project.competencies && project.competencies.length > 0 ? (
+                      project.competencies.map((comp, index) => {
+                        const name = typeof comp === 'string' ? comp : comp.name || comp.title || comp._id;
+                        const category = typeof comp === 'object' ? comp.category : undefined;
+                        return (
+                          <Badge key={index} className={`${getCategoryColor(category)} text-sm`}>
+                            {name}
+                          </Badge>
+                        );
+                      })
+                    ) : (project.tags && project.tags.length > 0 && (
                       project.tags.map((tag, index) => (
                         <Badge key={index} variant="secondary" className="text-sm">
                           {tag}
                         </Badge>
                       ))
-                    )}
+                    ))}
                   </div>
                 </div>
                 <div className="flex gap-2 flex-shrink-0 flex-wrap">

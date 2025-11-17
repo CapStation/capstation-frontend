@@ -33,13 +33,27 @@ export const endpoints = {
 
   // Users
   users: {
-    base: "/users",
-    profile: "/users/profile",
-    userProfile: (id) => `/users/profile/${id}`,
-    updateProfile: "/users/profile",
-    changePassword: "/users/change-password",
-    search: "/users/search",
-    competencies: (id) => `/users/${id}/competencies`,
+  base: "/users",
+  profile: "/users/profile",
+  userProfile: (id) => `/users/profile/${id}`,
+  updateProfile: "/users/profile",
+  changePassword: "/users/change-password",
+  search: "/users/search",
+  myCompetencies: "/users/competencies", // REMOVE THE /me
+  addCompetency: "/users/competencies",
+  updateCompetency: (index) => `/users/competencies/${index}`,
+  deleteCompetency: (index) => `/users/competencies/${index}`,
+  },  
+
+  competencies: {
+    base: "/competencies",
+    detail: (id) => `/competencies/${id}`,
+    create: "/competencies",
+    update: (id) => `/competencies/${id}`,
+    delete: (id) => `/competencies/${id}`,
+    search: "/competencies/search",
+    byCategory: "/competencies/by-category",
+    categories: "/competencies/categories",
   },
 
   // Projects
@@ -83,6 +97,12 @@ export const endpoints = {
     join: (id) => `/groups/${id}/join`,
     leave: (id) => `/groups/${id}/leave`,
     members: (id) => `/groups/${id}/members`,
+    invite: (id) => `/groups/${id}/invite`,
+    availableUsers: (id) => `/groups/${id}/available-users`,
+    removeMemember: (id) => `/groups/${id}/remove-member`,
+    respondInvitation: (id) => `/groups/${id}/respond-invitation`,
+    requestJoin: (id) => `/groups/${id}/request-join`,
+    respondJoinRequest: (id) => `/groups/${id}/respond-join-request`,
   },
 
   // Announcements
@@ -106,18 +126,21 @@ export const endpoints = {
 
   // Request Decisions
   requests: {
-    base: "/requests",
+    base: '/requests',
+    list: '/requests',
     detail: (id) => `/requests/${id}`,
-    my: "/requests/my",
-    create: "/requests",
+    my: '/requests/my',
+    create: '/requests',
+    decide: (id) => `/requests/${id}/decide`,
+    history: (id) => `/requests/${id}/history`,
     cancel: (id) => `/requests/${id}/cancel`,
   },
 
+
   decisions: {
-    inbox: "/decisions/inbox",
-    history: "/decisions/history",
-    approve: (id) => `/decisions/${id}/approve`,
-    reject: (id) => `/decisions/${id}/reject`,
+    my: '/me/decisions',
+    myHistory: '/me/decisions/history',
+    ownerInbox: '/me/owner/requests',
   },
 
   // Admin

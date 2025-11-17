@@ -12,12 +12,45 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { User, Mail, UserCircle, ArrowLeft, Loader2 } from "lucide-react";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Input } from "@/components/ui/input";
+import { Badge } from "@/components/ui/badge";
+import { User, Mail, UserCircle, ArrowLeft, Loader2, Plus, X, Search } from "lucide-react";
+import CompetencyService from "@/services/CompetencyService";
+import { useToast } from "@/hooks/use-toast";
 
 export default function ProfilePage() {
   const router = useRouter();
   const { user, loading, isAuthenticated } = useAuth();
+  const { toast } = useToast();
+  
   const [isLoadingProfile, setIsLoadingProfile] = useState(true);
+  const [myCompetencies, setMyCompetencies] = useState([]);
+  const [loadingCompetencies, setLoadingCompetencies] = useState(true);
+  
+  
+  const [showAddDialog, setShowAddDialog] = useState(false);
+  const [allCompetencies, setAllCompetencies] = useState([]);
+  const [filteredCompetencies, setFilteredCompetencies] = useState([]);
+  const [categories, setCategories] = useState([]);
+  const [selectedCategory, setSelectedCategory] = useState("all");
+  const [searchQuery, setSearchQuery] = useState("");
+  const [loadingDialog, setLoadingDialog] = useState(false);
+  const [addingCompetency, setAddingCompetency] = useState(false);
 
   useEffect(() => {
     if (!loading) {
@@ -25,9 +58,171 @@ export default function ProfilePage() {
         router.push("/login");
       } else {
         setIsLoadingProfile(false);
+        loadMyCompetencies();
       }
     }
   }, [loading, isAuthenticated, router]);
+
+  const loadMyCompetencies = async () => {
+    setLoadingCompetencies(true);
+    try {
+      const result = await CompetencyService.getMyCompetencies();
+      if (result.success) {
+        setMyCompetencies(result.data || []);
+      } else {
+        toast({
+          title: "Error",
+          description: result.error,
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      console.error("Failed to load competencies:", error);
+    } finally {
+      setLoadingCompetencies(false);
+    }
+  };
+
+  const loadAvailableCompetencies = async () => {
+    setLoadingDialog(true);
+    try {
+      const [competenciesResult, categoriesResult] = await Promise.all([
+        CompetencyService.getAllCompetencies({ limit: 200 }),
+        CompetencyService.getCompetencyCategories(),
+      ]);
+
+      if (competenciesResult.success) {
+        setAllCompetencies(competenciesResult.data || []);
+        setFilteredCompetencies(competenciesResult.data || []);
+      }
+
+      if (categoriesResult.success) {
+        setCategories(categoriesResult.data || []);
+      }
+    } catch (error) {
+      console.error("Failed to load available competencies:", error);
+      toast({
+        title: "Error",
+        description: "Gagal memuat daftar kompetensi",
+        variant: "destructive",
+      });
+    } finally {
+      setLoadingDialog(false);
+    }
+  };
+
+  const handleOpenAddDialog = () => {
+    if (myCompetencies.length >= 20) {
+      toast({
+        title: "Limit Tercapai",
+        description: "Anda sudah mencapai maksimal 20 kompetensi",
+        variant: "destructive",
+      });
+      return;
+    }
+    setShowAddDialog(true);
+    loadAvailableCompetencies();
+  };
+
+  const handleAddCompetency = async (competencyId) => {
+    setAddingCompetency(true);
+    try {
+      const result = await CompetencyService.addCompetency(competencyId);
+      if (result.success) {
+        setMyCompetencies(result.data || []);
+        setShowAddDialog(false);
+        toast({
+          title: "Berhasil",
+          description: result.message || "Kompetensi berhasil ditambahkan",
+        });
+      } else {
+        toast({
+          title: "Error",
+          description: result.error,
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Gagal menambahkan kompetensi",
+        variant: "destructive",
+      });
+    } finally {
+      setAddingCompetency(false);
+    }
+  };
+
+  const handleRemoveCompetency = async (index) => {
+    try {
+      const result = await CompetencyService.removeCompetency(index);
+      if (result.success) {
+        setMyCompetencies(result.data || []);
+        toast({
+          title: "Berhasil",
+          description: result.message || "Kompetensi berhasil dihapus",
+        });
+      } else {
+        toast({
+          title: "Error",
+          description: result.error,
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Gagal menghapus kompetensi",
+        variant: "destructive",
+      });
+    }
+  };
+
+  
+  useEffect(() => {
+    if (!allCompetencies.length) return;
+
+    let filtered = [...allCompetencies];
+
+    
+    if (selectedCategory && selectedCategory !== "all") {
+      filtered = filtered.filter(c => c.category === selectedCategory);
+    }
+
+    
+    if (searchQuery.trim()) {
+      const query = searchQuery.toLowerCase();
+      filtered = filtered.filter(c => 
+        c.name.toLowerCase().includes(query) ||
+        c.description?.toLowerCase().includes(query)
+      );
+    }
+
+    
+    const myCompIds = myCompetencies.map(c => c._id?.toString() || c.toString());
+    filtered = filtered.filter(c => !myCompIds.includes(c._id?.toString() || c.toString()));
+
+    setFilteredCompetencies(filtered);
+  }, [selectedCategory, searchQuery, allCompetencies, myCompetencies]);
+
+  const getCategoryColor = (category) => {
+    const colors = {
+      'Programming Languages': 'bg-blue-100 text-blue-800',
+      'Web Development': 'bg-green-100 text-green-800',
+      'Mobile Development': 'bg-purple-100 text-purple-800',
+      'Data Science': 'bg-orange-100 text-orange-800',
+      'UI/UX Design': 'bg-pink-100 text-pink-800',
+      'DevOps': 'bg-indigo-100 text-indigo-800',
+      'Database': 'bg-yellow-100 text-yellow-800',
+      'Cloud Computing': 'bg-cyan-100 text-cyan-800',
+      'Artificial Intelligence': 'bg-red-100 text-red-800',
+      'Cybersecurity': 'bg-gray-100 text-gray-800',
+      'Project Management': 'bg-teal-100 text-teal-800',
+      'Soft Skills': 'bg-lime-100 text-lime-800',
+      'Others': 'bg-neutral-100 text-neutral-800',
+    };
+    return colors[category] || 'bg-neutral-100 text-neutral-800';
+  };
 
   if (loading || isLoadingProfile) {
     return (
@@ -60,15 +255,15 @@ export default function ProfilePage() {
             Kembali
           </Button>
           <div className="max-w-2xl mx-auto">
-          <h1 className="text-3xl font-bold text-neutral-900">User Profile</h1>
-          <p className="text-muted-foreground mt-2">
-            Informasi profil pengguna Anda
-          </p>
+            <h1 className="text-3xl font-bold text-neutral-900">User Profile</h1>
+            <p className="text-muted-foreground mt-2">
+              Informasi profil pengguna Anda
+            </p>
           </div>
         </div>
 
         {/* Profile Card */}
-        <div className="max-w-2xl mx-auto">
+        <div className="max-w-2xl mx-auto space-y-6">
           <Card>
             <CardHeader>
               <CardTitle>Informasi Pengguna</CardTitle>
@@ -87,11 +282,7 @@ export default function ProfilePage() {
                     Nama Lengkap
                   </p>
                   <p className="text-base font-semibold text-neutral-900">
-                    {user?.name || (
-                      <span className="text-muted-foreground italic">
-                        Loading...
-                      </span>
-                    )}
+                    {user?.name || <span className="text-muted-foreground italic">Loading...</span>}
                   </p>
                 </div>
               </div>
@@ -102,32 +293,15 @@ export default function ProfilePage() {
                   <Mail className="h-5 w-5 text-primary" />
                 </div>
                 <div className="flex-1">
-                  <p className="text-sm font-medium text-muted-foreground mb-1">
-                    Email
-                  </p>
+                  <p className="text-sm font-medium text-muted-foreground mb-1">Email</p>
                   <p className="text-base font-semibold text-neutral-900 break-all">
-                    {user?.email || (
-                      <span className="text-muted-foreground italic">
-                        Loading...
-                      </span>
-                    )}
+                    {user?.email || <span className="text-muted-foreground italic">Loading...</span>}
                   </p>
                   {user?.isVerified !== undefined && (
-                    <span
-                      className={`inline-flex items-center gap-1 mt-2 px-2 py-1 text-xs font-medium rounded-full ${
-                        user.isVerified
-                          ? "bg-green-100 text-green-700"
-                          : "bg-yellow-100 text-yellow-700"
-                      }`}
-                    >
-                      {user.isVerified
-                        ? "✓ Terverifikasi"
-                        : "⏳ Belum Terverifikasi"}
-                    </span>
-                  )}
-                  {user?.isVerified === undefined && (
-                    <span className="text-xs text-muted-foreground italic mt-2 block">
-                      Loading status...
+                    <span className={`inline-flex items-center gap-1 mt-2 px-2 py-1 text-xs font-medium rounded-full ${
+                      user.isVerified ? "bg-green-100 text-green-700" : "bg-yellow-100 text-yellow-700"
+                    }`}>
+                      {user.isVerified ? "✓ Terverifikasi" : "⏳ Belum Terverifikasi"}
                     </span>
                   )}
                 </div>
@@ -139,15 +313,9 @@ export default function ProfilePage() {
                   <UserCircle className="h-5 w-5 text-primary" />
                 </div>
                 <div className="flex-1">
-                  <p className="text-sm font-medium text-muted-foreground mb-1">
-                    Role
-                  </p>
+                  <p className="text-sm font-medium text-muted-foreground mb-1">Role</p>
                   <p className="text-base font-semibold text-neutral-900 capitalize">
-                    {user?.role || (
-                      <span className="text-muted-foreground italic">
-                        Loading...
-                      </span>
-                    )}
+                    {user?.role || <span className="text-muted-foreground italic">Loading...</span>}
                   </p>
                   {user?.role && (
                     <p className="text-xs text-muted-foreground mt-1">
@@ -163,34 +331,85 @@ export default function ProfilePage() {
             </CardContent>
           </Card>
 
+          {/* Competencies Card */}
+          <Card>
+            <CardHeader>
+              <div className="flex items-center justify-between">
+                <div>
+                  <CardTitle>Kompetensi</CardTitle>
+                  <CardDescription>
+                    Kelola kompetensi dan keahlian Anda (Maksimal 20)
+                  </CardDescription>
+                </div>
+                <Button
+                  onClick={handleOpenAddDialog}
+                  size="sm"
+                  disabled={myCompetencies.length >= 20}
+                >
+                  <Plus className="h-4 w-4 mr-2" />
+                  Tambah
+                </Button>
+              </div>
+            </CardHeader>
+            <CardContent>
+              {loadingCompetencies ? (
+                <div className="flex items-center justify-center py-8">
+                  <Loader2 className="h-6 w-6 animate-spin text-primary" />
+                </div>
+              ) : myCompetencies.length === 0 ? (
+                <div className="text-center py-8">
+                  <p className="text-muted-foreground mb-4">
+                    Belum ada kompetensi yang ditambahkan
+                  </p>
+                  <Button onClick={handleOpenAddDialog} variant="outline" size="sm">
+                    <Plus className="h-4 w-4 mr-2" />
+                    Tambah Kompetensi Pertama
+                  </Button>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  <div className="flex flex-wrap gap-2">
+                    {myCompetencies.map((comp, index) => (
+                      <Badge
+                        key={index}
+                        className={`${getCategoryColor(comp.category)} px-3 py-2 flex items-center gap-2`}
+                      >
+                        <span className="font-medium">{comp.name}</span>
+                        <button
+                          onClick={() => handleRemoveCompetency(index)}
+                          className="hover:bg-black/10 rounded-full p-0.5 transition-colors"
+                        >
+                          <X className="h-3 w-3" />
+                        </button>
+                      </Badge>
+                    ))}
+                  </div>
+                  <p className="text-xs text-muted-foreground mt-2">
+                    {myCompetencies.length} / 20 kompetensi
+                  </p>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
           {/* Additional Info Card */}
-          <Card className="mt-6">
+          <Card>
             <CardHeader>
               <CardTitle>Informasi Akun</CardTitle>
             </CardHeader>
             <CardContent className="space-y-3">
               <div className="flex justify-between items-center py-2">
-                <span className="text-sm text-muted-foreground">
-                  Status Akun
-                </span>
+                <span className="text-sm text-muted-foreground">Status Akun</span>
                 <span className="text-sm font-medium text-green-600">
                   {user?.isVerified !== undefined ? (
-                    user.isVerified ? (
-                      "Aktif & Terverifikasi"
-                    ) : (
-                      "Belum Terverifikasi"
-                    )
+                    user.isVerified ? "Aktif & Terverifikasi" : "Belum Terverifikasi"
                   ) : (
-                    <span className="text-muted-foreground italic">
-                      Loading...
-                    </span>
+                    <span className="text-muted-foreground italic">Loading...</span>
                   )}
                 </span>
               </div>
               <div className="flex justify-between items-center py-2 border-t">
-                <span className="text-sm text-muted-foreground">
-                  Member Since
-                </span>
+                <span className="text-sm text-muted-foreground">Member Since</span>
                 <span className="text-sm font-medium">
                   {user?.createdAt ? (
                     new Date(user.createdAt).toLocaleDateString("id-ID", {
@@ -199,9 +418,7 @@ export default function ProfilePage() {
                       day: "numeric",
                     })
                   ) : (
-                    <span className="text-muted-foreground italic">
-                      Loading...
-                    </span>
+                    <span className="text-muted-foreground italic">Loading...</span>
                   )}
                 </span>
               </div>
@@ -209,6 +426,100 @@ export default function ProfilePage() {
           </Card>
         </div>
       </main>
+
+      {/* Add Competency Dialog */}
+      <Dialog open={showAddDialog} onOpenChange={setShowAddDialog}>
+        <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Tambah Kompetensi</DialogTitle>
+            <DialogDescription>
+              Pilih kompetensi yang ingin Anda tambahkan ke profil
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4 py-4">
+            {/* Search and Filter */}
+            <div className="space-y-3">
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input
+                  placeholder="Cari kompetensi..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="pl-9"
+                />
+              </div>
+
+              <Select value={selectedCategory} onValueChange={setSelectedCategory}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Pilih Kategori" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Semua Kategori</SelectItem>
+                  {categories.map((cat) => (
+                    <SelectItem key={cat} value={cat}>
+                      {cat}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Competencies List */}
+            {loadingDialog ? (
+              <div className="flex items-center justify-center py-8">
+                <Loader2 className="h-6 w-6 animate-spin text-primary" />
+              </div>
+            ) : filteredCompetencies.length === 0 ? (
+              <div className="text-center py-8">
+                <p className="text-muted-foreground">
+                  {searchQuery || selectedCategory !== "all"
+                    ? "Tidak ada kompetensi yang sesuai dengan filter"
+                    : "Semua kompetensi telah ditambahkan"}
+                </p>
+              </div>
+            ) : (
+              <div className="space-y-2 max-h-96 overflow-y-auto">
+                {filteredCompetencies.map((comp) => (
+                  <div
+                    key={comp._id}
+                    className="flex items-start justify-between p-3 border rounded-lg hover:bg-accent transition-colors"
+                  >
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2 mb-1">
+                        <p className="font-medium">{comp.name}</p>
+                        <Badge variant="secondary" className="text-xs">
+                          {comp.category}
+                        </Badge>
+                      </div>
+                      {comp.description && (
+                        <p className="text-xs text-muted-foreground">{comp.description}</p>
+                      )}
+                    </div>
+                    <Button
+                      size="sm"
+                      onClick={() => handleAddCompetency(comp._id)}
+                      disabled={addingCompetency}
+                    >
+                      {addingCompetency ? (
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                      ) : (
+                        <Plus className="h-4 w-4" />
+                      )}
+                    </Button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowAddDialog(false)}>
+              Tutup
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
