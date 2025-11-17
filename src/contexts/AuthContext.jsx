@@ -123,6 +123,17 @@ export const AuthProvider = ({ children }) => {
           error.message ||
           "Tidak dapat terhubung ke server. Periksa koneksi internet Anda.";
       }
+      // Handle 403 Forbidden - Email not verified or Role not approved
+      else if (error.status === 403) {
+        // Check for specific error codes
+        if (error.data?.code === "EMAIL_NOT_VERIFIED") {
+          errorMessage = "Email Anda belum diverifikasi. Silakan cek email Anda untuk melakukan verifikasi.";
+        } else if (error.data?.code === "ROLE_NOT_APPROVED") {
+          errorMessage = "Akun Anda belum divalidasi oleh admin. Mohon tunggu hingga admin memvalidasi akun Anda.";
+        } else {
+          errorMessage = error.message || error.data?.message || "Akses ditolak.";
+        }
+      }
       // Handle 401 Unauthorized
       else if (error.status === 401) {
         errorMessage = "Email atau password salah.";

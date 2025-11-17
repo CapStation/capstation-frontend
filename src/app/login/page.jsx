@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useAuth } from "@/contexts/AuthContext";
 import apiClient from "@/lib/api-client";
+import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -21,6 +22,7 @@ import { AlertCircle, Loader2, Mail, Lock, Eye, EyeOff } from "lucide-react";
 export default function LoginPage() {
   const router = useRouter();
   const { login, loginWithGoogle } = useAuth();
+  const { toast } = useToast();
 
   const [formData, setFormData] = useState({
     email: "",
@@ -79,13 +81,51 @@ export default function LoginPage() {
       const result = await login(formData.email, formData.password);
 
       if (result.success) {
+        toast({
+          title: "Login Berhasil",
+          description: "Selamat datang kembali!",
+          variant: "default",
+        });
         router.push("/dashboard");
       } else {
         setError(result.error || "Login gagal. Silakan coba lagi.");
+        
+        // Redirect to account-pending page for specific errors
+        if (result.error?.includes("belum diverifikasi")) {
+          toast({
+            title: "Email Belum Diverifikasi",
+            description: result.error,
+            variant: "destructive",
+          });
+          setTimeout(() => {
+            router.push("/account-pending?reason=not-verified");
+          }, 2000);
+        } else if (result.error?.includes("belum divalidasi")) {
+          toast({
+            title: "Akun Belum Divalidasi",
+            description: result.error,
+            variant: "destructive",
+          });
+          setTimeout(() => {
+            router.push("/account-pending?reason=not-approved");
+          }, 2000);
+        } else {
+          toast({
+            title: "Login Gagal",
+            description: result.error,
+            variant: "destructive",
+          });
+        }
       }
     } catch (err) {
       console.error("Login submit error:", err);
-      setError(err.message || "Terjadi kesalahan. Silakan coba lagi.");
+      const errorMsg = err.message || "Terjadi kesalahan. Silakan coba lagi.";
+      setError(errorMsg);
+      toast({
+        title: "Error",
+        description: errorMsg,
+        variant: "destructive",
+      });
     } finally {
       setLoading(false);
     }
