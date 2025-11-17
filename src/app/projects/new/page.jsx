@@ -8,13 +8,24 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { ArrowLeft, Loader2, Search } from "lucide-react";
+import { ArrowLeft, Loader2, Search, Plus, X } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import CompetencyService from "@/services/CompetencyService";
 import Link from "next/link";
 import projectService from "@/services/ProjectService";
 import UserService from "@/services/UserService";
@@ -40,6 +51,15 @@ export default function NewProjectPage() {
     year: "",
     academicYear: "",
   });
+  const [projectCompetencies, setProjectCompetencies] = useState([]);
+  const [showAddCompetencyDialog, setShowAddCompetencyDialog] = useState(false);
+  const [allCompetencies, setAllCompetencies] = useState([]);
+  const [filteredCompetencies, setFilteredCompetencies] = useState([]);
+  const [competencyCategories, setCompetencyCategories] = useState([]);
+  const [selectedCompetencyCategory, setSelectedCompetencyCategory] = useState('all');
+  const [competencySearchQuery, setCompetencySearchQuery] = useState('');
+  const [loadingCompetencyDialog, setLoadingCompetencyDialog] = useState(false);
+  const [addingCompetency, setAddingCompetency] = useState(false);
 
   useEffect(() => {
     loadDosenList();
@@ -93,6 +113,84 @@ export default function NewProjectPage() {
     setFilteredDosenList(dosenList);
   };
 
+  const loadAvailableCompetencies = async () => {
+    setLoadingCompetencyDialog(true);
+    try {
+      const [competenciesResult, categoriesResult] = await Promise.all([
+        CompetencyService.getAllCompetencies({ limit: 200 }),
+        CompetencyService.getCompetencyCategories(),
+      ]);
+
+      if (competenciesResult.success) {
+        setAllCompetencies(competenciesResult.data || []);
+        setFilteredCompetencies(competenciesResult.data || []);
+      }
+
+      if (categoriesResult.success) {
+        setCompetencyCategories(categoriesResult.data || []);
+      }
+    } catch (error) {
+      console.error('Failed to load competencies:', error);
+      toast({ title: 'Error', description: 'Gagal memuat daftar kompetensi', variant: 'destructive' });
+    } finally {
+      setLoadingCompetencyDialog(false);
+    }
+  };
+
+  const handleOpenAddCompetencyDialog = () => {
+    if (projectCompetencies.length >= 20) {
+      toast({ title: 'Limit Tercapai', description: 'Maksimal 20 kompetensi', variant: 'destructive' });
+      return;
+    }
+    setShowAddCompetencyDialog(true);
+    loadAvailableCompetencies();
+  };
+
+  const handleAddProjectCompetency = async (competencyId) => {
+    setAddingCompetency(true);
+    try {
+      // find competency object
+      const comp = allCompetencies.find(c => (c._id || c.id) === competencyId || c._id === competencyId);
+      if (comp) {
+        // prevent duplicates
+        const exists = projectCompetencies.some(c => (c._id || c.id || c) === (comp._id || comp.id || comp));
+        if (!exists) {
+          setProjectCompetencies(prev => [...prev, comp]);
+        }
+      } else {
+        // fallback: push id
+        setProjectCompetencies(prev => [...prev, competencyId]);
+      }
+      setShowAddCompetencyDialog(false);
+      toast({ title: 'Berhasil', description: 'Kompetensi ditambahkan' });
+    } catch (error) {
+      console.error('Add competency error:', error);
+      toast({ title: 'Error', description: 'Gagal menambahkan kompetensi', variant: 'destructive' });
+    } finally {
+      setAddingCompetency(false);
+    }
+  };
+
+  const handleRemoveProjectCompetency = (index) => {
+    setProjectCompetencies(prev => prev.filter((_, i) => i !== index));
+  };
+
+  // Filter competencies list when searching or category changes
+  useEffect(() => {
+    if (!allCompetencies.length) return;
+    let filtered = [...allCompetencies];
+    if (selectedCompetencyCategory && selectedCompetencyCategory !== 'all') {
+      filtered = filtered.filter(c => c.category === selectedCompetencyCategory);
+    }
+    if (competencySearchQuery.trim()) {
+      const q = competencySearchQuery.toLowerCase();
+      filtered = filtered.filter(c => (c.name || '').toLowerCase().includes(q) || (c.description || '').toLowerCase().includes(q));
+    }
+    const existingIds = projectCompetencies.map(c => c._id?.toString() || c.toString());
+    filtered = filtered.filter(c => !existingIds.includes(c._id?.toString() || c.toString()));
+    setFilteredCompetencies(filtered);
+  }, [selectedCompetencyCategory, competencySearchQuery, allCompetencies, projectCompetencies]);
+
   const generateYearOptions = () => {
     const currentYear = new Date().getFullYear();
     const years = [];
@@ -125,6 +223,7 @@ export default function NewProjectPage() {
       const submitData = {
         ...formData,
         academicYear: formData.academicYear || undefined, // Only send if filled
+        competencies: projectCompetencies ? projectCompetencies.map(c => c._id || c.id || c) : [],
       };
       
       const result = await projectService.createProject(submitData);
@@ -329,15 +428,70 @@ export default function NewProjectPage() {
                 </div>
 
                 <div>
-                  <Label htmlFor="keywords">Kata Kunci</Label>
-                  <Input
-                    id="keywords"
-                    name="keywords"
-                    value={formData.keywords}
-                    onChange={handleChange}
-                    placeholder="Pisahkan dengan koma: IoT, sensor, monitoring"
-                    className="mt-2"
-                  />
+                  <Label>Kompetensi</Label>
+                  <div className="mt-2 flex flex-wrap gap-2">
+                    {projectCompetencies.length > 0 ? (
+                      projectCompetencies.map((c, idx) => (
+                        <Badge key={c._id || c.id || c} className="flex items-center gap-2">
+                          <span>{c.name || c}</span>
+                          <button type="button" onClick={() => handleRemoveProjectCompetency(idx)} className="ml-2">
+                            <X className="h-3 w-3" />
+                          </button>
+                        </Badge>
+                      ))
+                    ) : (
+                      <p className="text-sm text-neutral-500">Belum ada kompetensi ditambahkan</p>
+                    )}
+                  </div>
+                  <div className="mt-2">
+                    <Button type="button" onClick={handleOpenAddCompetencyDialog} variant="outline" className="inline-flex items-center gap-2">
+                      <Plus className="h-4 w-4" /> Tambah Kompetensi
+                    </Button>
+                  </div>
+
+                  <Dialog open={showAddCompetencyDialog} onOpenChange={setShowAddCompetencyDialog}>
+                    <DialogContent>
+                      <DialogHeader>
+                        <DialogTitle>Tambahkan Kompetensi</DialogTitle>
+                        <DialogDescription>Pilih kompetensi yang ingin ditambahkan ke proyek</DialogDescription>
+                      </DialogHeader>
+                      <div className="mt-4">
+                        <div className="flex gap-2 mb-2">
+                          <select value={selectedCompetencyCategory} onChange={e => setSelectedCompetencyCategory(e.target.value)} className="border rounded p-2">
+                            <option value="all">Semua Kategori</option>
+                            {competencyCategories.map(cat => (
+                              <option key={cat} value={cat}>{cat}</option>
+                            ))}
+                          </select>
+                          <Input placeholder="Cari kompetensi..." value={competencySearchQuery} onChange={e => setCompetencySearchQuery(e.target.value)} />
+                        </div>
+                        <div className="max-h-60 overflow-y-auto grid grid-cols-1 gap-2">
+                          {loadingCompetencyDialog ? (
+                            <div className="p-4 text-center"><Loader2 className="animate-spin h-4 w-4 mx-auto" /></div>
+                          ) : filteredCompetencies.length === 0 ? (
+                            <div className="p-4 text-center text-neutral-500">Tidak ada kompetensi</div>
+                          ) : (
+                            filteredCompetencies.map(comp => (
+                              <div key={comp._id || comp.id || comp} className="flex items-center justify-between p-2 border rounded-md">
+                                <div>
+                                  <div className="font-medium">{comp.name}</div>
+                                  <div className="text-xs text-neutral-500">{comp.category}</div>
+                                </div>
+                                <div>
+                                  <Button type="button" size="sm" onClick={() => handleAddProjectCompetency(comp._id || comp.id || comp)} disabled={addingCompetency}>
+                                    Tambah
+                                  </Button>
+                                </div>
+                              </div>
+                            ))
+                          )}
+                        </div>
+                      </div>
+                      <DialogFooter>
+                        <Button type="button" variant="outline" onClick={() => setShowAddCompetencyDialog(false)}>Tutup</Button>
+                      </DialogFooter>
+                    </DialogContent>
+                  </Dialog>
                 </div>
 
                 <div className="flex gap-4 pt-4">
