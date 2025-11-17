@@ -75,6 +75,25 @@ class ProjectService {
     }
   }
 
+  async getAvailableProjects() {
+    try {
+      console.log('📊 ProjectService: Fetching available projects');
+      const response = await apiClient.get(`${API_ENDPOINTS.projects.list}?status=dapat_dilanjutkan`);
+      console.log('✅ ProjectService: Available projects response:', response);
+      
+      // Return the count of available projects
+      const projects = response.data || response;
+      return { 
+        success: true, 
+        count: Array.isArray(projects) ? projects.length : 0,
+        data: projects
+      };
+    } catch (error) {
+      console.error("❌ ProjectService.getAvailableProjects error:", error);
+      return { success: false, error: error.message, count: 0 };
+    }
+  }
+
   async createProject(projectData) {
     try {
       const response = await apiClient.post(API_ENDPOINTS.projects.create, projectData);
