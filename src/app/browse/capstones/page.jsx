@@ -36,7 +36,8 @@ export default function BrowseCapstonesPage() {
   const [activeTab, setActiveTab] = useState("all"); // "new", "available", "all"
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("all");
-  const [selectedAvailability, setSelectedAvailability] = useState("all");
+  const [selectedStatus, setSelectedStatus] = useState("all");
+  const [selectedAcademicYear, setSelectedAcademicYear] = useState("all");
   const [sortBy, setSortBy] = useState("newest");
   const [showFilters, setShowFilters] = useState(false);
 
@@ -50,7 +51,7 @@ export default function BrowseCapstonesPage() {
 
   useEffect(() => {
     applyFilters();
-  }, [allProjects, activeTab, searchQuery, selectedCategory, selectedAvailability, sortBy]);
+  }, [allProjects, activeTab, searchQuery, selectedCategory, selectedStatus, selectedAcademicYear, sortBy]);
 
   const loadProjects = async () => {
     setLoading(true);
@@ -58,7 +59,11 @@ export default function BrowseCapstonesPage() {
       const result = await ProjectService.getAllProjects();
       
       if (result.success && Array.isArray(result.data)) {
-        setAllProjects(result.data);
+        // Filter hanya project dengan status: active, selesai, dapat_dilanjutkan
+        const filteredData = result.data.filter(p => 
+          p.status === 'active' || p.status === 'selesai' || p.status === 'dapat_dilanjutkan'
+        );
+        setAllProjects(filteredData);
       } else {
         // Fallback to mock data
         setAllProjects(generateMockProjects(30));
@@ -77,10 +82,17 @@ export default function BrowseCapstonesPage() {
 
     // Tab filter
     if (activeTab === "new") {
-      const sortedByDate = [...result].sort((a, b) => 
-        new Date(b.createdAt) - new Date(a.createdAt)
-      );
-      result = sortedByDate.slice(0, 12);
+      // Filter projects created within last 2 weeks (14 days)
+      const twoWeeksAgo = new Date();
+      twoWeeksAgo.setDate(twoWeeksAgo.getDate() - 14);
+      
+      result = result.filter(p => {
+        const createdDate = new Date(p.createdAt);
+        return createdDate >= twoWeeksAgo;
+      });
+      
+      // Sort by newest first
+      result.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
     } else if (activeTab === "available") {
       result = result.filter(p => 
         p.status === 'dapat_dilanjutkan'
@@ -90,33 +102,64 @@ export default function BrowseCapstonesPage() {
     // Search filter
     if (searchQuery.trim()) {
       const query = searchQuery.toLowerCase();
-      result = result.filter(p => 
-        p.title?.toLowerCase().includes(query) ||
-        p.keywords?.toLowerCase().includes(query) ||
-        p.supervisor?.name?.toLowerCase().includes(query) ||
-        p.supervisor?.toLowerCase().includes(query)
-      );
+      result = result.filter(p => {
+        // Search in title
+        const titleMatch = p.title?.toLowerCase().includes(query);
+        
+        // Search in keywords
+        const keywordsMatch = p.keywords?.toLowerCase().includes(query);
+        
+        // Search in supervisor (bisa object atau string)
+        let supervisorMatch = false;
+        if (p.supervisor) {
+          if (typeof p.supervisor === 'object' && p.supervisor !== null) {
+            // Supervisor adalah object, cek di field name, fullName, username
+            supervisorMatch = 
+              p.supervisor.fullName?.toLowerCase().includes(query) ||
+              p.supervisor.name?.toLowerCase().includes(query) ||
+              p.supervisor.username?.toLowerCase().includes(query) ||
+              p.supervisor.email?.toLowerCase().includes(query);
+          } else if (typeof p.supervisor === 'string') {
+            // Supervisor adalah string
+            supervisorMatch = p.supervisor.toLowerCase().includes(query);
+          }
+        }
+        
+        // Search in owner (bisa object atau string)
+        let ownerMatch = false;
+        if (p.owner) {
+          if (typeof p.owner === 'object' && p.owner !== null) {
+            // Owner adalah object, cek di field name, fullName, username
+            ownerMatch = 
+              p.owner.fullName?.toLowerCase().includes(query) ||
+              p.owner.name?.toLowerCase().includes(query) ||
+              p.owner.username?.toLowerCase().includes(query) ||
+              p.owner.email?.toLowerCase().includes(query);
+          } else if (typeof p.owner === 'string') {
+            // Owner adalah string
+            ownerMatch = p.owner.toLowerCase().includes(query);
+          }
+        }
+        
+        return titleMatch || keywordsMatch || supervisorMatch || ownerMatch;
+      });
     }
 
-    // Category filter
+    // Tema filter
     if (selectedCategory && selectedCategory !== "all") {
       result = result.filter(p => 
-        p.category?.toLowerCase() === selectedCategory.toLowerCase() ||
-        p.theme?.toLowerCase() === selectedCategory.toLowerCase()
+        p.tema?.toLowerCase() === selectedCategory.toLowerCase()
       );
     }
 
-    // Availability filter
-    if (selectedAvailability && selectedAvailability !== "all") {
-      if (selectedAvailability === "tersedia") {
-        result = result.filter(p => 
-          p.status === 'dapat_dilanjutkan'
-        );
-      } else if (selectedAvailability === "tidak-tersedia") {
-        result = result.filter(p => 
-          p.status !== 'dapat_dilanjutkan'
-        );
-      }
+    // Status filter
+    if (selectedStatus && selectedStatus !== "all") {
+      result = result.filter(p => p.status === selectedStatus);
+    }
+
+    // Academic Year filter
+    if (selectedAcademicYear && selectedAcademicYear !== "all") {
+      result = result.filter(p => p.academicYear === selectedAcademicYear);
     }
 
     // Sort
@@ -139,13 +182,14 @@ export default function BrowseCapstonesPage() {
   const clearFilters = () => {
     setSearchQuery("");
     setSelectedCategory("all");
-    setSelectedAvailability("all");
+    setSelectedStatus("all");
+    setSelectedAcademicYear("all");
     setSortBy("newest");
     setActiveTab("all");
     setCurrentPage(1);
   };
 
-  const hasActiveFilters = searchQuery || selectedCategory !== "all" || selectedAvailability !== "all" || sortBy !== "newest";
+  const hasActiveFilters = searchQuery || selectedCategory !== "all" || selectedStatus !== "all" || selectedAcademicYear !== "all" || sortBy !== "newest";
 
   // Pagination calculations
   const totalPages = Math.ceil(filteredProjects.length / itemsPerPage);
@@ -219,52 +263,74 @@ export default function BrowseCapstonesPage() {
                 onClick={() => setShowFilters(!showFilters)}
                 className="w-full"
               >
-                <Filter className="h-4 w-4 mr-2" />
+                <Filter className="h-4 w-4 mr-1" />
                 {showFilters ? "Sembunyikan Filter" : "Tampilkan Filter"}
               </Button>
             </div>
 
             {/* Filters */}
-            <div className={`grid grid-cols-1 lg:grid-cols-4 gap-4 ${showFilters ? 'block' : 'hidden lg:grid'}`}>
-              {/* Category Filter */}
+            <div className={`grid grid-cols-1 lg:grid-cols-5 gap-4 ${showFilters ? 'block' : 'hidden lg:grid'}`}>
+              {/* Tema Filter */}
               <div>
                 <label className="block text-sm font-medium text-neutral-700 mb-2">
-                  Kategori
+                  Tema
                 </label>
                 <Select
                   value={selectedCategory}
                   onValueChange={setSelectedCategory}
                 >
                   <SelectTrigger>
-                    <SelectValue placeholder="Semua Kategori" />
+                    <SelectValue placeholder="Semua Tema" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="all">Semua Kategori</SelectItem>
-                    <SelectItem value="Kesehatan">Kesehatan</SelectItem>
-                    <SelectItem value="Smart City">Smart City</SelectItem>
-                    <SelectItem value="IoT">IoT</SelectItem>
-                    <SelectItem value="Pengelolaan Sampah">Pengelolaan Sampah</SelectItem>
-                    <SelectItem value="AI/ML">AI/ML</SelectItem>
+                    <SelectItem value="all">Semua Tema</SelectItem>
+                    <SelectItem value="kesehatan">Kesehatan</SelectItem>
+                    <SelectItem value="smart_city">Smart City</SelectItem>
+                    <SelectItem value="pengelolaan_sampah">Pengelolaan Sampah</SelectItem>
+                    <SelectItem value="transportasi_ramah_lingkungan">Transportasi Ramah Lingkungan</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
 
-              {/* Availability Filter */}
+              {/* Status Filter */}
               <div>
                 <label className="block text-sm font-medium text-neutral-700 mb-2">
-                  Ketersediaan
+                  Status
                 </label>
                 <Select
-                  value={selectedAvailability}
-                  onValueChange={setSelectedAvailability}
+                  value={selectedStatus}
+                  onValueChange={setSelectedStatus}
                 >
                   <SelectTrigger>
-                    <SelectValue placeholder="Semua" />
+                    <SelectValue placeholder="Semua Status" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="all">Semua</SelectItem>
-                    <SelectItem value="tersedia">Tersedia</SelectItem>
-                    <SelectItem value="tidak-tersedia">Tidak Tersedia</SelectItem>
+                    <SelectItem value="all">Semua Status</SelectItem>
+                    <SelectItem value="active">Aktif</SelectItem>
+                    <SelectItem value="selesai">Selesai</SelectItem>
+                    <SelectItem value="dapat_dilanjutkan">Dapat Dilanjutkan</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* Tahun Ajaran Filter */}
+              <div>
+                <label className="block text-sm font-medium text-neutral-700 mb-2">
+                  Tahun Ajaran
+                </label>
+                <Select
+                  value={selectedAcademicYear}
+                  onValueChange={setSelectedAcademicYear}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Semua Tahun" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Semua Tahun</SelectItem>
+                    <SelectItem value="Gasal-2024">Gasal 2024</SelectItem>
+                    <SelectItem value="Genap-2025">Genap 2025</SelectItem>
+                    <SelectItem value="Gasal-2025">Gasal 2025</SelectItem>
+                    <SelectItem value="Genap-2026">Genap 2026</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -297,7 +363,7 @@ export default function BrowseCapstonesPage() {
                     onClick={clearFilters}
                     className="w-full"
                   >
-                    <X className="h-4 w-4 mr-2" />
+                    <X className="h-4 w-4 mr-1" />
                     Reset Filter
                   </Button>
                 )}
@@ -309,9 +375,9 @@ export default function BrowseCapstonesPage() {
         {/* Tabs Navigation using shadcn Tabs */}
         <Tabs value={activeTab} onValueChange={setActiveTab} className="mb-6">
           <TabsList className="grid w-full max-w-md grid-cols-3">
+            <TabsTrigger value="all">Semua Proyek</TabsTrigger>
             <TabsTrigger value="new">Proyek Terbaru</TabsTrigger>
             <TabsTrigger value="available">Proyek Tersedia</TabsTrigger>
-            <TabsTrigger value="all">Semua Proyek</TabsTrigger>
           </TabsList>
         </Tabs>
 
@@ -340,12 +406,18 @@ export default function BrowseCapstonesPage() {
                 <div className="max-w-md mx-auto">
                   <Search className="h-16 w-16 text-neutral-300 mx-auto mb-4" />
                   <h3 className="text-lg font-semibold text-neutral-900 mb-2">
-                    Tidak ada proyek yang ditemukan
+                    {activeTab === "new" 
+                      ? "Tidak ada proyek terbaru untuk saat ini"
+                      : "Tidak ada proyek yang ditemukan"
+                    }
                   </h3>
                   <p className="text-neutral-500 mb-4">
-                    Coba ubah filter atau kata kunci pencarian Anda
+                    {activeTab === "new"
+                      ? "Belum ada proyek yang dibuat dalam 2 minggu terakhir"
+                      : "Coba ubah filter atau kata kunci pencarian Anda"
+                    }
                   </p>
-                  {hasActiveFilters && (
+                  {hasActiveFilters && activeTab !== "new" && (
                     <Button onClick={clearFilters} variant="outline">
                       Reset Semua Filter
                     </Button>
@@ -447,3 +519,5 @@ export default function BrowseCapstonesPage() {
     </div>
   );
 }
+
+
