@@ -57,7 +57,7 @@ export default function Navbar({ className = "" }) {
 
   return (
     <nav className={`bg-white border-b border-neutral-200 sticky top-0 z-50 ${className}`}>
-      <div className="container mx-auto px-24">
+      <div className="container mx-auto px-20">
         <div className="flex items-center justify-between h-16">
           <div className="flex items-center gap-8">
             <Link href="/dashboard" className="text-2xl font-bold text-primary">
@@ -68,14 +68,6 @@ export default function Navbar({ className = "" }) {
                 height={150}
                 />
             </Link>
-            <div className="relative hidden md:block">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-neutral-400" />
-              <input
-                type="text"
-                placeholder="Search..."
-                className="pl-10 pr-4 py-2 border border-neutral-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary w-64"
-              />
-            </div>
           </div>
 
           <div className="flex items-center gap-4">
