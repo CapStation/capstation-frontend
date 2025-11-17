@@ -4,6 +4,8 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useAuth } from "@/contexts/AuthContext";
+import apiClient from "@/lib/api-client";
+import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -20,6 +22,7 @@ import { AlertCircle, Loader2, Mail, Lock, Eye, EyeOff } from "lucide-react";
 export default function LoginPage() {
   const router = useRouter();
   const { login, loginWithGoogle } = useAuth();
+  const { toast } = useToast();
 
   const [formData, setFormData] = useState({
     email: "",
@@ -34,31 +37,30 @@ export default function LoginPage() {
   useEffect(() => {
     const checkApi = async () => {
       try {
-        const apiUrl =
-          process.env.NEXT_PUBLIC_API_URL ||
-          "https://capstation-backend.vercel.app/api";
-        const response = await fetch(`${apiUrl}/health`, {
-          method: "GET",
-          headers: {
-            "Content-Type": "application/json",
-          },
-        });
+        // Use apiClient instead of fetch for consistent CORS handling
+        const response = await apiClient.get("/health");
 
-        if (response.ok) {
-          const data = await response.json();
-          if (data.success) {
-            setApiStatus("connected");
-          } else {
-            setApiStatus("error");
-          }
+        if (response && response.success) {
+          setApiStatus("connected");
         } else {
           setApiStatus("error");
         }
       } catch (err) {
-        console.error("API check failed:", err);
-        setApiStatus("offline");
+        console.error("API health check failed:", {
+          message: err?.message || "Unknown error",
+          status: err?.status,
+          isNetworkError: err?.isNetworkError,
+        });
+
+        // Determine specific error status
+        if (err?.isNetworkError || err?.message?.includes("fetch")) {
+          setApiStatus("offline");
+        } else {
+          setApiStatus("error");
+        }
       }
     };
+
     checkApi();
   }, []);
 
@@ -79,13 +81,51 @@ export default function LoginPage() {
       const result = await login(formData.email, formData.password);
 
       if (result.success) {
+        toast({
+          title: "Login Berhasil",
+          description: "Selamat datang kembali!",
+          variant: "default",
+        });
         router.push("/dashboard");
       } else {
         setError(result.error || "Login gagal. Silakan coba lagi.");
+
+        // Redirect to account-pending page for specific errors
+        if (result.error?.includes("belum diverifikasi")) {
+          toast({
+            title: "Email Belum Diverifikasi",
+            description: result.error,
+            variant: "destructive",
+          });
+          setTimeout(() => {
+            router.push("/account-pending?reason=not-verified");
+          }, 2000);
+        } else if (result.error?.includes("belum divalidasi")) {
+          toast({
+            title: "Akun Belum Divalidasi",
+            description: result.error,
+            variant: "destructive",
+          });
+          setTimeout(() => {
+            router.push("/account-pending?reason=not-approved");
+          }, 2000);
+        } else {
+          toast({
+            title: "Login Gagal",
+            description: result.error,
+            variant: "destructive",
+          });
+        }
       }
     } catch (err) {
       console.error("Login submit error:", err);
-      setError(err.message || "Terjadi kesalahan. Silakan coba lagi.");
+      const errorMsg = err.message || "Terjadi kesalahan. Silakan coba lagi.";
+      setError(errorMsg);
+      toast({
+        title: "Error",
+        description: errorMsg,
+        variant: "destructive",
+      });
     } finally {
       setLoading(false);
     }
