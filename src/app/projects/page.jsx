@@ -346,7 +346,7 @@ export default function ProjectsPage() {
                         Lihat Grup
                       </Button>
                     </Link>
-                    <Link href={`/projects/${myProject._id}/requests`} className="flex-1">
+                    <Link href={`/request`} className="flex-1">
                       <Button className="w-full bg-[#FF8730] hover:bg-[#FF8730]/90 text-white">
                         Lihat Request
                       </Button>

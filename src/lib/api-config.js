@@ -120,18 +120,21 @@ export const endpoints = {
 
   // Request Decisions
   requests: {
-    base: "/requests",
+    base: '/requests',
+    list: '/requests',
     detail: (id) => `/requests/${id}`,
-    my: "/requests/my",
-    create: "/requests",
+    my: '/requests/my',
+    create: '/requests',
+    decide: (id) => `/requests/${id}/decide`,
+    history: (id) => `/requests/${id}/history`,
     cancel: (id) => `/requests/${id}/cancel`,
   },
 
+
   decisions: {
-    inbox: "/decisions/inbox",
-    history: "/decisions/history",
-    approve: (id) => `/decisions/${id}/approve`,
-    reject: (id) => `/decisions/${id}/reject`,
+    my: '/me/decisions',
+    myHistory: '/me/decisions/history',
+    ownerInbox: '/me/owner/requests',
   },
 
   // Admin

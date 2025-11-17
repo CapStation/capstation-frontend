@@ -27,6 +27,7 @@ import {
   FileText,
   Search,
   FolderOpen,
+  History,
   User,
   LogOut,
   UserCircle,
@@ -95,6 +96,12 @@ export default function Navbar({ className = "" }) {
                 <FileText className="h-4 w-4 mr-2" />
                 Browse
               </Button>
+            </Link>
+            <Link href="/request">
+              <Button variant="ghost" size="sm">
+                <History className="h-4 w-4 mr-2"/>
+                Request
+                </Button>
             </Link>
             {user?.role === "admin" && (
               <Link href="/admin">
