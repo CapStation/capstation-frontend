@@ -66,12 +66,14 @@ const inferStatusFromReason = (reason) => {
 };
 
 const getStatusLabel = (status) => {
-  if (!status) return "Pending";
+  if (!status) return "Menunggu";
   const lower = status.toLowerCase();
-  if (lower === "accepted") return "Accepted";
-  if (lower === "rejected") return "Rejected";
-  if (lower === "cancelled" || lower === "canceled") return "Cancelled";
-  return "Pending";
+
+  if (lower === "accepted") return "Diterima";
+  if (lower === "rejected") return "Ditolak";
+  if (lower === "cancelled" || lower === "canceled") return "Dibatalkan";
+
+  return "Menunggu";
 };
 
 const getStatusClass = (status) => {
