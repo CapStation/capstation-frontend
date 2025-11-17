@@ -34,6 +34,8 @@ import {
   ChevronDown,
 } from "lucide-react";
 
+import Image from "next/image";
+
 export default function Navbar({ className = "" }) {
   const router = useRouter();
   const { user, logout } = useAuth();
@@ -54,14 +56,17 @@ export default function Navbar({ className = "" }) {
   };
 
   return (
-    <nav
-      className={`bg-white border-b border-neutral-200 sticky top-0 z-50 ${className}`}
-    >
-      <div className="container mx-auto px-4">
+    <nav className={`bg-white border-b border-neutral-200 sticky top-0 z-50 ${className}`}>
+      <div className="container mx-auto px-24">
         <div className="flex items-center justify-between h-16">
           <div className="flex items-center gap-8">
             <Link href="/dashboard" className="text-2xl font-bold text-primary">
-              CapStation
+              <Image 
+                src="/LogoVertical.png" 
+                alt="CapStation Logo" 
+                width={150} 
+                height={150}
+                />
             </Link>
             <div className="relative hidden md:block">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-neutral-400" />
@@ -92,20 +97,11 @@ export default function Navbar({ className = "" }) {
                 Browse
               </Button>
             </Link>
-            <Link href="/request">
-              <Button variant="ghost" size="sm">
-                <History className="h-4 w-4 mr-2"/>
-                Request
-                </Button>
-            </Link>
-            <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center text-white font-semibold">
-              {user?.name?.charAt(0) || "U"}
-            </div>
-            {(user?.role === "admin" || user?.role === "dosen") && (
-              <Link href="/documents">
+            {user?.role === "admin" && (
+              <Link href="/admin">
                 <Button variant="ghost" size="sm">
                   <FolderOpen className="h-4 w-4 mr-2" />
-                  Dokumen Admin
+                  Dashboard Admin
                 </Button>
               </Link>
             )}

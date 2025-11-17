@@ -1,5 +1,5 @@
 import apiClient from '@/lib/api-client';
-import { API_ENDPOINTS } from '@/lib/api-config';
+import { endpoints } from '@/lib/api-config';
 
 /**
  * Dashboard Service Class
@@ -7,17 +7,43 @@ import { API_ENDPOINTS } from '@/lib/api-config';
  */
 class DashboardService {
   /**
-   * Get dashboard statistics
+   * Get complete dashboard data (all stats, announcements, etc.)
+   * This endpoint returns all dashboard data in one call
+   * @returns {Promise<Object>} Complete dashboard data
+   */
+  async getDashboardData() {
+    try {
+      // Use /dashboard endpoint directly (not /dashboard/stats)
+      console.log('📡 Fetching dashboard data from:', '/dashboard');
+      const response = await apiClient.get('/dashboard');
+      console.log('✅ Dashboard data received:', response);
+      return { success: true, data: response };
+    } catch (error) {
+      console.error('❌ Dashboard API Error:', {
+        message: error.message,
+        status: error.status,
+        data: error.data,
+        endpoint: '/dashboard'
+      });
+      return { 
+        success: false, 
+        error: error.message || error.data?.message || 'Gagal mengambil data dashboard' 
+      };
+    }
+  }
+
+  /**
+   * Get dashboard statistics only
    * @returns {Promise<Object>} Dashboard stats data
    */
   async getStats() {
     try {
-      const response = await apiClient.get(API_ENDPOINTS.DASHBOARD.STATS);
+      const response = await apiClient.get('/dashboard');
       return { success: true, data: response };
     } catch (error) {
       return { 
         success: false, 
-        error: error.response?.data?.message || 'Gagal mengambil statistik dashboard' 
+        error: error.message || 'Gagal mengambil statistik dashboard' 
       };
     }
   }
@@ -30,13 +56,13 @@ class DashboardService {
   async getRecentAnnouncements(limit = 5) {
     try {
       const response = await apiClient.get(
-        `${API_ENDPOINTS.DASHBOARD.ANNOUNCEMENTS}?limit=${limit}`
+        `${endpoints.announcements.base}?limit=${limit}`
       );
       return { success: true, data: response };
     } catch (error) {
       return { 
         success: false, 
-        error: error.response?.data?.message || 'Gagal mengambil pengumuman terbaru' 
+        error: error.message || 'Gagal mengambil pengumuman terbaru' 
       };
     }
   }
@@ -49,13 +75,13 @@ class DashboardService {
   async getRecentActivities(limit = 10) {
     try {
       const response = await apiClient.get(
-        `${API_ENDPOINTS.DASHBOARD.ACTIVITIES}?limit=${limit}`
+        `${endpoints.dashboard.activities}?limit=${limit}`
       );
       return { success: true, data: response };
     } catch (error) {
       return { 
         success: false, 
-        error: error.response?.data?.message || 'Gagal mengambil aktivitas terbaru' 
+        error: error.message || 'Gagal mengambil aktivitas terbaru' 
       };
     }
   }
