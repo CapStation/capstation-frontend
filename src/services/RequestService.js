@@ -27,76 +27,72 @@ class RequestService {
     }
   }
 
-// membuat request baru (ketika klik Lanjutkan)
-async createRequest(payload) {
-  try {
-    const response = await apiClient.post(
-      API_ENDPOINTS.requests.create,
-      payload
-    );
-    return {
-      success: true,
-      data: response.data || response,
-    };
-  } catch (error) {
-    console.error("RequestService.createRequest error:", error);
+  // membuat request baru (ketika klik Lanjutkan)
+  async createRequest(payload) {
+    try {
+      const response = await apiClient.post(
+        API_ENDPOINTS.requests.create,
+        payload
+      );
+      return {
+        success: true,
+        data: response.data || response,
+      };
+    } catch (error) {
+      console.error("RequestService.createRequest error:", error);
 
-    const data = error.response?.data;
-    // log supaya kelihatan di console browser juga
-    console.log("createRequest backend error data:", data);
+      const data = error.response?.data;
+      console.log("createRequest backend error data:", data);
 
-    let message = "Gagal membuat request capstone";
+      let message = "Gagal membuat request capstone";
 
-    if (data?.error) {
-      message = data.error;
-    } else if (data?.message) {
-      message = data.message;
-    } else if (typeof data === "string") {
-      message = data;
-    } else if (data) {
-      // kalau backend kirim object lain (misalnya { errors: [...] })
-      try {
-        message = JSON.stringify(data);
-      } catch {
-        // biarkan default
+      if (data?.error) {
+        message = data.error;
+      } else if (data?.message) {
+        message = data.message;
+      } else if (typeof data === "string") {
+        message = data;
+      } else if (data) {
+        try {
+          message = JSON.stringify(data);
+        } catch {
+          // biarkan default
+        }
       }
+
+      return {
+        success: false,
+        error: message,
+      };
     }
-
-    return {
-      success: false,
-      error: message,
-    };
   }
-}
 
+  // batalkan request
+  async cancelRequest(id) {
+    try {
+      const res = await apiClient.delete(
+        API_ENDPOINTS.requests.cancel(id)
+      );
+      return {
+        success: true,
+        data: res.data,
+      };
+    } catch (error) {
+      console.error("RequestService.cancelRequest error:", error);
+      console.log("cancelRequest response:", error?.response?.data);
 
-// batalkan request
-async cancelRequest(id) {
-  try {
-    const res = await apiClient.delete(API_ENDPOINTS.requests.cancel(id));
-    // kalau berhasil, kirim data balik
-    return {
-      success: true,
-      data: res.data,
-    };
-  } catch (error) {
-    console.error("RequestService.cancelRequest error:", error);
+      const msg =
+        error?.response?.data?.error ||
+        error?.response?.data?.message ||
+        error.message ||
+        "Gagal membatalkan request capstone";
 
-    // LOG semua isi respon supaya kelihatan di console browser
-    console.log("cancelRequest response:", error?.response?.data);
-
-    const msg =
-      error?.response?.data?.error ||   // backend-mu sering pakai key "error"
-      error?.response?.data?.message ||
-      error.message ||
-      "Gagal membatalkan request capstone";
-
-    return {
-      success: false,
-      error: msg,
-    };
+      return {
+        success: false,
+        error: msg,
+      };
+    }
   }
-}
 
   // detail satu request (dipakai di halaman decision / history detail)
   async getRequestDetail(id) {
@@ -112,7 +108,11 @@ async cancelRequest(id) {
         data,
       };
     } catch (error) {
-      console.error("RequestService.getRequestDetail error:", error);
+      // pakai warn supaya tidak muncul overlay merah di Next dev
+      console.warn("RequestService.getRequestDetail error:", {
+        response: error?.response?.data,
+        message: error?.message,
+      });
       return {
         success: false,
         error:
@@ -152,7 +152,7 @@ async cancelRequest(id) {
     }
   }
 
-  // detail satu request (versi umum, sama saja, disatukan dengan getRequestDetail)
+  // detail satu request (versi umum)
   async getRequestById(id) {
     return this.getRequestDetail(id);
   }
@@ -221,7 +221,6 @@ async cancelRequest(id) {
         API_ENDPOINTS.decisions.ownerInbox
       );
 
-      // backend: { count, data: [...] } atau langsung array
       const raw = response.data || response;
       const data = Array.isArray(raw) ? raw : raw.data || [];
 
@@ -240,31 +239,34 @@ async cancelRequest(id) {
     }
   }
 
-// ubah keputusan (owner / dosen)
-async decideRequest(requestId, payload) {
-  try {
-    const res = await apiClient.patch(
-      API_ENDPOINTS.requests.decide(requestId),
-      payload
-    );
+  // ubah keputusan (owner / dosen)
+  async decideRequest(requestId, payload) {
+    try {
+      const res = await apiClient.patch(
+        API_ENDPOINTS.requests.decide(requestId),
+        payload
+      );
 
-    return {
-      success: true,
-      data: res.data?.data || res.data,
-    };
-  } catch (error) {
-    const data = error.response?.data;
-    console.error("RequestService.decideRequest api error:", data || error.message);
+      return {
+        success: true,
+        data: res.data?.data || res.data,
+      };
+    } catch (error) {
+      const data = error.response?.data;
+      console.error(
+        "RequestService.decideRequest api error:",
+        data || error.message
+      );
 
-    return {
-      success: false,
-      error:
-        data?.error ||
-        data?.message ||
-        "Gagal mengubah keputusan request capstone",
-    };
+      return {
+        success: false,
+        error:
+          data?.error ||
+          data?.message ||
+          "Gagal mengubah keputusan request capstone",
+      };
+    }
   }
-}
 }
 
 const requestService = new RequestService();
