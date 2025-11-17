@@ -97,6 +97,12 @@ export const endpoints = {
     join: (id) => `/groups/${id}/join`,
     leave: (id) => `/groups/${id}/leave`,
     members: (id) => `/groups/${id}/members`,
+    invite: (id) => `/groups/${id}/invite`,
+    availableUsers: (id) => `/groups/${id}/available-users`,
+    removeMemember: (id) => `/groups/${id}/remove-member`,
+    respondInvitation: (id) => `/groups/${id}/respond-invitation`,
+    requestJoin: (id) => `/groups/${id}/request-join`,
+    respondJoinRequest: (id) => `/groups/${id}/respond-join-request`,
   },
 
   // Announcements
