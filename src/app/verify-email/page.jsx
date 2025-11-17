@@ -43,7 +43,6 @@ function VerifyEmailContent() {
             setCountdown((prev) => {
               if (prev <= 1) {
                 clearInterval(interval);
-                router.push("/login");
                 return 0;
               }
               return prev - 1;
@@ -67,7 +66,14 @@ function VerifyEmailContent() {
     };
 
     verifyEmail();
-  }, [searchParams, router]);
+  }, [searchParams]);
+
+  // Separate useEffect for navigation when countdown reaches 0
+  useEffect(() => {
+    if (status === "success" && countdown === 0) {
+      router.push("/login");
+    }
+  }, [countdown, status, router]);
 
   // Loading State
   if (status === "verifying") {
