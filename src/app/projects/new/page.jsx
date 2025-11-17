@@ -78,7 +78,12 @@ export default function NewProjectPage() {
     try {
       const result = await UserService.getAllUsers();
       if (result.success && result.data) {
-        const dosenUsers = result.data.filter(user => user.role === 'dosen');
+        // Filter hanya dosen yang terverifikasi dan role approved
+        const dosenUsers = result.data.filter(user => 
+          user.role === 'dosen' && 
+          user.isVerified === true && 
+          user.roleApproved === true
+        );
         setDosenList(dosenUsers);
         setFilteredDosenList(dosenUsers);
       }
