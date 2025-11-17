@@ -46,16 +46,26 @@ export default function RequestDecisionPage() {
   const requestId = searchParams.get("requestId");
   const action = searchParams.get("action") || "accepted"; // "accepted" | "rejected"
 
+  // data fallback dari query string
+  const titleFromQuery = searchParams.get("title");
+  const groupFromQuery = searchParams.get("groupName");
+  const tahunFromQuery = searchParams.get("tahun");
+  const temaFromQuery = searchParams.get("tema");
+
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
-  const [errorMessage, setErrorMessage] = useState("");
+
+  // pisah error load dan error submit
+  const [loadError, setLoadError] = useState("");
+  const [submitError, setSubmitError] = useState("");
 
   const [requestDetail, setRequestDetail] = useState(null);
   const [reason, setReason] = useState("");
 
   const targetStatus = action === "rejected" ? "rejected" : "accepted";
 
-  const pageTitle = targetStatus === "rejected" ? "Tolak Pengajuan" : "Setujui Pengajuan";
+  const pageTitle =
+    targetStatus === "rejected" ? "Tolak Pengajuan" : "Setujui Pengajuan";
   const pageDescription =
     targetStatus === "rejected"
       ? "Tolak pengajuan untuk melanjutkan proyek capstone."
@@ -64,24 +74,25 @@ export default function RequestDecisionPage() {
   useEffect(() => {
     if (!requestId) {
       setLoading(false);
-      setErrorMessage("Permintaan tidak ditemukan.");
+      setLoadError("Permintaan tidak ditemukan.");
       return;
     }
 
     const fetchDetail = async () => {
       setLoading(true);
-      setErrorMessage("");
+      setLoadError("");
 
       try {
         const res = await RequestService.getRequestDetail(requestId);
         if (res.success && res.data) {
           setRequestDetail(res.data);
         } else {
-          setErrorMessage("Gagal mengambil detail pengajuan.");
+          // backend belum siap, kita cuma simpan error untuk kasus tidak ada data sama sekali
+          setLoadError("Gagal mengambil detail pengajuan.");
         }
       } catch (err) {
         console.error("getRequestDetail error:", err);
-        setErrorMessage("Terjadi kesalahan saat memuat data.");
+        setLoadError("Terjadi kesalahan saat memuat data.");
       } finally {
         setLoading(false);
       }
@@ -95,30 +106,32 @@ export default function RequestDecisionPage() {
     if (!requestId) return;
 
     if (!reason.trim()) {
-      setErrorMessage("Alasan keputusan wajib diisi.");
+      setSubmitError("Alasan keputusan wajib diisi.");
       return;
     }
 
     setSubmitting(true);
-    setErrorMessage("");
+    setSubmitError("");
 
     try {
-      const payload = {
-        status: targetStatus,
-        reason: reason.trim(),
-      };
+      const decisionValue = action === "rejected" ? "reject" : "accept";
+
+const payload = {
+  decision: decisionValue,      // "accept" atau "reject" persis seperti Postman
+  reason: reason.trim(),
+};
+
 
       const res = await RequestService.decideRequest(requestId, payload);
 
       if (res.success) {
-        // setelah memutuskan, kembali ke tab Decision Inbox
         router.push("/request?tab=inbox");
       } else {
-        setErrorMessage(res.error || "Gagal menyimpan keputusan.");
+        setSubmitError(res.error || "Gagal menyimpan keputusan.");
       }
     } catch (err) {
       console.error("decideRequest error:", err);
-      setErrorMessage("Terjadi kesalahan. Silakan coba lagi.");
+      setSubmitError("Terjadi kesalahan. Silakan coba lagi.");
     } finally {
       setSubmitting(false);
     }
@@ -128,28 +141,42 @@ export default function RequestDecisionPage() {
     router.push("/request?tab=inbox");
   };
 
+  // gabungan data dari API dan query string
   const title =
     requestDetail?.capstone?.title ||
     requestDetail?.project?.title ||
     requestDetail?.capstoneTitle ||
     requestDetail?.title ||
+    titleFromQuery ||
     "Judul Capstone";
 
   const themeLabel = getThemeLabel(
-    requestDetail?.capstone?.tema || requestDetail?.project?.tema
+    requestDetail?.capstone?.tema ||
+      requestDetail?.project?.tema ||
+      temaFromQuery
   );
 
   const groupName =
-    requestDetail?.groupName || requestDetail?.group?.name || "-";
+    requestDetail?.groupName ||
+    requestDetail?.group?.name ||
+    groupFromQuery ||
+    "-";
 
   const tahunProyek =
     requestDetail?.tahunPengajuan ||
     (requestDetail?.createdAt
       ? new Date(requestDetail.createdAt).getFullYear()
-      : "-");
+      : tahunFromQuery || "-");
 
   const lastStatus = requestDetail?.status; // pending / accepted / rejected
   const lastReason = requestDetail?.reason || "-";
+
+  const hasAnyData =
+    !!requestDetail ||
+    !!titleFromQuery ||
+    !!groupFromQuery ||
+    !!tahunFromQuery ||
+    !!temaFromQuery;
 
   return (
     <div className="min-h-screen bg-[#EEF3F7]">
@@ -157,7 +184,6 @@ export default function RequestDecisionPage() {
 
       <main className="container mx-auto px-6 py-8">
         <div className="max-w-5xl mx-auto">
-          {/* Tombol kembali */}
           <Button
             variant="ghost"
             size="sm"
@@ -168,10 +194,10 @@ export default function RequestDecisionPage() {
             Kembali
           </Button>
 
-          <h1 className="text-3xl font-bold text-neutral-900 mb-1">
+          <h1 className="mb-1 text-3xl font-bold text-neutral-900">
             {pageTitle}
           </h1>
-          <p className="mb-6 text-neutral-600 text-sm">
+          <p className="mb-6 text-sm text-neutral-600">
             {pageDescription}
           </p>
 
@@ -181,12 +207,13 @@ export default function RequestDecisionPage() {
                 <div className="flex items-center justify-center py-16">
                   <Loader2 className="h-6 w-6 animate-spin text-neutral-500" />
                 </div>
-              ) : errorMessage && !requestDetail ? (
-                <div className="text-center text-sm text-red-600 py-8">
-                  {errorMessage}
+              ) : !hasAnyData ? (
+                <div className="py-8 text-center text-sm text-red-600">
+                  {loadError || "Data pengajuan tidak ditemukan."}
                 </div>
               ) : (
                 <>
+                  {/* kalau mau, loadError bisa ditampilkan kecil abu abu, tapi tidak wajib */}
                   {/* Info proyek */}
                   <div className="mb-8">
                     <h2 className="mb-3 text-2xl font-semibold text-neutral-900">
@@ -277,8 +304,8 @@ export default function RequestDecisionPage() {
                       />
                     </div>
 
-                    {errorMessage && (
-                      <p className="text-sm text-red-600">{errorMessage}</p>
+                    {submitError && (
+                      <p className="text-sm text-red-600">{submitError}</p>
                     )}
 
                     <div className="mt-6 flex flex-wrap gap-4">

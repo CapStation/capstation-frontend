@@ -54,9 +54,7 @@ export default function EditDecisionPage() {
   const prevStatusParam = searchParams.get("status") || "pending";
   const prevReasonParam = searchParams.get("reason") || "";
 
-  const [projectTitle] = useState(
-    titleParam || "Judul capstone"
-  );
+  const [projectTitle] = useState(titleParam || "Judul capstone");
   const [groupName] = useState(groupNameParam || "-");
   const [tahunPengajuan] = useState(yearParam || "-");
   const [previousStatus] = useState(prevStatusParam);
@@ -91,18 +89,18 @@ export default function EditDecisionPage() {
     setSubmitting(true);
 
     try {
+      // backend butuh field decision, bukan status
+      const decisionValue = newStatus === "rejected" ? "reject" : "accept";
+
       const payload = {
-        status: newStatus,
+        decision: decisionValue,
         reason: changeReason.trim(),
+        override: "true",
       };
 
-      const result = await RequestService.decideRequest(
-        requestId,
-        payload
-      );
+      const result = await RequestService.decideRequest(requestId, payload);
 
       if (result.success) {
-        // kembali ke tab Decision History
         router.push("/request?tab=history");
       } else {
         setErrorMessage(
@@ -162,10 +160,9 @@ export default function EditDecisionPage() {
 
                     <div className="mb-4 flex flex-wrap items-center gap-2">
                       <Badge
-                        className={`
-                          rounded-full px-3 py-1 text-xs font-medium
-                          ${getStatusClass(previousStatus)}
-                        `}
+                        className={`rounded-full px-3 py-1 text-xs font-medium ${getStatusClass(
+                          previousStatus
+                        )}`}
                       >
                         {getStatusLabel(previousStatus)}
                       </Badge>
@@ -239,8 +236,7 @@ export default function EditDecisionPage() {
                     {/* alasan perubahan */}
                     <div className="space-y-1 text-sm">
                       <p className="font-semibold text-neutral-900">
-                        Alasan Perubahan{" "}
-                        <span className="text-red-500">*</span>
+                        Alasan Perubahan <span className="text-red-500">*</span>
                       </p>
                       <textarea
                         rows={3}

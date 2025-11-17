@@ -100,6 +100,34 @@ const getStatusClass = (status) => {
 export default function RequestPage() {
   const [availableProjects, setAvailableProjects] = useState([]);
   const [myRequests, setMyRequests] = useState([]);
+  // capstone yang sudah pernah diajukan oleh user ini
+const requestedCapstoneIds = new Set(
+  myRequests
+    .filter((req) => {
+      const status = String(req.status || "").toLowerCase();
+      // yang dianggap "sudah diajukan" misalnya pending atau accepted
+      return status === "pending" || status === "accepted";
+    })
+    .map((req) =>
+      String(
+        req.capstoneId ||
+          req.capstone?._id ||
+          req.capstone?.id ||
+          req.projectId ||
+          req.project?._id ||
+          req.project?.id ||
+          ""
+      )
+    )
+);
+
+// daftar project yang boleh muncul di tab Submit Request
+const submitProjects = availableProjects.filter((p) => {
+  const pid = String(p._id || p.id || p.capstoneId || "");
+  if (!pid) return false;
+  return !requestedCapstoneIds.has(pid);
+});
+
   const [loadingProjects, setLoadingProjects] = useState(true);
   const [loadingRequests, setLoadingRequests] = useState(true);
   const [inboxRequests, setInboxRequests] = useState([]);
@@ -219,18 +247,6 @@ const [decidingId, setDecidingId] = useState(null);
   });
 };
 
-
-// klik tombol Accept atau Reject di inbox
-const handleDecision = (requestId, action) => {
-  // buat debug dulu
-  console.log("klik decision", requestId, action);
-
-  router.push(
-    `/request/decision?requestId=${requestId}&action=${action}`
-  );
-};
-
-
 const getDecisionStatusLabel = (status) => {
   if (!status) return "-";
   const s = String(status).toLowerCase();
@@ -268,26 +284,70 @@ const getDecisionStatusClass = (status) => {
     setLoadingRequests(false);
   }
     };
+
 const loadInbox = async () => {
   setLoadingInbox(true);
   try {
-    const result = await RequestService.getOwnerInbox();
+    // ambil inbox + semua project sekaligus
+    const [inboxResult, projectResult] = await Promise.all([
+      RequestService.getOwnerInbox(),
+      ProjectService.getAllProjects(),
+    ]);
 
-    // antisipasi bentuk { count, data: [...] }
-    const raw = result.data;
-    const list = Array.isArray(raw) ? raw : raw?.data;
+    let list = [];
 
-    if (Array.isArray(list)) {
-      setInboxRequests(list);
-    } else {
-      setInboxRequests([]);
+    if (inboxResult.success && inboxResult.data) {
+      const raw = inboxResult.data;
+      list = Array.isArray(raw) ? raw : raw.data || [];
     }
+
+    if (list.length === 0) {
+      setInboxRequests([]);
+      return;
+    }
+
+    // kalau berhasil ambil project, buat map capstoneId -> title
+    if (projectResult.success && Array.isArray(projectResult.data)) {
+      const projectMap = new Map();
+
+      projectResult.data.forEach((p) => {
+        const id = String(p._id || p.id || "");
+        const title = p.title || p.judul || "Judul capstone";
+        projectMap.set(id, title);
+      });
+
+      list = list.map((req) => {
+        const capId = String(
+          req.capstoneId ||
+            req.capstone?.id ||
+            req.capstone?._id ||
+            ""
+        );
+
+        const capstoneTitle =
+          req.capstoneTitle || projectMap.get(capId) || "Judul capstone";
+
+        return { ...req, capstoneTitle };
+      });
+    }
+
+    setInboxRequests(list);
   } catch (error) {
     console.error("Failed to load owner inbox:", error);
     setInboxRequests([]);
   } finally {
     setLoadingInbox(false);
   }
+};
+
+// klik tombol Accept atau Reject di inbox
+const handleDecision = (requestId, action) => {
+  // buat debug dulu
+  console.log("klik decision", requestId, action);
+
+  router.push(
+    `/request/decision?requestId=${requestId}&action=${action}`
+  );
 };
 
   const loadDecisionHistory = async () => {
@@ -516,24 +576,14 @@ const renderMyRequestRow = (req) => {
 const renderInboxCard = (req) => {
   const id = req.id || req._id;
 
-  // cari project yang sesuai dari daftar proyek yang sudah ada
-  const matchedProject =
-    availableProjects.find(
-      (p) =>
-        String(p.id) === String(req.capstoneId) ||
-        String(p._id) === String(req.capstoneId)
-    ) || null;
-
   const projectTitle =
-    req.capstone?.title ||        // kalau backend suatu saat kirim capstone
-    matchedProject?.title ||      // judul dari daftar project yang sudah ada
     req.capstoneTitle ||
+    req.capstone?.title ||
     req.project?.title ||
     req.title ||
     "Judul capstone";
 
-  const groupName =
-    req.groupName || req.group?.name || "Nama grup";
+  const groupName = req.groupName || req.group?.name || "Nama grup";
 
   const tahun =
     req.tahunPengajuan ||
@@ -543,13 +593,19 @@ const renderInboxCard = (req) => {
 
   const isDeciding = decidingId === id;
 
+  const buildDecisionUrl = (action) =>
+    `/request/decision?requestId=${id}` +
+    `&action=${action}` +
+    `&title=${encodeURIComponent(projectTitle)}` +
+    `&groupName=${encodeURIComponent(groupName)}` +
+    `&tahun=${encodeURIComponent(String(tahun))}`;
+
   return (
     <Card
       key={id}
       className="rounded-2xl border border-neutral-200 shadow-sm"
     >
       <CardContent className="flex flex-col justify-between gap-4 px-6 py-5 md:flex-row md:items-center">
-        {/* kiri: info request */}
         <div className="space-y-1">
           <h3 className="text-base font-semibold text-neutral-900">
             {projectTitle}
@@ -564,14 +620,13 @@ const renderInboxCard = (req) => {
           </p>
         </div>
 
-        {/* kanan: tombol aksi */}
         <div className="flex flex-shrink-0 gap-3">
           <Button
             type="button"
             variant="outline"
             disabled={isDeciding}
             className="min-w-[96px] rounded-lg border border-[#F97373] bg-white text-sm font-semibold text-[#F97373] hover:bg-[#FFF5F5]"
-            onClick={() => handleDecision(id, "rejected")}
+            onClick={() => router.push(buildDecisionUrl("rejected"))}
           >
             {isDeciding ? "Memproses..." : "Reject"}
           </Button>
@@ -580,7 +635,7 @@ const renderInboxCard = (req) => {
             type="button"
             disabled={isDeciding}
             className="min-w-[96px] rounded-lg bg-[#BBF7D0] text-sm font-semibold text-neutral-900 hover:bg-[#86EFAC]"
-            onClick={() => handleDecision(id, "accepted")}
+            onClick={() => router.push(buildDecisionUrl("accepted"))}
           >
             {isDeciding ? "Memproses..." : "Accept"}
           </Button>
@@ -589,9 +644,6 @@ const renderInboxCard = (req) => {
     </Card>
   );
 };
-
-
-
 
   return (
     <div className="min-h-screen bg-[#EEF3F7]">
@@ -688,7 +740,7 @@ const renderInboxCard = (req) => {
                 </div>
               ) : (
                 <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
-                  {availableProjects.map((project) =>
+                  {submitProjects.map((project) =>
                     renderProjectCard(project)
                   )}
                 </div>
