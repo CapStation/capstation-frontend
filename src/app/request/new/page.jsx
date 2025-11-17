@@ -15,22 +15,59 @@ import { Loader2, ArrowLeft, Search } from "lucide-react";
 import ProjectService from "@/services/ProjectService";
 import RequestService from "@/services/RequestService";
 import UserService from "@/services/UserService";
+import GroupService from "@/services/GroupService";
 
-// helper tema
+if (typeof window !== "undefined") {
+  const originalConsoleError = console.error;
+
+  console.error = (...args) => {
+    const text = args
+      .map((arg) =>
+        typeof arg === "string" ? arg : JSON.stringify(arg)
+      )
+      .join(" ");
+
+    const shouldIgnore =
+      text.includes("getUserGroups error") ||
+      text.includes("User belum bergabung dalam grup manapun") ||
+      text.includes("No response data") ||
+      text.includes("Gagal mengambil data grup");
+
+    if (shouldIgnore) {
+      return;
+    }
+
+    originalConsoleError(...args);
+  };
+}
+
 const getThemeLabel = (tema) => {
+  if (!tema) return "Lainnya";
+
+  const raw = String(tema).toLowerCase();
+
+  const normalizedKey = raw.replace(/[-_]/g, "");
+
   const themeMap = {
     kesehatan: "Kesehatan",
-    pengelolaan_sampah: "Pengelolaan Sampah",
-    smart_city: "Smart City",
-    "smart-city": "Smart City",
-    transportasi_ramah_lingkungan: "Transportasi Ramah Lingkungan",
+    pengelolaansampah: "Pengelolaan Sampah",
+    smartcity: "Smart City",
+    transportasiramahlingkungan: "Transportasi Ramah Lingkungan",
     iot: "IoT",
     ai: "Artificial Intelligence",
     mobile: "Mobile Development",
   };
 
-  if (!tema) return "Lainnya";
-  return themeMap[tema] || tema.charAt(0).toUpperCase() + tema.slice(1);
+  if (themeMap[normalizedKey]) {
+    return themeMap[normalizedKey];
+  }
+
+  return String(tema)
+    .replace(/[-_]/g, " ")
+    .split(" ")
+    .filter(Boolean)
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+    .join(" ");
 };
 
 export default function NewRequestPage() {
@@ -42,6 +79,9 @@ export default function NewRequestPage() {
   const [loadingProject, setLoadingProject] = useState(true);
 
   const [groupName, setGroupName] = useState("");
+  const [group, setGroup] = useState(null);
+  const [loadingGroup, setLoadingGroup] = useState(true);
+
   const [submissionYear, setSubmissionYear] = useState(
     new Date().getFullYear()
   );
@@ -77,6 +117,37 @@ export default function NewRequestPage() {
 
     loadDosenList();
   }, []);
+
+// load grup saya
+useEffect(() => {
+  const loadGroup = async () => {
+    setLoadingGroup(true);
+    try {
+      const res = await GroupService.getUserGroups();
+
+      if (res.success && Array.isArray(res.data) && res.data.length > 0) {
+        // user sudah punya grup
+        const g = res.data[0];
+        setGroup(g);
+        setGroupName(g.name || g.groupName || "");
+      } else {
+        // tidak punya grup atau gagal ambil grup
+        setGroup(null);
+        setGroupName("");
+        console.log("User belum punya grup atau gagal ambil grup:", res);
+      }
+    } catch (err) {
+      // jaga jaga kalau sampai throw
+      console.error("Gagal load group di halaman request:", err);
+      setGroup(null);
+      setGroupName("");
+    } finally {
+      setLoadingGroup(false);
+    }
+  };
+
+  loadGroup();
+}, []);
 
   const handleDosenSearch = (query) => {
     setDosenSearchQuery(query);
@@ -115,8 +186,6 @@ export default function NewRequestPage() {
 
           setProject(p);
 
-          // autofill dari project kalau ada
-          if (p.groupName) setGroupName(p.groupName);
           if (p.supervisorName || p.dosenPembimbing) {
             setLecturerName(p.supervisorName || p.dosenPembimbing);
           }
@@ -175,8 +244,11 @@ export default function NewRequestPage() {
     "Smart City Dashboard untuk Monitoring Lingkungan Area Malioboro";
 
   const academicYearLabel =
-    project?.academicYear ||
-    (project?.createdAt ? new Date(project.createdAt).getFullYear() : "-");
+  project?.academicYear
+    ? String(project.academicYear).replace("-", " ")
+    : project?.createdAt
+    ? new Date(project.createdAt).getFullYear()
+    : "-";
 
   const themeLabel = getThemeLabel(project?.tema);
 
@@ -184,9 +256,9 @@ export default function NewRequestPage() {
     <div className="min-h-screen bg-[#EEF3F7]">
       <Navbar />
 
-      <main className="container mx-auto px-6 py-8">
-        <div className="max-w-6xl mx-auto">
-          {/* tombol kembali */}
+      <main className="container mx-auto px-4 py-8">
+        <div className="max-w-3xl mx-auto">
+          <div className="mb-8"></div>
           <Button
             variant="ghost"
             size="sm"
@@ -247,27 +319,29 @@ export default function NewRequestPage() {
                         {academicYearLabel}
                       </p>
                     </div>
+
+                    <div className="space-y-1 text-sm text-neutral-700 mt-5"></div>
+                    <div className="text-sm text-neutral-700">
+                      <p className="pt-2">
+                        <span className="font-semibold text-neutral-900">
+                          Nama Grup
+                        </span>
+                        <br />
+                        {loadingGroup ? (
+                          "Memuat nama grup..."
+                        ) : group ? (
+                          groupName
+                        ) : (
+                          <span className="text-red-600">
+                            Anda belum tergabung dalam grup. Silakan bergabung dalam grup terlebih dahulu sebelum mengajukan.
+                          </span>
+                        )}
+                      </p>
+                    </div>
                   </div>
 
                   {/* form pengajuan */}
                   <form onSubmit={handleSubmit} className="space-y-5">
-                    <div className="space-y-1">
-                      <Label
-                        htmlFor="groupName"
-                        className="text-sm font-semibold"
-                      >
-                        Nama Grup <span className="text-red-500">*</span>
-                      </Label>
-                      <Input
-                        id="groupName"
-                        placeholder="Masukkan nama grup Anda"
-                        value={groupName}
-                        onChange={(e) => setGroupName(e.target.value)}
-                        required
-                        className="bg-white border border-neutral-200 focus-visible:ring-0 focus-visible:ring-offset-0"
-                      />
-                    </div>
-
                     <div className="space-y-1">
                       <Label
                         htmlFor="submissionYear"
@@ -355,6 +429,9 @@ export default function NewRequestPage() {
                           </div>
                         </div>
                       )}
+                      <p className="text-xs text-amber-600 mt-2 font-medium">
+                    ⚠️ Pastikan Nama Dosen sesuai dengan plottingan yang sudah ada.
+                  </p>
                     </div>
 
                     {errorMessage && (
@@ -364,7 +441,7 @@ export default function NewRequestPage() {
                     <div className="flex gap-4 pt-4">
                       <Button
                         type="submit"
-                        disabled={submitting}
+                        disabled={submitting || (!loadingGroup && !group)}
                         className="min-w-[160px] rounded-lg bg-[#FFE196] font-semibold text-neutral-900 hover:bg-[#FFD86A]"
                       >
                         {submitting ? (

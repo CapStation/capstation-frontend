@@ -262,30 +262,86 @@ export default function ProjectDetailPage() {
 
   // Helper function to check if user can edit/delete project
   const canEditProject = () => {
-    if (!user || !project) return false;
+    if (!user || !project) {
+      console.log('🔒 canEditProject: No user or project');
+      return false;
+    }
     
     // Admin can edit any project
-    if (user.role === 'admin') return true;
+    if (user.role === 'admin') {
+      console.log('✅ canEditProject: User is admin');
+      return true;
+    }
+    
+    // Get user ID (handle both user.id and user._id)
+    const userId = user.id || user._id;
+    console.log('🔍 canEditProject: Checking permissions', {
+      userId,
+      userIdType: user.id ? 'user.id' : 'user._id',
+      projectOwnerId: typeof project.owner === 'string' ? project.owner : project.owner?._id || project.owner?.id,
+      hasGroup: !!project.group,
+      hasMembers: !!project.members?.length
+    });
     
     // Check if user is the owner
     const isOwner = typeof project.owner === 'string' 
-      ? project.owner === user.id 
-      : project.owner?._id === user.id;
+      ? project.owner === userId 
+      : (project.owner?._id === userId || project.owner?.id === userId);
     
-    if (isOwner) return true;
+    if (isOwner) {
+      console.log('✅ canEditProject: User is project owner');
+      return true;
+    }
     
     // Check if user is a member of the project
     if (project.members && Array.isArray(project.members)) {
       const isMember = project.members.some(member => {
         if (typeof member === 'string') {
-          return member === user.id;
+          return member === userId;
         }
-        return member?._id === user.id;
+        return member?._id === userId || member?.id === userId;
       });
       
-      if (isMember) return true;
+      if (isMember) {
+        console.log('✅ canEditProject: User is project member');
+        return true;
+      }
     }
     
+    // Check if user is part of the group
+    if (project.group) {
+      console.log('🔍 canEditProject: Checking group permissions', {
+        groupOwnerId: typeof project.group.owner === 'string' ? project.group.owner : project.group.owner?._id || project.group.owner?.id,
+        groupMembersCount: project.group.members?.length
+      });
+      
+      // Check if user is the group owner
+      const isGroupOwner = typeof project.group.owner === 'string'
+        ? project.group.owner === userId
+        : (project.group.owner?._id === userId || project.group.owner?.id === userId);
+      
+      if (isGroupOwner) {
+        console.log('✅ canEditProject: User is group owner');
+        return true;
+      }
+      
+      // Check if user is a member of the group
+      if (project.group.members && Array.isArray(project.group.members)) {
+        const isGroupMember = project.group.members.some(member => {
+          if (typeof member === 'string') {
+            return member === userId;
+          }
+          return member?._id === userId || member?.id === userId;
+        });
+        
+        if (isGroupMember) {
+          console.log('✅ canEditProject: User is group member');
+          return true;
+        }
+      }
+    }
+    
+    console.log('❌ canEditProject: User has no permissions');
     return false;
   };
 

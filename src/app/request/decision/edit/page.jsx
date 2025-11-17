@@ -123,8 +123,9 @@ export default function EditDecisionPage() {
     <div className="min-h-screen bg-[#EEF3F7]">
       <Navbar />
 
-      <main className="container mx-auto px-6 py-8">
-        <div className="mx-auto max-w-5xl">
+      <main className="container mx-auto px-4 py-8">
+        <div className="max-w-3xl mx-auto">
+          <div className="mb-8"></div>
           {/* tombol kembali */}
           <Button
             type="button"
