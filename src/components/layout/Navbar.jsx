@@ -27,6 +27,7 @@ import {
   FileText,
   Search,
   FolderOpen,
+  History,
   User,
   LogOut,
   UserCircle,
@@ -47,7 +48,7 @@ export default function Navbar({ className = "" }) {
     try {
       await logout();
       setShowLogoutDialog(false);
-      router.push("/login");
+      router.push("/");
     } catch (error) {
       console.error("Logout error:", error);
     } finally {
@@ -118,6 +119,12 @@ export default function Navbar({ className = "" }) {
               </Link>
             )}
 
+            <Link href="/request">
+              <Button variant="ghost" size="sm">
+                <History className="h-4 w-4 mr-2"/>
+                Request
+                </Button>
+            </Link>
             {user?.role === "admin" && (
               <Link href="/admin">
                 <Button variant="ghost" size="sm">
