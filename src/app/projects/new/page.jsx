@@ -43,7 +43,7 @@ export default function NewProjectPage() {
   const [formData, setFormData] = useState({
     title: "",
     description: "",
-    category: "",
+    tema: "",
     supervisor: "",
     supervisorName: "",
     keywords: "",
@@ -313,15 +313,27 @@ export default function NewProjectPage() {
                 </div>
 
                 <div>
-                  <Label htmlFor="category">Kategori</Label>
-                  <Input
-                    id="category"
-                    name="category"
-                    value={formData.category}
-                    onChange={handleChange}
-                    placeholder="Contoh: IoT, Kesehatan, Transportasi"
-                    className="mt-2"
-                  />
+                  <Label htmlFor="tema">Tema</Label>
+                  <Select
+                    value={formData.tema}
+                    onValueChange={(value) =>
+                      setFormData((prev) => ({ ...prev, tema: value }))
+                    }
+                  >
+                    <SelectTrigger className="mt-2">
+                      <SelectValue placeholder="Pilih Tema" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="kesehatan">Kesehatan</SelectItem>
+                      <SelectItem value="pengelolaan_sampah">
+                        Pengelolaan Sampah
+                      </SelectItem>
+                      <SelectItem value="smart_city">Smart City</SelectItem>
+                      <SelectItem value="transportasi_ramah_lingkungan">
+                        Transportasi Ramah Lingkungan
+                      </SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
 
                 <div>
