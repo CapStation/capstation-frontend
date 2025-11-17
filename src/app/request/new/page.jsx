@@ -94,25 +94,33 @@ export default function NewRequestPage() {
     loadDosenList();
   }, []);
 
-  // load grup saya
-  useEffect(() => {
+// load grup saya
+useEffect(() => {
   const loadGroup = async () => {
     setLoadingGroup(true);
-    const res = await GroupService.getMyGroup();
+    try {
+      // method yang tersedia di GroupService setelah merge
+      const res = await GroupService.getUserGroups(); 
 
-    if (res.success && res.data) {
-      const g = res.data;
-      setGroup(g);
-      setGroupName(
-        g.name ||
-        g.groupName ||
-        ""
-      );
-    } else {
+      if (res.success && Array.isArray(res.data) && res.data.length > 0) {
+        // backend kirim 1 grup, tapi GroupService bungkus jadi array
+        const g = res.data[0];
+        setGroup(g);
+        setGroupName(
+          g.name ||
+          g.groupName ||
+          ""
+        );
+      } else {
+        // tidak punya grup
+        setGroup(null);
+      }
+    } catch (err) {
+      console.error("Gagal load grup:", err);
       setGroup(null);
+    } finally {
+      setLoadingGroup(false);
     }
-
-    setLoadingGroup(false);
   };
 
   loadGroup();
