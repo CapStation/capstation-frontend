@@ -136,6 +136,13 @@ const [loadingInbox, setLoadingInbox] = useState(true);
 const [decidingId, setDecidingId] = useState(null);
 
   const [decisionHistory, setDecisionHistory] = useState([]);
+  // hanya tampilkan keputusan yang benar benar diputuskan
+// tidak termasuk cancelled
+const visibleDecisionHistory = decisionHistory.filter((item) => {
+  const status = String(item.status || "").toLowerCase();
+  return status === "accepted" || status === "rejected";
+});
+
   const [loadingDecisionHistory, setLoadingDecisionHistory] = useState(true);
   const router = useRouter();
 
@@ -246,6 +253,7 @@ const [decidingId, setDecidingId] = useState(null);
     year: "numeric",
   });
 };
+
 
 const getDecisionStatusLabel = (status) => {
   if (!status) return "-";
@@ -509,6 +517,35 @@ const renderProjectCard = (project) => {
   );
 };
 
+const handleCancelRequest = async (req) => {
+  const id = req.id || req._id;
+  const title =
+    req.capstoneTitle ||
+    req.capstone?.title ||
+    req.capstone?.judul ||
+    req.title ||
+    "Judul capstone";
+
+  const ok = window.confirm(
+    `Yakin ingin membatalkan request untuk "${title}"?`
+  );
+  if (!ok) return;
+
+  try {
+    const res = await RequestService.cancel(id);
+
+    if (res?.success) {
+      // reload daftar My Request supaya status berubah jadi Cancelled
+      await loadMyRequests();
+    } else {
+      console.error("Cancel gagal:", res);
+      alert("Gagal membatalkan request.");
+    }
+  } catch (err) {
+    console.error("Error cancel request:", err);
+    alert("Terjadi kesalahan saat membatalkan request.");
+  }
+};
 
   // baris di My Request
 const renderMyRequestRow = (req) => {
@@ -529,6 +566,9 @@ const renderMyRequestRow = (req) => {
   const statusLabel = getStatusLabel(req.status);
   const statusClass = getStatusClass(req.status);
 
+  // hanya pending yang bisa dibatalkan
+  const isPending = String(req.status || "").toLowerCase() === "pending";
+
   const id = req.id || req._id;
   const capstoneId = req.capstoneId;
 
@@ -541,7 +581,7 @@ const renderMyRequestRow = (req) => {
         {title}
       </div>
       <div className="col-span-3 text-neutral-700">{group}</div>
-      <div className="col-span-2 text-neutral-700">{year}</div>
+      <div className="col-span-1 text-neutral-700">{year}</div>
       <div className="col-span-1">
         <span
           className={`inline-flex items-center justify-center rounded-full px-3 py-0.5 text-xs font-medium ${statusClass}`}
@@ -549,25 +589,50 @@ const renderMyRequestRow = (req) => {
           {statusLabel}
         </span>
       </div>
-      <div className="col-span-1 flex justify-end">
-        <Button
-          variant="outline"
-          size="sm"
-          className="flex items-center gap-1 rounded-full border-neutral-300 text-xs font-medium text-neutral-800"
-          onClick={() =>
-            router.push(
-              `/request/history?requestId=${id}` +
-                `&title=${encodeURIComponent(title)}` +
-                `&group=${encodeURIComponent(group)}` +
-                `&year=${encodeURIComponent(String(year))}` +
-                `&status=${encodeURIComponent(statusLabel)}` +
-                (capstoneId ? `&capstoneId=${capstoneId}` : "")
-            )
-          }
-        >
-          <History className="h-3 w-3" />
-          <span>Lihat Histori</span>
-        </Button>
+
+      <div className="col-span-2 flex justify-end">
+        <div className="flex items-center gap-3">
+          {/* tombol Lihat Riwayat */}
+          <Button
+            variant="outline"
+            size="sm"
+            className="
+  flex items-center gap-1 rounded-full 
+  border border-neutral-300 
+  text-xs font-medium text-neutral-800 
+  bg-white
+  hover:bg-neutral-100
+  hover:border-neutral-300
+  hover:text-neutral-900
+  active:bg-neutral-200
+"
+            onClick={() =>
+              router.push(
+                `/request/history?requestId=${id}` +
+                  `&title=${encodeURIComponent(title)}` +
+                  `&group=${encodeURIComponent(group)}` +
+                  `&year=${encodeURIComponent(String(year))}` +
+                  `&status=${encodeURIComponent(statusLabel)}` +
+                  (capstoneId ? `&capstoneId=${capstoneId}` : "")
+              )
+            }
+          >
+            <History className="h-3 w-3" />
+            <span>Lihat Riwayat</span>
+          </Button>
+
+          {/* tombol X Batalkan. hanya muncul kalau pending
+{isPending && (
+  <button
+    type="button"
+    onClick={() => handleCancelRequest(req)}
+    className="text-xs font-medium text-red-600 hover:text-red-700 hover:underline"
+  >
+    X
+  </button>
+)} */}
+
+        </div>
       </div>
     </div>
   );
@@ -772,9 +837,9 @@ const renderInboxCard = (req) => {
                   ">
                     <div className="col-span-5">Judul Capstone</div>
                     <div className="col-span-3">Nama Grup</div>
-                    <div className="col-span-2">Tahun</div>
+                    <div className="col-span-1">Tahun</div>
                     <div className="col-span-1">Status</div>
-                    <div className="col-span-1 text-right">Aksi</div>
+                    <div className="col-span-2 text-right">Aksi</div>
                   </div>
 
                   {myRequests.map((req) => renderMyRequestRow(req))}
@@ -836,7 +901,7 @@ const renderInboxCard = (req) => {
       </div>
 
       <div className="divide-y divide-neutral-100">
-        {decisionHistory.map((item, idx) => {
+        {visibleDecisionHistory.map((item, idx) => {
           const title =
             item.capstoneTitle ||
             item.request?.capstoneTitle ||
@@ -909,7 +974,16 @@ const renderInboxCard = (req) => {
                   type="button"
                   variant="outline"
                   size="sm"
-                  className="border-neutral-300 text-neutral-800"
+                  className="
+                    flex items-center gap-1 rounded-full 
+                    border border-neutral-300 
+                    text-xs font-medium text-neutral-800 
+                    bg-white
+                    hover:bg-neutral-100
+                    hover:border-neutral-300
+                    hover:text-neutral-900
+                    active:bg-neutral-200
+                  "
                   onClick={() => {
                      router.push(
               `/request/decision/edit?requestId=${

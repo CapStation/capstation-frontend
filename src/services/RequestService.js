@@ -69,21 +69,34 @@ async createRequest(payload) {
   }
 }
 
-  // batalkan request
-  async cancelRequest(id) {
-    try {
-      await apiClient.delete(API_ENDPOINTS.requests.cancel(id));
-      return { success: true };
-    } catch (error) {
-      console.error("RequestService.cancelRequest error:", error);
-      return {
-        success: false,
-        error:
-          error.response?.data?.message ||
-          "Gagal membatalkan request capstone",
-      };
-    }
+
+// batalkan request
+async cancelRequest(id) {
+  try {
+    const res = await apiClient.delete(API_ENDPOINTS.requests.cancel(id));
+    // kalau berhasil, kirim data balik
+    return {
+      success: true,
+      data: res.data,
+    };
+  } catch (error) {
+    console.error("RequestService.cancelRequest error:", error);
+
+    // LOG semua isi respon supaya kelihatan di console browser
+    console.log("cancelRequest response:", error?.response?.data);
+
+    const msg =
+      error?.response?.data?.error ||   // backend-mu sering pakai key "error"
+      error?.response?.data?.message ||
+      error.message ||
+      "Gagal membatalkan request capstone";
+
+    return {
+      success: false,
+      error: msg,
+    };
   }
+}
 
   // detail satu request (dipakai di halaman decision / history detail)
   async getRequestDetail(id) {

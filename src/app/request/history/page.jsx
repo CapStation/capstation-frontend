@@ -230,10 +230,10 @@ export default function RequestHistoryPage() {
             </Button>
 
           <h1 className="mb-1 text-3xl font-bold text-neutral-900">
-            Histori Pengajuan
+            Riwayat Pengajuan
           </h1>
           <p className="mb-6 text-neutral-600">
-            Lihat histori pengajuan melanjutkan proyek capstone.
+            Lihat riwayat pengajuan melanjutkan proyek capstone.
           </p>
 
           <Card className="rounded-2xl border border-neutral-200 bg-white shadow-sm">
@@ -301,7 +301,7 @@ export default function RequestHistoryPage() {
                   {/* tabel histori */}
                 <div className="mt-6">
                 <p className="mb-3 text-sm font-semibold text-neutral-800">
-                    Histori{" "}
+                    Riwayat Pengajuan{" "}
                     <span className="font-normal text-neutral-600">
                     (Urut berdasarkan yang terbaru)
                     </span>
@@ -317,7 +317,7 @@ export default function RequestHistoryPage() {
 
                     {history.length === 0 ? (
                     <div className="px-5 py-6 text-center text-sm text-neutral-500">
-                        Belum ada histori keputusan untuk pengajuan ini.
+                        Belum ada riwayat keputusan untuk pengajuan ini.
                     </div>
                     ) : (
                     <div className="divide-y divide-neutral-100">
