@@ -91,11 +91,11 @@ export default function Navbar({ className = "" }) {
                 Browse
               </Button>
             </Link>
-            {(user?.role === "admin" || user?.role === "dosen") && (
-              <Link href="/documents">
+            {user?.role === "admin" && (
+              <Link href="/admin">
                 <Button variant="ghost" size="sm">
                   <FolderOpen className="h-4 w-4 mr-2" />
-                  Dokumen Admin
+                  Dashboard Admin
                 </Button>
               </Link>
             )}
