@@ -15,6 +15,7 @@ import {
   Folder,
 } from "lucide-react";
 import Link from "next/link";
+import Image from "next/image";
 
 export default function Home() {
   const router = useRouter();
@@ -27,13 +28,15 @@ export default function Home() {
     }
   }, [isAuthenticated, loading, router]);
 
-  // Saat cek auth, tampilkan loading spinner
-  if (loading) {
+  // Tampilkan loading spinner saat cek auth ATAU saat redirect ke dashboard
+  if (loading || isAuthenticated) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary/10 via-secondary/10 to-accent/10">
         <div className="text-center">
           <Loader2 className="h-12 w-12 animate-spin text-primary mx-auto mb-4" />
-          <p className="text-neutral-600">Memuat CapStation...</p>
+          <p className="text-neutral-600">
+            {loading ? "Memuat CapStation..." : "Mengarahkan ke dashboard..."}
+          </p>
         </div>
       </div>
     );
@@ -76,17 +79,17 @@ export default function Home() {
         />
         <line
           x1="0"
-          y1="25%"
+          y1="22%"
           x2="100%"
-          y2="25%"
+          y2="22%"
           stroke="#B8B8B8"
           strokeWidth="1.5"
         />
         <line
           x1="0"
-          y1="75%"
+          y1="77%"
           x2="100%"
-          y2="75%"
+          y2="77%"
           stroke="#B8B8B8"
           strokeWidth="1.5"
         />
@@ -141,9 +144,7 @@ export default function Home() {
               <Calendar className="w-4 h-4 text-accent" />
               <span>Bimbingan Hari Ini</span>
             </div>
-            <div className="text-xs font-medium text-primary">
-              13:00 - 15:00
-            </div>
+            <div className="text-xs font-medium text-primary">13:00 - 15:00</div>
           </div>
         </div>
       </div>
@@ -209,6 +210,29 @@ export default function Home() {
 
       {/* Main Content */}
       <div className="relative z-10 flex flex-col items-center justify-center min-h-screen px-4 py-20">
+        {/* Logo */}
+        <div className="mb-2">
+          <div
+            className="bg-white p-2 rounded-xl shadow-xl"
+            style={{
+              boxShadow: `
+                1px 1px 2px 0px rgba(0,0,0,0.10),
+                2px 3px 3px 0px rgba(0,0,0,0.09),
+                5px 6px 5px 0px rgba(0,0,0,0.05),
+                9px 11px 6px 0px rgba(0,0,0,0.01),
+                14px 17px 6px 0px rgba(0,0,0,0.00)
+              `,
+            }}
+          >
+            <Image
+              src="/Logo.png"
+              alt="CapStation Logo"
+              width={50}
+              height={50}
+            />
+          </div>
+        </div>
+
         <div className="text-center max-w-4xl mx-auto">
           {/* Main Heading */}
           <h1 className="text-5xl md:text-6xl font-bold mb-3 leading-relaxed">
