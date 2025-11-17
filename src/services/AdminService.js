@@ -12,13 +12,40 @@ class AdminService {
         apiClient.get('/projects'),
         apiClient.get('/users'),
         apiClient.get('/groups'),
-        apiClient.get('/documents'),
+        apiClient.get('/documents?limit=1000'), // Get all documents with high limit
       ]);
 
       const projects = projectsRes.status === 'fulfilled' ? projectsRes.value.data : [];
       const users = usersRes.status === 'fulfilled' ? usersRes.value.data : [];
       const groups = groupsRes.status === 'fulfilled' ? groupsRes.value.data : [];
-      const documents = documentsRes.status === 'fulfilled' ? documentsRes.value.data : [];
+      
+      // Debug: Log documents response structure
+      console.log('📄 Documents Response:', documentsRes);
+      if (documentsRes.status === 'fulfilled') {
+        console.log('📄 Documents Data:', documentsRes.value.data);
+      }
+      
+      // Documents response has nested structure: { data: { documents: [...], pagination: {...} } }
+      let totalDocuments = 0;
+      if (documentsRes.status === 'fulfilled') {
+        const responseData = documentsRes.value.data;
+        
+        // Check if response has nested data.data structure
+        if (responseData?.data?.documents) {
+          totalDocuments = responseData.data.pagination?.total || responseData.data.documents.length;
+          console.log('📄 Total Documents (nested):', totalDocuments);
+        } 
+        // Or direct data.documents structure
+        else if (responseData?.documents) {
+          totalDocuments = responseData.pagination?.total || responseData.documents.length;
+          console.log('📄 Total Documents (direct):', totalDocuments);
+        }
+        // Or array directly
+        else if (Array.isArray(responseData)) {
+          totalDocuments = responseData.length;
+          console.log('📄 Total Documents (array):', totalDocuments);
+        }
+      }
 
       return {
         success: true,
@@ -26,7 +53,7 @@ class AdminService {
           totalProjects: Array.isArray(projects) ? projects.length : 0,
           totalUsers: Array.isArray(users) ? users.length : 0,
           totalGroups: Array.isArray(groups) ? groups.length : 0,
-          totalDocuments: Array.isArray(documents) ? documents.length : 0,
+          totalDocuments: totalDocuments,
           activeProjects: Array.isArray(projects) ? projects.filter(p => p.status === 'active').length : 0,
           pendingRequests: Array.isArray(projects) ? projects.filter(p => p.capstoneStatus === 'pending').length : 0,
         },
@@ -271,12 +298,178 @@ class AdminService {
       const response = await apiClient.delete(`/competencies/${id}`);
       return {
         success: true,
-        data: response, // apiClient.delete already returns the data directly
+        data: response,
       };
     } catch (error) {
       return {
         success: false,
         error: error.response?.data?.message || error.message || 'Gagal menghapus kompetensi',
+      };
+    }
+  }
+
+  // ==================== GROUPS MANAGEMENT ====================
+
+  /**
+   * Get all groups (admin only)
+   * @param {Object} params - Query parameters
+   * @returns {Promise<Object>} Groups data
+   */
+  async getAllGroups(params = {}) {
+    try {
+      const response = await apiClient.get('/groups', { params });
+      return {
+        success: true,
+        data: response,
+      };
+    } catch (error) {
+      return {
+        success: false,
+        error: error.response?.data?.message || error.message || 'Gagal mengambil data grup',
+      };
+    }
+  }
+
+  /**
+   * Get group by ID (admin only)
+   * @param {string} id - Group ID
+   * @returns {Promise<Object>} Group data
+   */
+  async getGroupById(id) {
+    try {
+      const response = await apiClient.get(`/groups/${id}`);
+      return {
+        success: true,
+        data: response,
+      };
+    } catch (error) {
+      return {
+        success: false,
+        error: error.response?.data?.message || error.message || 'Gagal mengambil detail grup',
+      };
+    }
+  }
+
+  /**
+   * Update group (admin only)
+   * @param {string} id - Group ID
+   * @param {Object} data - Updated group data
+   * @returns {Promise<Object>} Updated group
+   */
+  async updateGroup(id, data) {
+    try {
+      const response = await apiClient.put(`/groups/${id}`, data);
+      return {
+        success: true,
+        data: response,
+      };
+    } catch (error) {
+      return {
+        success: false,
+        error: error.response?.data?.message || error.message || 'Gagal memperbarui grup',
+      };
+    }
+  }
+
+  /**
+   * Delete group (admin only)
+   * @param {string} id - Group ID
+   * @returns {Promise<Object>} Result
+   */
+  async deleteGroup(id) {
+    try {
+      const response = await apiClient.delete(`/groups/${id}`);
+      return {
+        success: true,
+        data: response,
+      };
+    } catch (error) {
+      return {
+        success: false,
+        error: error.response?.data?.message || error.message || 'Gagal menghapus grup',
+      };
+    }
+  }
+
+  // ==================== ANNOUNCEMENTS MANAGEMENT ====================
+
+  /**
+   * Get all announcements (admin only)
+   * @param {Object} params - Query parameters
+   * @returns {Promise<Object>} Announcements data
+   */
+  async getAllAnnouncements(params = {}) {
+    try {
+      const response = await apiClient.get('/announcements', { params });
+      return {
+        success: true,
+        data: response,
+      };
+    } catch (error) {
+      return {
+        success: false,
+        error: error.response?.data?.message || error.message || 'Gagal mengambil data pengumuman',
+      };
+    }
+  }
+
+  /**
+   * Create announcement (admin only)
+   * @param {Object} data - Announcement data
+   * @returns {Promise<Object>} Created announcement
+   */
+  async createAnnouncement(data) {
+    try {
+      const response = await apiClient.post('/announcements', data);
+      return {
+        success: true,
+        data: response,
+      };
+    } catch (error) {
+      return {
+        success: false,
+        error: error.response?.data?.message || error.message || 'Gagal membuat pengumuman',
+      };
+    }
+  }
+
+  /**
+   * Update announcement (admin only)
+   * @param {string} id - Announcement ID
+   * @param {Object} data - Updated announcement data
+   * @returns {Promise<Object>} Updated announcement
+   */
+  async updateAnnouncement(id, data) {
+    try {
+      const response = await apiClient.put(`/announcements/${id}`, data);
+      return {
+        success: true,
+        data: response,
+      };
+    } catch (error) {
+      return {
+        success: false,
+        error: error.response?.data?.message || error.message || 'Gagal memperbarui pengumuman',
+      };
+    }
+  }
+
+  /**
+   * Delete announcement (admin only)
+   * @param {string} id - Announcement ID
+   * @returns {Promise<Object>} Result
+   */
+  async deleteAnnouncement(id) {
+    try {
+      const response = await apiClient.delete(`/announcements/${id}`);
+      return {
+        success: true,
+        data: response,
+      };
+    } catch (error) {
+      return {
+        success: false,
+        error: error.response?.data?.message || error.message || 'Gagal menghapus pengumuman',
       };
     }
   }
