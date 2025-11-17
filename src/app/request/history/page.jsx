@@ -216,9 +216,9 @@ export default function RequestHistoryPage() {
     <div className="min-h-screen bg-[#EEF3F7]">
       <Navbar />
 
-      <main className="container mx-auto px-6 py-8">
-        <div className="mx-auto max-w-6xl">
-          {/* tombol kembali hijau seperti desain */}
+      <main className="container mx-auto px-4 py-8">
+        <div className="max-w-3xl mx-auto">
+          <div className="mb-8"></div>
             <Button
               asChild
               variant="ghost"
@@ -271,7 +271,7 @@ export default function RequestHistoryPage() {
                       )}
                     </div>
 
-                    <div className="space-y-2 text-sm text-neutral-700">
+                    <div className="space-y-5 text-sm text-neutral-700">
                       <p>
                         <span className="font-semibold text-neutral-900">
                           Nama Grup{" "}

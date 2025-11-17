@@ -56,19 +56,32 @@ import {
 const OBJECT_ID_REGEX = /^[a-f0-9]{24}$/i;
 
 const getThemeLabel = (tema) => {
+  if (!tema) return "Lainnya";
+
+  const raw = String(tema).toLowerCase();
+
+  const normalizedKey = raw.replace(/[-_]/g, "");
+
   const themeMap = {
     kesehatan: "Kesehatan",
-    pengelolaan_sampah: "Pengelolaan Sampah",
-    smart_city: "Smart City",
-    "smart-city": "Smart City",
-    transportasi_ramah_lingkungan: "Transportasi Ramah Lingkungan",
+    pengelolaansampah: "Pengelolaan Sampah",
+    smartcity: "Smart City",
+    transportasiramahlingkungan: "Transportasi Ramah Lingkungan",
     iot: "IoT",
     ai: "Artificial Intelligence",
     mobile: "Mobile Development",
   };
 
-  if (!tema) return "Lainnya";
-  return themeMap[tema] || tema.charAt(0).toUpperCase() + tema.slice(1);
+  if (themeMap[normalizedKey]) {
+    return themeMap[normalizedKey];
+  }
+
+  return String(tema)
+    .replace(/[-_]/g, " ")
+    .split(" ")
+    .filter(Boolean)
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+    .join(" ");
 };
 
 const getStatusLabel = (status) => {
@@ -447,12 +460,13 @@ export default function RequestPage() {
     );
 
     const yearLabel =
-      project.academicYear ||
-      (project.startedAt
-        ? new Date(project.startedAt).getFullYear()
-        : project.createdAt
-        ? new Date(project.createdAt).getFullYear()
-        : "2024");
+    project.academicYear
+    ? String(project.academicYear).replace("-", " ")
+    : project.startedAt
+    ? new Date(project.startedAt).getFullYear()
+    : project.createdAt
+    ? new Date(project.createdAt).getFullYear()
+    : "2024";
 
     const ownerLabel = project.ownerName || "Pemilik Proyek";
 
@@ -668,7 +682,18 @@ export default function RequestPage() {
 
     const tahun =
       req.tahunPengajuan ||
-      (req.createdAt ? new Date(req.createdAt).getFullYear() : "-");
+      (req.createdAt ? new Date(req.createdAt).getFullYear() : "-")
+   ;
+    
+      const categoryLabel = getThemeLabel(
+      req.capstoneProject?.tema ||
+        req.capstone?.tema ||
+        req.tema ||
+        req.capstoneProject?.category?.name ||
+        req.capstoneProject?.category ||
+        req.category?.name ||
+        req.category
+    );
 
     // -----------------------------
     // Anggota Tim
@@ -725,14 +750,22 @@ export default function RequestPage() {
           "
       >
         <CardContent className="flex flex-col justify-between gap-4 px-6 py-5 md:flex-row md:items-center">
-          <div className="space-y-1">
-            <h3 className="text-base font-semibold text-neutral-900">
-              {projectTitle}
-            </h3>
-            <p className="text-sm text-neutral-700">
-              <span className="font-semibold">Nama Grup: </span>
-              {groupName}
-            </p>
+            <div className="space-y-3">
+              <h3 className="text-base font-bold text-neutral-900">
+                {projectTitle}
+              </h3>
+
+              <Badge
+                variant="outline"
+                className="inline-flex rounded-full px-3 py-1 text-xs font-medium"
+              >
+                {categoryLabel}
+              </Badge>
+
+              <p className="text-sm text-neutral-700">
+                <span className="font-semibold">Nama Grup: </span>
+                {groupName}
+              </p>
             <p className="text-sm text-neutral-700">
               <span className="font-semibold">Tahun: </span>
               {tahun}
@@ -1099,11 +1132,8 @@ export default function RequestPage() {
             <div className="w-full max-w-md rounded-xl bg-white shadow-lg">
               <div className="flex items-center justify-between border-b px-6 py-4">
                 <div className="flex items-center gap-2">
-                  <span className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-red-50 text-red-500">
-                    <X className="h-4 w-4" />
-                  </span>
                   <h3 className="text-base font-semibold text-neutral-900">
-                    Konfirmasi Pembatalan
+                    Konfirmasi Membatalkan Request
                   </h3>
                 </div>
                 <button
@@ -1130,14 +1160,6 @@ export default function RequestPage() {
                       {requestToCancel.capstoneTitle ||
                         requestToCancel.capstone?.title ||
                         "Judul capstone"}
-                    </div>
-                    <div>
-                      <span className="font-medium">Nama grup</span>:{" "}
-                      {requestToCancel.groupName || "-"}
-                    </div>
-                    <div>
-                      <span className="font-medium">Tahun</span>:{" "}
-                      {requestToCancel.tahunPengajuan || "-"}
                     </div>
                   </div>
                 )}

@@ -14,12 +14,11 @@ import { Loader2, ArrowLeft } from "lucide-react";
 import RequestService from "@/services/RequestService";
 
 const getThemeLabel = (tema) => {
-  const themeMap = {
+    const themeMap = {
     kesehatan: "Kesehatan",
-    pengelolaan_sampah: "Pengelolaan Sampah",
-    smart_city: "Smart City",
-    "smart-city": "Smart City",
-    transportasi_ramah_lingkungan: "Transportasi Ramah Lingkungan",
+    pengelolaansampah: "Pengelolaan Sampah",
+    smartcity: "Smart City",
+    transportasiramahlingkungan: "Transportasi Ramah Lingkungan",
     iot: "IoT",
     ai: "Artificial Intelligence",
     mobile: "Mobile Development",
@@ -87,7 +86,6 @@ export default function RequestDecisionPage() {
         if (res.success && res.data) {
           setRequestDetail(res.data);
         } else {
-          // backend belum siap, kita cuma simpan error untuk kasus tidak ada data sama sekali
           setLoadError("Gagal mengambil detail pengajuan.");
         }
       } catch (err) {
@@ -182,8 +180,9 @@ const payload = {
     <div className="min-h-screen bg-[#EEF3F7]">
       <Navbar />
 
-      <main className="container mx-auto px-6 py-8">
-        <div className="max-w-5xl mx-auto">
+      <main className="container mx-auto px-4 py-8">
+        <div className="max-w-3xl mx-auto">
+          <div className="mb-8"></div>
           <Button
             variant="ghost"
             size="sm"
@@ -238,6 +237,7 @@ const payload = {
                         <p className="font-semibold">Tahun Pengajuan</p>
                         <p>{tahunProyek}</p>
                       </div>
+                      
                       {lastStatus && (
                         <div>
                           <p className="font-semibold">Status Sebelumnya</p>
