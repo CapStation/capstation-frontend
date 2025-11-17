@@ -30,6 +30,7 @@ import {
   User,
   Eye,
   EyeOff,
+  CheckCircle,
 } from "lucide-react";
 
 export default function RegisterPage() {
@@ -46,6 +47,7 @@ export default function RegisterPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
+  const [registeredEmail, setRegisteredEmail] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
@@ -112,6 +114,7 @@ export default function RegisterPage() {
 
       if (result.success) {
         if (result.requiresVerification) {
+          setRegisteredEmail(formData.email); // Save email for display
           setSuccess(
             result.message ||
               "Registrasi berhasil! Silakan cek email untuk verifikasi."
@@ -176,9 +179,28 @@ export default function RegisterPage() {
             )}
 
             {success && (
-              <div className="bg-success/10 border border-success/30 text-success px-4 py-3 rounded-md flex items-start gap-3">
-                <AlertCircle className="h-5 w-5 mt-0.5 flex-shrink-0" />
-                <p className="text-sm">{success}</p>
+              <div className="bg-success/10 border border-success/30 text-success px-4 py-3 rounded-md">
+                <div className="flex items-start gap-3 mb-3">
+                  <CheckCircle className="h-5 w-5 mt-0.5 flex-shrink-0" />
+                  <div className="flex-1">
+                    <p className="text-sm font-semibold mb-1">
+                      Pendaftaran Berhasil!
+                    </p>
+                    <p className="text-sm">{success}</p>
+                  </div>
+                </div>
+                <div className="bg-white/50 rounded p-3 mt-2">
+                  <p className="text-xs font-medium mb-1 flex items-center gap-1">
+                    <Mail className="h-3 w-3" />
+                    Langkah Selanjutnya:
+                  </p>
+                  <ol className="text-xs space-y-1 ml-4 list-decimal">
+                    <li>Buka email Anda ({registeredEmail || "inbox"})</li>
+                    <li>Cari email dari CapStation</li>
+                    <li>Klik link verifikasi di email tersebut</li>
+                    <li>Login setelah verifikasi berhasil</li>
+                  </ol>
+                </div>
               </div>
             )}
 
