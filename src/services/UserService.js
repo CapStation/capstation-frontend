@@ -1,12 +1,8 @@
 import apiClient from "@/lib/api-client";
 
 class UserService {
-  // Cache untuk menyimpan user data agar tidak fetch berulang kali
   static userCache = new Map();
 
-  /**
-   * Normalisasi error dari API
-   */
   static handleError(error) {
     const errorMessage =
       error?.response?.data?.message ||
@@ -21,19 +17,93 @@ class UserService {
     };
   }
 
-  /**
+    /**
    * Search user by email
+   * 1. Coba hit /users/search-by-email
+   * 2. Kalau error / {} → fallback ke /users lalu filter di frontend
    */
   async searchByEmail(email) {
+    const normalizedEmail = email.toLowerCase().trim();
+
+    // 1️⃣ Coba pakai endpoint khusus dulu
     try {
-      const response = await apiClient.get("/users/search", {
-        params: { email },
+      const res = await apiClient.get("/users/search-by-email", {
+        params: { email: normalizedEmail },
       });
-      return response.data;
+
+      const payload = res?.data || res; // antisipasi bentuk response
+
+      // Kalau backend sudah mengembalikan { success, data }
+      if (payload && payload.success && payload.data) {
+        return {
+          success: true,
+          data: payload.data,
+        };
+      }
+
+      // Kalau bentuknya cuma { _id, name, email } dsb
+      if (payload && payload._id && payload.email) {
+        return {
+          success: true,
+          data: payload,
+        };
+      }
+
+      // Kalau success tapi data kosong
+      return {
+        success: false,
+        error: `User dengan email "${email}" tidak ditemukan`,
+        data: null,
+      };
     } catch (error) {
-      throw UserService.handleError(error);
+      // Jangan panik kalau error, kita fallback ke /users
+      console.warn("⚠️ searchByEmail via /users/search-by-email gagal, fallback ke /users:", error);
+    }
+
+    // 2️⃣ Fallback: ambil semua user lalu filter di frontend
+    try {
+      const resAll = await apiClient.get("/users");
+      const payloadAll = resAll?.data || resAll;
+
+      // Bentuk backend getUsers: { success: true, data: users }
+      const users =
+        Array.isArray(payloadAll)
+          ? payloadAll
+          : Array.isArray(payloadAll?.data)
+          ? payloadAll.data
+          : Array.isArray(payloadAll?.users)
+          ? payloadAll.users
+          : [];
+
+      const found = users.find(
+        (u) =>
+          u.email &&
+          u.email.toLowerCase().trim() === normalizedEmail
+      );
+
+      if (found) {
+        return {
+          success: true,
+          data: found,
+        };
+      }
+
+      return {
+        success: false,
+        error: `User dengan email "${email}" tidak ditemukan`,
+        data: null,
+      };
+    } catch (error) {
+      console.error("❌ UserService.searchByEmail fallback error:", error);
+      const normalized = UserService.handleError(error);
+      return {
+        success: false,
+        error: normalized.message,
+        data: null,
+      };
     }
   }
+
 
   /**
    * Get current user (profil user yang sedang login)

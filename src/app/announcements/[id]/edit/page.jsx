@@ -3,14 +3,16 @@
 import React, { useState, useEffect } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import { Button } from '@/components/ui/button';
-import { AlertCircle, ArrowLeft } from 'lucide-react';
+import { AlertCircle, ArrowLeft, Loader2 } from 'lucide-react';
+import { useAuth } from '@/contexts/AuthContext';
 import AnnouncementFormComponent from '@/components/announcement/AnnouncementFormComponent';
-import apiClient from '@/lib/api-client';
+import AnnouncementService from '@/services/AnnouncementService';
 import Navbar from '@/components/layout/Navbar';
 
 export default function EditAnnouncementPage() {
   const router = useRouter();
   const params = useParams();
+  const { user, loading: authLoading } = useAuth();
   const [announcement, setAnnouncement] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
   const [isFetching, setIsFetching] = useState(true);
@@ -19,42 +21,62 @@ export default function EditAnnouncementPage() {
   const id = params.id;
 
   useEffect(() => {
-    if (id) {
+    if (id && !authLoading) {
       fetchAnnouncement();
     }
-  }, [id]);
+  }, [id, authLoading]);
 
-  const fetchAnnouncement = async () => {
-    try {
-      setIsFetching(true);
-      setError(null);
+  const fetchAnnouncements = async () => {
+  try {
+    setLoading(true);
+    setError(null);
 
-      const response = await apiClient.get(`/announcements/${id}`);
+    const result = await AnnouncementService.getAnnouncements(
+      page,
+      10,
+      null,
+      'newest',
+      search || null
+    );
 
-      if (response.success) {
-        setAnnouncement(response.data);
-      } else {
-        setError('Gagal mengambil data pengumuman');
+    if (result.success) {
+      let data = result.data || [];
+
+      // 🔍 Filter tambahan di frontend (jaga-jaga kalau backend nggak ngefilter)
+      const keyword = (search || '').trim().toLowerCase();
+      if (keyword) {
+        data = data.filter((item) => {
+          const title = (item.title || '').toLowerCase();
+          const content = (item.content || '').toLowerCase();
+          return title.includes(keyword) || content.includes(keyword);
+        });
       }
-    } catch (err) {
-      console.error('❌ Error fetching announcement:', err);
-      setError(err.message || 'Terjadi kesalahan saat mengambil pengumuman');
-    } finally {
-      setIsFetching(false);
+
+      setAnnouncements(data);
+      setPagination(result.pagination || {});
+    } else {
+      setError(result.error || 'Gagal mengambil data pengumuman');
     }
-  };
+  } catch (err) {
+    console.error('❌ Error fetching announcements:', err);
+    setError(err.message || 'Terjadi kesalahan saat mengambil pengumuman');
+  } finally {
+    setLoading(false);
+  }
+};
+
 
   const handleSubmit = async (formData) => {
     setIsLoading(true);
     setError(null);
 
     try {
-      const response = await apiClient.put(`/announcements/${id}`, formData);
+      const result = await AnnouncementService.updateAnnouncement(id, formData);
 
-      if (response.success) {
-        router.push(`/announcements/${id}`);
+      if (result.success) {
+        router.push(`/announcements`);
       } else {
-        setError(response.errors || 'Gagal memperbarui pengumuman');
+        setError(result.error || 'Gagal memperbarui pengumuman');
       }
     } catch (err) {
       console.error('❌ Error updating announcement:', err);
@@ -64,13 +86,13 @@ export default function EditAnnouncementPage() {
     }
   };
 
-  if (isFetching) {
+  if (isFetching || authLoading) {
     return (
       <>
         <Navbar />
         <div className="min-h-screen bg-gradient-to-br from-neutral-50 to-neutral-100 p-6">
           <div className="max-w-4xl mx-auto text-center py-12">
-            <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+            <Loader2 className="h-12 w-12 animate-spin text-primary mx-auto" />
             <p className="mt-4 text-neutral-600">Memuat pengumuman...</p>
           </div>
         </div>

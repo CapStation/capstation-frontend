@@ -44,9 +44,6 @@ const GroupCard = ({ group, isOwner = false, onAction = null }) => {
               <CardTitle className="text-lg line-clamp-2 text-neutral-900">
                 {group.name}
               </CardTitle>
-              <CardDescription className="text-sm text-neutral-600">
-                {group.capstone?.title || 'Capstone tidak ada'}
-              </CardDescription>
             </div>
           </div>
           <Badge className={`shrink-0 ${getStatusColor(group.status)}`}>
@@ -115,18 +112,13 @@ const GroupCard = ({ group, isOwner = false, onAction = null }) => {
           >
             <Link href={`/groups/${group._id}`}>Lihat Detail</Link>
           </Button>
-          {onAction && (
-            <Button
-              size="sm"
-              variant={isOwner ? 'default' : 'outline'}
-              className={
-                isOwner
-                  ? 'flex-1 bg-primary hover:bg-primary-dark text-white'
-                  : 'flex-1 border-primary text-primary hover:bg-primary hover:text-white'
-              }
-              onClick={() => onAction(group._id)}
-            >
-              {isOwner ? 'Kelola' : 'Bergabung'}
+          {isOwner && (
+          <Button
+            size="sm"
+            className="flex-1 bg-primary hover:bg-primary-dark text-white"
+            onClick={() => onAction && onAction(group._id)}
+          >
+            Kelola
             </Button>
           )}
         </div>

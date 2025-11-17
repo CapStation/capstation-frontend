@@ -25,9 +25,6 @@ const AnnouncementFormComponent = ({
   const [formData, setFormData] = useState({
     title: initialData?.title || '',
     content: initialData?.content || '',
-    category: initialData?.category || 'pengumuman',
-    targetAudience: initialData?.targetAudience || 'semua',
-    status: initialData?.status || 'published',
     isImportant: initialData?.isImportant || false
   });
 
@@ -48,18 +45,6 @@ const AnnouncementFormComponent = ({
       errors.content = 'Konten harus diisi';
     } else if (formData.content.length < 10) {
       errors.content = 'Konten minimal 10 karakter';
-    }
-
-    if (!formData.category) {
-      errors.category = 'Kategori harus dipilih';
-    }
-
-    if (!formData.targetAudience) {
-      errors.targetAudience = 'Target audiens harus dipilih';
-    }
-
-    if (!formData.status) {
-      errors.status = 'Status harus dipilih';
     }
 
     return errors;
@@ -183,68 +168,6 @@ const AnnouncementFormComponent = ({
             </p>
             {formErrors.content && (
               <p className="text-sm text-red-600">{formErrors.content}</p>
-            )}
-          </div>
-
-          {/* Category Field */}
-          <div className="space-y-2">
-            <Label htmlFor="category" className="text-neutral-700 font-semibold">
-              Kategori <span className="text-red-500">*</span>
-            </Label>
-            <Select value={formData.category} onValueChange={(value) => handleSelectChange(value, 'category')}>
-              <SelectTrigger className="border-neutral-300 text-neutral-900">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent className="bg-white border-neutral-300">
-                <SelectItem value="akademik">Akademik</SelectItem>
-                <SelectItem value="pengumuman">Pengumuman</SelectItem>
-                <SelectItem value="peringatan">Peringatan</SelectItem>
-                <SelectItem value="informasi">Informasi</SelectItem>
-                <SelectItem value="lainnya">Lainnya</SelectItem>
-              </SelectContent>
-            </Select>
-            {formErrors.category && (
-              <p className="text-sm text-red-600">{formErrors.category}</p>
-            )}
-          </div>
-
-          {/* Target Audience Field */}
-          <div className="space-y-2">
-            <Label htmlFor="targetAudience" className="text-neutral-700 font-semibold">
-              Target Audiens <span className="text-red-500">*</span>
-            </Label>
-            <Select value={formData.targetAudience} onValueChange={(value) => handleSelectChange(value, 'targetAudience')}>
-              <SelectTrigger className="border-neutral-300 text-neutral-900">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent className="bg-white border-neutral-300">
-                <SelectItem value="semua">Semua Pengguna</SelectItem>
-                <SelectItem value="mahasiswa">Mahasiswa</SelectItem>
-                <SelectItem value="dosen">Dosen</SelectItem>
-                <SelectItem value="admin">Admin</SelectItem>
-              </SelectContent>
-            </Select>
-            {formErrors.targetAudience && (
-              <p className="text-sm text-red-600">{formErrors.targetAudience}</p>
-            )}
-          </div>
-
-          {/* Status Field */}
-          <div className="space-y-2">
-            <Label htmlFor="status" className="text-neutral-700 font-semibold">
-              Status <span className="text-red-500">*</span>
-            </Label>
-            <Select value={formData.status} onValueChange={(value) => handleSelectChange(value, 'status')}>
-              <SelectTrigger className="border-neutral-300 text-neutral-900">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent className="bg-white border-neutral-300">
-                <SelectItem value="published">Dipublikasikan</SelectItem>
-                <SelectItem value="draft">Draft</SelectItem>
-              </SelectContent>
-            </Select>
-            {formErrors.status && (
-              <p className="text-sm text-red-600">{formErrors.status}</p>
             )}
           </div>
 

@@ -6,6 +6,8 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
+import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { Badge } from '@/components/ui/badge';
 import {
   Select,
   SelectContent,
@@ -13,10 +15,10 @@ import {
   SelectTrigger,
   SelectValue
 } from '@/components/ui/select';
-import { AlertCircle, CheckCircle, Loader2 } from 'lucide-react';
+import { AlertCircle, CheckCircle, Loader2, Plus, X, Mail } from 'lucide-react';
 import UserService from '@/services/UserService';
 
-const GroupForm = ({ initialData = null, onSubmit, isLoading = false, error = null, success = null }) => {
+const GroupForm = ({ initialData = null, onSubmit, isLoading = false, error = null, success = null, existingProjects = [] }) => {
   const [formData, setFormData] = useState({
     name: initialData?.name || '',
     description: initialData?.description || '',
@@ -28,7 +30,14 @@ const GroupForm = ({ initialData = null, onSubmit, isLoading = false, error = nu
   const [emailInput, setEmailInput] = useState('');
   const [formErrors, setFormErrors] = useState({});
   const [emailValidating, setEmailValidating] = useState(false);
-  const [validatedEmails, setValidatedEmails] = useState({});
+  const [invitedMembers, setInvitedMembers] = useState(
+    initialData?.inviteEmails?.map((email) => ({
+      email,
+      name: email.split('@')[0],
+      isValidated: true
+    })) || []
+  );
+  const [successMessages, setSuccessMessages] = useState([]);
 
   const validateForm = () => {
     const errors = {};
@@ -87,7 +96,10 @@ const GroupForm = ({ initialData = null, onSubmit, isLoading = false, error = nu
       return;
     }
 
-    if (formData.inviteEmails.includes(emailInput.trim())) {
+    const email = emailInput.trim().toLowerCase();
+    
+    // Check if email already added
+    if (invitedMembers.some((m) => m.email === email)) {
       setFormErrors((prev) => ({
         ...prev,
         inviteEmails: 'Email sudah ditambahkan'
@@ -95,70 +107,71 @@ const GroupForm = ({ initialData = null, onSubmit, isLoading = false, error = nu
       return;
     }
 
-    // Check if email already validated
-    const email = emailInput.trim().toLowerCase();
-    if (!validatedEmails[email]) {
-      setEmailValidating(true);
-      try {
-        const result = await UserService.searchByEmail(email);
-        console.log('📧 Email validation result:', { email, result });
+    setEmailValidating(true);
+    try {
+      const result = await UserService.searchByEmail(email);
+      console.log('📧 Email validation result:', { email, result });
+      
+      if (result && result.success && result.data) {
+        // User found
+        console.log('✅ User found, adding to invite list:', result.data);
+        const newMember = {
+          email: email,
+          name: result.data.name || email.split('@')[0],
+          userId: result.data._id,
+          isValidated: true
+        };
         
-        if (result && result.success && result.data) {
-          // User found
-          console.log('✅ User found, adding to invite list:', result.data);
-          setValidatedEmails((prev) => ({
-            ...prev,
-            [email]: true
-          }));
-          setFormData((prev) => ({
-            ...prev,
-            inviteEmails: [...prev.inviteEmails, email]
-          }));
-          setEmailInput('');
-          if (formErrors.inviteEmails) {
-            setFormErrors((prev) => ({
-              ...prev,
-              inviteEmails: null
-            }));
-          }
-        } else {
-          // User not found
-          console.log('❌ User not found for email:', email);
-          setFormErrors((prev) => ({
-            ...prev,
-            inviteEmails: `Email "${email}" belum terdaftar di sistem. Pastikan pengguna sudah membuat akun terlebih dahulu.`
-          }));
-        }
-      } catch (err) {
-        // API error
-        console.error('🔴 Error searching for email:', err);
+        setInvitedMembers((prev) => [...prev, newMember]);
+        setFormData((prev) => ({
+          ...prev,
+          inviteEmails: [...prev.inviteEmails, email]
+        }));
+        setEmailInput('');
+        setFormErrors((prev) => {
+          const newErrors = { ...prev };
+          delete newErrors.inviteEmails;
+          return newErrors;
+        });
+        setSuccessMessages((prev) => [...prev, `✅ ${email} berhasil ditambahkan`]);
+        setTimeout(() => setSuccessMessages((prev) => prev.slice(1)), 3000);
+      } else {
+        // User not found - result.error contains the error message
+        console.log('❌ User not found for email:', email);
         setFormErrors((prev) => ({
           ...prev,
-          inviteEmails: err.message || 'Terjadi kesalahan saat memverifikasi email'
+          inviteEmails: result.error || `Email "${email}" belum terdaftar di sistem. Pastikan pengguna sudah membuat akun terlebih dahulu.`
         }));
-      } finally {
-        setEmailValidating(false);
       }
-    } else {
-      setFormData((prev) => ({
+    } catch (err) {
+      // Unexpected error
+      console.error('🔴 Error searching for email:', err);
+      setFormErrors((prev) => ({
         ...prev,
-        inviteEmails: [...prev.inviteEmails, email]
+        inviteEmails: err.message || 'Terjadi kesalahan saat memverifikasi email'
       }));
-      setEmailInput('');
-      if (formErrors.inviteEmails) {
-        setFormErrors((prev) => ({
-          ...prev,
-          inviteEmails: null
-        }));
-      }
+    } finally {
+      setEmailValidating(false);
     }
   };
 
   const handleRemoveEmail = (email) => {
+    setInvitedMembers((prev) => prev.filter((m) => m.email !== email));
     setFormData((prev) => ({
       ...prev,
       inviteEmails: prev.inviteEmails.filter((e) => e !== email)
     }));
+  };
+
+  const getInitials = (nameOrEmail) => {
+    const name = nameOrEmail || '';
+    return name
+      .split('@')[0]
+      .split('.')
+      .map((part) => part[0])
+      .join('')
+      .toUpperCase()
+      .slice(0, 2) || 'MB';
   };
 
   const handleSubmit = (e) => {
@@ -297,13 +310,29 @@ const GroupForm = ({ initialData = null, onSubmit, isLoading = false, error = nu
 
           {/* Email Invite Field */}
           {!initialData && (
-            <div className="space-y-3 p-4 bg-green-50 border border-green-200 rounded-lg">
-              <Label className="text-neutral-700 font-semibold">
-                Undang Anggota Berdasarkan Email
-              </Label>
-              <p className="text-xs text-neutral-600">
-                Masukkan email dari anggota yang sudah terdaftar di sistem CapStation
-              </p>
+            <div className="space-y-4 p-4 bg-gradient-to-br from-accent/10 to-accent/5 border border-accent/30 rounded-lg">
+              <div>
+                <Label className="text-neutral-700 font-semibold text-base">
+                  📧 Undang Anggota Berdasarkan Email
+                </Label>
+                <p className="text-xs text-neutral-600 mt-1">
+                  Masukkan email dari anggota yang sudah terdaftar di sistem CapStation. Mereka akan langsung ditambahkan ke grup.
+                </p>
+              </div>
+
+              {/* Success Messages */}
+              {successMessages.length > 0 && (
+                <div className="space-y-2">
+                  {successMessages.map((msg, idx) => (
+                    <div key={idx} className="text-sm p-2 bg-green-50 border border-green-200 rounded text-green-700 flex items-center gap-2">
+                      <CheckCircle className="w-4 h-4 flex-shrink-0" />
+                      {msg}
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {/* Email Input with Add Button */}
               <div className="flex gap-2">
                 <Input
                   type="email"
@@ -312,10 +341,11 @@ const GroupForm = ({ initialData = null, onSubmit, isLoading = false, error = nu
                   onChange={(e) => {
                     setEmailInput(e.target.value);
                     if (formErrors.inviteEmails) {
-                      setFormErrors((prev) => ({
-                        ...prev,
-                        inviteEmails: null
-                      }));
+                      setFormErrors((prev) => {
+                        const newErrors = { ...prev };
+                        delete newErrors.inviteEmails;
+                        return newErrors;
+                      });
                     }
                   }}
                   onKeyPress={(e) => {
@@ -324,62 +354,98 @@ const GroupForm = ({ initialData = null, onSubmit, isLoading = false, error = nu
                       handleAddEmail();
                     }
                   }}
-                  disabled={emailValidating}
-                  className="border-green-300 text-neutral-900 placeholder:text-neutral-500 disabled:bg-gray-100"
+                  disabled={emailValidating || isLoading}
+                  className="border-accent/50 text-neutral-900 placeholder:text-neutral-500 disabled:bg-gray-100 focus:border-accent focus:ring-accent/20"
                 />
                 <Button
                   type="button"
                   onClick={handleAddEmail}
-                  disabled={emailValidating || isLoading}
-                  className="bg-green-600 hover:bg-green-700 text-white font-semibold px-4 disabled:bg-gray-400"
+                  disabled={emailValidating || isLoading || !emailInput.trim()}
+                  className="bg-accent hover:bg-accent text-neutral-900 font-semibold px-6 disabled:bg-gray-400 flex items-center gap-2"
                 >
                   {emailValidating ? (
                     <>
-                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                      Validasi
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                      <span className="hidden sm:inline">Validasi</span>
                     </>
                   ) : (
-                    'Tambah'
+                    <>
+                      <Plus className="h-4 w-4" />
+                      <span className="hidden sm:inline">Tambah</span>
+                    </>
                   )}
                 </Button>
               </div>
+
+              {/* Error Message */}
               {formErrors.inviteEmails && (
-                <div className="text-sm p-2 bg-red-50 border border-red-200 rounded text-red-700">
-                  ❌ {formErrors.inviteEmails}
-                  <p className="text-xs mt-1 text-red-600">
+                <div className="text-sm p-3 bg-red-50 border border-red-200 rounded text-red-700 space-y-1">
+                  <div className="flex items-center gap-2 font-semibold">
+                    <AlertCircle className="w-4 h-4 flex-shrink-0" />
+                    {formErrors.inviteEmails}
+                  </div>
+                  <p className="text-xs text-red-600 ml-6">
                     Pastikan email yang dimasukkan sudah terdaftar di sistem CapStation
                   </p>
                 </div>
               )}
 
-              {/* Email List */}
-              {formData.inviteEmails.length > 0 && (
-                <div className="space-y-2 mt-3">
-                  <p className="text-sm font-medium text-neutral-700">
-                    ✅ Anggota yang diundang ({formData.inviteEmails.length}):
-                  </p>
-                  <div className="space-y-2">
-                    {formData.inviteEmails.map((email) => (
+              {/* Invited Members List */}
+              {invitedMembers.length > 0 && (
+                <div className="space-y-3 mt-4 pt-4 border-t border-accent/20">
+                  <div className="flex items-center justify-between">
+                    <p className="text-sm font-semibold text-neutral-700">
+                      ✅ Anggota yang Diundang
+                    </p>
+                    <Badge variant="outline" className="bg-accent/10 text-accent border-accent">
+                      {invitedMembers.length}
+                    </Badge>
+                  </div>
+
+                  <div className="space-y-2 max-h-72 overflow-y-auto">
+                    {invitedMembers.map((member) => (
                       <div
-                        key={email}
-                        className="flex items-center justify-between p-2 bg-white border border-green-300 rounded-lg"
+                        key={member.email}
+                        className="flex items-center justify-between p-3 bg-white border border-accent/30 rounded-lg hover:bg-neutral-50 transition-colors"
                       >
-                        <span className="text-sm text-neutral-700">{email}</span>
-                        <button
+                        <div className="flex items-center gap-3 flex-1 min-w-0">
+                          <Avatar className="w-8 h-8 flex-shrink-0">
+                            <AvatarFallback className="bg-accent/20 text-accent text-xs font-semibold">
+                              {getInitials(member.email)}
+                            </AvatarFallback>
+                          </Avatar>
+                          <div className="min-w-0 flex-1">
+                            <p className="text-sm font-medium text-neutral-900">
+                              {member.name}
+                            </p>
+                            <p className="text-xs text-neutral-600 flex items-center gap-1 truncate">
+                              <Mail className="w-3 h-3 flex-shrink-0" />
+                              {member.email}
+                            </p>
+                          </div>
+                        </div>
+                        <Button
                           type="button"
-                          onClick={() => handleRemoveEmail(email)}
-                          className="text-red-500 hover:text-red-700 text-sm font-semibold"
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleRemoveEmail(member.email)}
+                          disabled={isLoading}
+                          className="text-red-600 hover:bg-red-50 hover:text-red-700 flex-shrink-0 ml-2"
                         >
-                          Hapus
-                        </button>
+                          <X className="w-4 h-4" />
+                        </Button>
                       </div>
                     ))}
                   </div>
                 </div>
               )}
-              <p className="text-xs text-green-700">
-                Anggota harus memiliki akun yang sudah terdaftar untuk bisa diundang
-              </p>
+
+              {/* Info Box */}
+              <div className="p-3 bg-white border border-accent/20 rounded text-xs text-neutral-600 space-y-1">
+                <p>
+                  <strong className="text-neutral-700">ℹ️ Catatan:</strong> Anggota yang diundang harus sudah memiliki akun terdaftar di CapStation untuk bisa ditambahkan ke grup.
+                </p>
+              </div>
             </div>
           )}
 

@@ -4,38 +4,39 @@ import React, { useState, useEffect } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { AlertCircle, ArrowLeft, Edit, Trash2 } from 'lucide-react';
-import apiClient from '@/lib/api-client';
+import { AlertCircle, ArrowLeft, Edit, Trash2, Loader2 } from 'lucide-react';
+import AnnouncementService from '@/services/AnnouncementService';
 import { useAuth } from '@/contexts/AuthContext';
 import Navbar from '@/components/layout/Navbar';
 
 export default function AnnouncementDetailPage() {
   const router = useRouter();
   const params = useParams();
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const [announcement, setAnnouncement] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const id = params.id;
 
   useEffect(() => {
-    if (id) {
+    if (id && !authLoading) {
       fetchAnnouncement();
     }
-  }, [id]);
+  }, [id, authLoading]);
 
   const fetchAnnouncement = async () => {
     try {
       setLoading(true);
       setError(null);
 
-      const response = await apiClient.get(`/announcements/${id}`);
+      const result = await AnnouncementService.getAnnouncementById(id);
 
-      if (response.success) {
-        setAnnouncement(response.data);
+      if (result.success) {
+        setAnnouncement(result.data);
       } else {
-        setError('Gagal mengambil detail pengumuman');
+        setError(result.error || 'Gagal mengambil detail pengumuman');
       }
     } catch (err) {
       console.error('❌ Error fetching announcement:', err);
@@ -49,29 +50,36 @@ export default function AnnouncementDetailPage() {
     if (!confirm('Apakah Anda yakin ingin menghapus pengumuman ini?')) return;
 
     try {
-      const response = await apiClient.delete(`/announcements/${id}`);
+      setIsDeleting(true);
+      const result = await AnnouncementService.deleteAnnouncement(id);
 
-      if (response.success) {
+      if (result.success) {
         router.push('/announcements');
       } else {
-        alert('Gagal menghapus pengumuman');
+        setError(result.error || 'Gagal menghapus pengumuman');
       }
     } catch (err) {
       console.error('❌ Error deleting announcement:', err);
-      alert(err.message || 'Terjadi kesalahan');
+      setError(err.message || 'Terjadi kesalahan saat menghapus pengumuman');
+    } finally {
+      setIsDeleting(false);
     }
   };
 
-  const getCategoryColor = (category) => {
-    const colors = {
-      'akademik': 'bg-blue-100 text-blue-800',
-      'pengumuman': 'bg-green-100 text-green-800',
-      'peringatan': 'bg-red-100 text-red-800',
-      'informasi': 'bg-yellow-100 text-yellow-800',
-      'lainnya': 'bg-gray-100 text-gray-800'
-    };
-    return colors[category] || 'bg-gray-100 text-gray-800';
-  };
+  const canEdit = user?.role === 'admin' || user?.role === 'dosen';
+  const isCreator = String(announcement?.createdBy?._id) === String(user?._id);
+  const canManage = canEdit && isCreator;
+
+  // Debug logging
+  console.log('📋 Announcement Detail Debug:', {
+    userRole: user?.role,
+    userId: user?._id,
+    createdById: announcement?.createdBy?._id,
+    canEdit,
+    isCreator,
+    canManage,
+    announcementData: announcement
+  });
 
   if (loading) {
     return (
@@ -79,7 +87,7 @@ export default function AnnouncementDetailPage() {
         <Navbar />
         <div className="min-h-screen bg-gradient-to-br from-neutral-50 to-neutral-100 p-6">
           <div className="max-w-4xl mx-auto text-center py-12">
-            <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+            <Loader2 className="h-12 w-12 animate-spin text-primary mx-auto" />
             <p className="mt-4 text-neutral-600">Memuat pengumuman...</p>
           </div>
         </div>
@@ -115,9 +123,6 @@ export default function AnnouncementDetailPage() {
     );
   }
 
-  const canEdit = user?.role === 'admin' || user?.role === 'dosen';
-  const isCreator = announcement.createdBy?._id === user?._id;
-
   return (
     <>
       <Navbar />
@@ -144,9 +149,6 @@ export default function AnnouncementDetailPage() {
                       ⭐ PENTING
                     </span>
                   )}
-                  <span className={`inline-block px-3 py-1 text-sm font-medium rounded ${getCategoryColor(announcement.category)}`}>
-                    {announcement.category}
-                  </span>
                 </div>
                 <CardTitle className="text-3xl text-neutral-900 mb-2">
                   {announcement.title}
@@ -160,12 +162,11 @@ export default function AnnouncementDetailPage() {
                     hour: '2-digit',
                     minute: '2-digit'
                   })}</span>
-                  <span>👁️ {announcement.viewCount} views</span>
                 </div>
               </div>
 
               {/* Action Buttons */}
-              {canEdit && isCreator && (
+              {canManage && (
                 <div className="flex gap-2 ml-4">
                   <Button
                     variant="outline"
@@ -178,10 +179,17 @@ export default function AnnouncementDetailPage() {
                   <Button
                     variant="outline"
                     onClick={handleDelete}
+                    disabled={isDeleting}
                     className="border-red-300 text-red-700 hover:bg-red-50"
                   >
-                    <Trash2 className="w-4 h-4 mr-2" />
-                    Hapus
+                    {isDeleting ? (
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                    ) : (
+                      <>
+                        <Trash2 className="w-4 h-4 mr-2" />
+                        Hapus
+                      </>
+                    )}
                   </Button>
                 </div>
               )}

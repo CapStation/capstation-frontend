@@ -53,24 +53,30 @@ const CreateGroupPage = () => {
       setError(null);
       setSuccess(null);
 
+      console.log('📤 Submitting group creation with data:', formData);
+
       const result = await GroupService.createGroup({
         name: formData.name,
         description: formData.description,
+        maxMembers: formData.maxMembers,
         projectType: formData.projectType,
         projectId: formData.projectId || null,
-        maxMembers: formData.maxMembers,
         inviteEmails: formData.inviteEmails || []
       });
+
+      console.log('✅ Group creation result:', result);
 
       if (result.success) {
         setSuccess('Grup berhasil dibuat!');
         setTimeout(() => {
-          router.push(`/groups/${result.data._id}`);
+          router.push(`/groups/${result.data._id || result.data.id}`);
         }, 1500);
+      } else {
+        setError(result.error || 'Gagal membuat grup');
       }
     } catch (err) {
-      setError(err);
-      console.error('Create group error:', err);
+      console.error('❌ Create group error:', err);
+      setError(err.message || 'Terjadi kesalahan saat membuat grup');
     } finally {
       setLoading(false);
     }
@@ -123,21 +129,6 @@ const CreateGroupPage = () => {
               success={success}
             />
           )}
-
-          {/* Info Card */}
-          <Card className="mt-6 border-neutral-200 bg-white p-4">
-            <p className="text-sm font-semibold text-neutral-900 mb-2">
-              💡 Tips Membuat Grup
-            </p>
-            <ul className="space-y-2 text-sm text-neutral-600">
-              <li>✓ Berikan nama grup yang jelas dan deskriptif</li>
-              <li>✓ Pilih tipe proyek (Baru atau Lanjutan)</li>
-              <li>✓ Jika Lanjutan, pilih proyek yang ingin dilanjutkan</li>
-              <li>✓ Undang anggota langsung berdasarkan email mereka</li>
-              <li>✓ Jumlah anggota antara 2-5 orang</li>
-              <li>✓ Anda akan menjadi owner grup secara otomatis</li>
-            </ul>
-          </Card>
         </div>
       </div>
     </div>

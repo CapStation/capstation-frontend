@@ -25,6 +25,8 @@ const GroupDetailPage = () => {
   const [error, setError] = useState(null);
   const [inviteDialogOpen, setInviteDialogOpen] = useState(false);
   const [actionLoading, setActionLoading] = useState(false);
+  const [availableUsers, setAvailableUsers] = useState([]);
+  const [loadingAvailableUsers, setLoadingAvailableUsers] = useState(false);
 
   useEffect(() => {
     loadGroupDetail();
@@ -32,6 +34,19 @@ const GroupDetailPage = () => {
     const interval = setInterval(loadGroupDetail, 5000);
     return () => clearInterval(interval);
   }, [groupId]);
+
+  const loadAvailableUsers = async () => {
+    try {
+      setLoadingAvailableUsers(true);
+      const result = await GroupService.getAvailableUsers(groupId);
+      setAvailableUsers(result.data || []);
+    } catch (err) {
+      console.error('Error loading available users:', err);
+      setAvailableUsers([]);
+    } finally {
+      setLoadingAvailableUsers(false);
+    }
+  };
 
   const loadGroupDetail = async () => {
     try {
@@ -289,7 +304,10 @@ const GroupDetailPage = () => {
                   </CardHeader>
                   <CardContent className="pt-6">
                     <Button
-                      onClick={() => setInviteDialogOpen(true)}
+                      onClick={() => {
+                        setInviteDialogOpen(true);
+                        loadAvailableUsers();
+                      }}
                       disabled={group.members.length >= group.maxMembers}
                       className="w-full bg-primary hover:bg-primary-dark text-white font-semibold"
                     >
@@ -318,8 +336,8 @@ const GroupDetailPage = () => {
         isOpen={inviteDialogOpen}
         onClose={() => setInviteDialogOpen(false)}
         onInvite={handleInviteMember}
-        isLoading={actionLoading}
-        availableUsers={[]} // TODO: Load from API
+        isLoading={actionLoading || loadingAvailableUsers}
+        availableUsers={availableUsers}
       />
     </div>
   );
