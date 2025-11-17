@@ -29,12 +29,42 @@ export const AuthProvider = ({ children }) => {
     try {
       const token = apiClient.getAuthToken();
       if (token) {
-        const userData = await apiClient.get(endpoints.auth.me);
+        const userData = await apiClient.get(endpoints.users.profile);
         setUser(userData.user || userData);
         setIsAuthenticated(true);
       }
     } catch (error) {
-      console.error("Auth check failed:", error);
+      // Only log error if it's not a simple "no token" case
+      if (apiClient.getAuthToken()) {
+        // Safely extract error information
+        const errorInfo = {
+          // Direct error properties
+          message: error?.message || "Unknown error",
+          status: error?.status,
+          data: error?.data,
+
+          // Network error flag
+          isNetworkError: error?.isNetworkError || false,
+
+          // For standard Error objects
+          name: error?.name,
+          stack: error?.stack,
+
+          // Check if it's an object
+          type: typeof error,
+
+          // Serialize the full error for debugging
+          raw: (() => {
+            try {
+              return JSON.stringify(error);
+            } catch {
+              return error?.toString() || String(error);
+            }
+          })(),
+        };
+
+        console.error("Auth check failed:", errorInfo);
+      }
       apiClient.removeAuthToken();
       setUser(null);
       setIsAuthenticated(false);
@@ -133,8 +163,16 @@ export const AuthProvider = ({ children }) => {
     try {
       await apiClient.post(endpoints.auth.logout);
     } catch (error) {
-      console.error("Logout error:", error);
+      // Safely log logout error - it's not critical if backend logout fails
+      const errorInfo = {
+        message: error?.message || "Unknown error",
+        status: error?.status,
+        data: error?.data,
+        type: typeof error,
+      };
+      console.error("Logout error:", errorInfo);
     } finally {
+      // Always clear local auth state regardless of backend response
       apiClient.removeAuthToken();
       setUser(null);
       setIsAuthenticated(false);

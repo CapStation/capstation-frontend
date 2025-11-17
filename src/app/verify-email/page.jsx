@@ -1,133 +1,203 @@
-'use client';
+"use client";
 
-import React, { useState, useEffect } from 'react';
-import { useSearchParams, useRouter } from 'next/navigation';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { AlertCircle, CheckCircle, Loader2, Mail } from 'lucide-react';
-import AuthService from '@/services/AuthService';
+import { useState, useEffect, Suspense } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { CheckCircle, AlertCircle, Loader2, Mail, Home } from "lucide-react";
+import Link from "next/link";
+import apiClient from "@/lib/api-client";
+import endpoints from "@/lib/api-config";
 
-export default function VerifyEmailPage() {
+function VerifyEmailContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-  const [success, setSuccess] = useState(false);
-  const [email, setEmail] = useState('');
+
+  const [status, setStatus] = useState("verifying"); // verifying, success, error
+  const [message, setMessage] = useState("");
+  const [countdown, setCountdown] = useState(5);
 
   useEffect(() => {
-    verifyEmail();
-  }, []);
+    const verifyEmail = async () => {
+      const token = searchParams.get("token");
+      const email = searchParams.get("email");
 
-  const verifyEmail = async () => {
-    try {
-      setLoading(true);
-      const token = searchParams.get('token');
-      const emailParam = searchParams.get('email');
-
-      if (!token || !emailParam) {
-        setError('Token atau email tidak ditemukan. Link verifikasi tidak valid.');
+      if (!token || !email) {
+        setStatus("error");
+        setMessage(
+          "Link verifikasi tidak valid. Token atau email tidak ditemukan."
+        );
         return;
       }
 
-      setEmail(emailParam);
+      try {
+        const response = await apiClient.post(endpoints.auth.verifyEmail, {
+          token,
+          email,
+        });
 
-      // Call backend to verify email
-      const response = await AuthService.verifyEmail(token, emailParam);
+        if (response.success) {
+          setStatus("success");
+          setMessage(response.message || "Email Anda berhasil diverifikasi!");
 
-      if (response.success || response.message === 'Email verified') {
-        setSuccess(true);
-        // Redirect to login after 3 seconds
-        setTimeout(() => {
-          router.push('/login');
-        }, 3000);
-      } else {
-        setError(response.message || 'Gagal memverifikasi email');
+          // Auto redirect countdown
+          const interval = setInterval(() => {
+            setCountdown((prev) => {
+              if (prev <= 1) {
+                clearInterval(interval);
+                router.push("/login");
+                return 0;
+              }
+              return prev - 1;
+            });
+          }, 1000);
+
+          return () => clearInterval(interval);
+        } else {
+          setStatus("error");
+          setMessage(response.message || "Verifikasi gagal");
+        }
+      } catch (error) {
+        console.error("Verification error:", error);
+        setStatus("error");
+        setMessage(
+          error?.data?.message ||
+            error?.message ||
+            "Token tidak valid atau sudah kadaluarsa. Silakan minta link verifikasi baru."
+        );
       }
-    } catch (err) {
-      console.error('Verification error:', err);
-      setError(err.message || 'Terjadi kesalahan saat memverifikasi email');
-    } finally {
-      setLoading(false);
-    }
-  };
+    };
 
-  return (
-    <div className="min-h-screen bg-gradient-to-br from-neutral-50 via-white to-neutral-50 flex items-center justify-center px-4">
-      <Card className="w-full max-w-md border-neutral-200 shadow-lg">
-        <CardHeader className="text-center bg-gradient-to-r from-primary/10 to-secondary/10 border-b border-neutral-200">
-          <CardTitle className="text-2xl">Verifikasi Email</CardTitle>
-          <CardDescription>
-            Sedang memverifikasi akun Anda...
-          </CardDescription>
-        </CardHeader>
+    verifyEmail();
+  }, [searchParams, router]);
 
-        <CardContent className="pt-8">
-          {loading && (
-            <div className="flex flex-col items-center gap-4">
-              <Loader2 className="h-12 w-12 text-primary animate-spin" />
-              <p className="text-center text-muted-foreground">
-                Memproses verifikasi email...
-              </p>
+  // Loading State
+  if (status === "verifying") {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary/10 via-secondary/10 to-accent/10">
+        <div className="text-center">
+          <div className="bg-white rounded-full p-6 shadow-xl mb-6 inline-block">
+            <Loader2 className="w-16 h-16 text-primary animate-spin" />
+          </div>
+          <h2 className="text-2xl font-bold text-neutral-900 mb-2">
+            Memverifikasi Email...
+          </h2>
+          <p className="text-neutral-600">Mohon tunggu sebentar</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Success State
+  if (status === "success") {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary/10 via-secondary/10 to-accent/10 px-4">
+        <div className="max-w-md w-full bg-white rounded-2xl shadow-xl p-8">
+          <div className="flex justify-center mb-6">
+            <div className="w-20 h-20 bg-success/10 rounded-full flex items-center justify-center">
+              <CheckCircle className="w-12 h-12 text-success" strokeWidth={2} />
             </div>
-          )}
+          </div>
 
-          {success && !loading && (
-            <div className="flex flex-col items-center gap-4">
-              <CheckCircle className="h-12 w-12 text-green-600" />
-              <div className="text-center">
-                <h3 className="font-semibold text-green-900 mb-2">
-                  Verifikasi Berhasil!
-                </h3>
-                <p className="text-sm text-green-700 mb-4">
-                  Email Anda telah berhasil diverifikasi. Anda sekarang dapat masuk ke akun Anda.
-                </p>
-                <p className="text-xs text-muted-foreground mb-4">
-                  Anda akan diarahkan ke halaman login dalam 3 detik...
-                </p>
-              </div>
-              <Button
-                onClick={() => router.push('/login')}
-                className="w-full bg-primary hover:bg-primary-dark text-white"
+          <div className="text-center">
+            <h2 className="text-2xl font-bold text-neutral-900 mb-3">
+              Email Berhasil Diverifikasi!
+            </h2>
+            <p className="text-neutral-600 mb-4">{message}</p>
+            <p className="text-sm text-neutral-500 mb-6">
+              Anda akan diarahkan ke halaman login dalam{" "}
+              <span className="font-bold text-primary">{countdown}</span>{" "}
+              detik...
+            </p>
+
+            <div className="space-y-3">
+              <Link
+                href="/login"
+                className="inline-flex items-center justify-center w-full px-6 py-3 bg-primary text-white rounded-lg font-medium hover:bg-primary/90 transition-colors shadow-md hover:shadow-lg"
               >
-                Ke Halaman Login
-              </Button>
-            </div>
-          )}
+                <Home className="w-4 h-4 mr-2" />
+                Lanjut ke Login
+              </Link>
 
-          {error && !loading && (
-            <div className="flex flex-col items-center gap-4">
-              <AlertCircle className="h-12 w-12 text-red-600" />
-              <div className="text-center">
-                <h3 className="font-semibold text-red-900 mb-2">
-                  Verifikasi Gagal
-                </h3>
-                <p className="text-sm text-red-700 mb-6">
-                  {error}
-                </p>
-                <div className="space-y-3">
-                  <p className="text-xs text-muted-foreground mb-4">
-                    Hubungi support jika Anda memerlukan bantuan.
-                  </p>
-                  <Button
-                    onClick={() => router.push('/register')}
-                    variant="outline"
-                    className="w-full border-neutral-300"
-                  >
-                    Kembali ke Daftar
-                  </Button>
-                  <Button
-                    onClick={() => router.push('/login')}
-                    className="w-full bg-primary hover:bg-primary-dark text-white"
-                  >
-                    Ke Halaman Login
-                  </Button>
-                </div>
-              </div>
+              <Link
+                href="/"
+                className="inline-flex items-center justify-center w-full px-6 py-3 border border-neutral-300 text-neutral-700 rounded-lg font-medium hover:bg-neutral-50 transition-colors"
+              >
+                Kembali ke Beranda
+              </Link>
             </div>
-          )}
-        </CardContent>
-      </Card>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Error State
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary/10 via-secondary/10 to-accent/10 px-4">
+      <div className="max-w-md w-full bg-white rounded-2xl shadow-xl p-8">
+        <div className="flex justify-center mb-6">
+          <div className="w-20 h-20 bg-destructive/10 rounded-full flex items-center justify-center">
+            <AlertCircle
+              className="w-12 h-12 text-destructive"
+              strokeWidth={2}
+            />
+          </div>
+        </div>
+
+        <div className="text-center">
+          <h2 className="text-2xl font-bold text-neutral-900 mb-3">
+            Verifikasi Gagal
+          </h2>
+          <p className="text-neutral-600 mb-6">{message}</p>
+
+          <div className="bg-neutral-50 border border-neutral-200 rounded-lg p-4 mb-6 text-left">
+            <h3 className="font-semibold text-neutral-900 mb-2 flex items-center">
+              <Mail className="w-4 h-4 mr-2 text-primary" />
+              Apa yang harus dilakukan?
+            </h3>
+            <ul className="text-sm text-neutral-600 space-y-1">
+              <li>
+                • Periksa apakah link verifikasi sudah kadaluarsa (24 jam)
+              </li>
+              <li>• Pastikan Anda menggunakan link terbaru dari email</li>
+              <li>• Coba daftar ulang jika masalah berlanjut</li>
+            </ul>
+          </div>
+
+          <div className="space-y-3">
+            <Link
+              href="/register"
+              className="inline-flex items-center justify-center w-full px-6 py-3 bg-primary text-white rounded-lg font-medium hover:bg-primary/90 transition-colors shadow-md hover:shadow-lg"
+            >
+              Daftar Ulang
+            </Link>
+            <Link
+              href="/login"
+              className="inline-flex items-center justify-center w-full px-6 py-3 border border-neutral-300 text-neutral-700 rounded-lg font-medium hover:bg-neutral-50 transition-colors"
+            >
+              Kembali ke Login
+            </Link>
+          </div>
+        </div>
+      </div>
     </div>
+  );
+}
+
+export default function VerifyEmailPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary/10 via-secondary/10 to-accent/10">
+          <div className="text-center">
+            <div className="bg-white rounded-full p-6 shadow-xl mb-6 inline-block">
+              <Loader2 className="w-16 h-16 text-primary animate-spin" />
+            </div>
+            <p className="text-neutral-600">Loading...</p>
+          </div>
+        </div>
+      }
+    >
+      <VerifyEmailContent />
+    </Suspense>
   );
 }

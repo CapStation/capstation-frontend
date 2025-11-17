@@ -1,11 +1,12 @@
 // API Configuration
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
+const API_BASE_URL =
+  process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api";
 
 export const apiConfig = {
   baseURL: API_BASE_URL,
   timeout: 10000,
   headers: {
-    'Content-Type': 'application/json',
+    "Content-Type": "application/json",
   },
 };
 
@@ -13,69 +14,70 @@ export const apiConfig = {
 export const endpoints = {
   // Auth
   auth: {
-    login: '/auth/login',
-    register: '/auth/register',
-    logout: '/auth/logout',
-    forgotPassword: '/auth/forgot-password',
-    resetPassword: '/auth/reset-password',
-    verifyEmail: '/auth/verify',
-    me: '/auth/me',
-    google: '/oauth/google',
+    login: "/auth/login",
+    register: "/auth/register",
+    logout: "/auth/logout",
+    forgotPassword: "/auth/forgot-password",
+    resetPassword: "/auth/reset-password",
+    verifyEmail: "/auth/verify-email",
+    me: "/auth/me",
+    google: "/oauth/google",
   },
-  
+
   // Dashboard
   dashboard: {
-    stats: '/dashboard/stats',
-    announcements: '/dashboard/announcements',
-    activities: '/dashboard/activities',
+    stats: "/dashboard/stats",
+    announcements: "/dashboard/announcements",
+    activities: "/dashboard/activities",
   },
-  
+
   // Users
   users: {
-    base: '/users',
-    profile: (id) => `/users/${id}`,
-    updateProfile: '/users/profile',
-    changePassword: '/users/change-password',
-    search: '/users/search',
+    base: "/users",
+    profile: "/users/profile",
+    userProfile: (id) => `/users/profile/${id}`,
+    updateProfile: "/users/profile",
+    changePassword: "/users/change-password",
+    search: "/users/search",
     competencies: (id) => `/users/${id}/competencies`,
   },
-  
+
   // Projects
   projects: {
-    base: '/projects',
-    list: '/projects',
+    base: "/projects",
+    list: "/projects",
     detail: (id) => `/projects/${id}`,
-    my: '/projects/my-projects',
-    create: '/projects',
+    my: "/projects/my-projects",
+    create: "/projects",
     update: (id) => `/projects/${id}`,
     delete: (id) => `/projects/${id}`,
     members: (id) => `/projects/${id}/members`,
   },
-  
+
   // Documents
   documents: {
-    base: '/documents',
+    base: "/documents",
     list: (projectId) => `/documents/project/${projectId}`,
     detail: (id) => `/documents/${id}`,
-    upload: '/documents',
+    upload: "/documents",
     update: (id) => `/documents/${id}`,
     delete: (id) => `/documents/${id}`,
     download: (id) => `/documents/${id}/download`,
   },
-  
+
   // Capstone Browse
   capstone: {
-    browse: '/capstone/browse',
+    browse: "/capstone/browse",
     detail: (id) => `/capstone/${id}`,
-    categories: '/capstone/categories',
+    categories: "/capstone/categories",
   },
-  
+
   // Groups
   groups: {
-    base: '/groups',
+    base: "/groups",
     detail: (id) => `/groups/${id}`,
-    my: '/groups/my',
-    create: '/groups',
+    my: "/groups/my",
+    create: "/groups",
     update: (id) => `/groups/${id}`,
     delete: (id) => `/groups/${id}`,
     join: (id) => `/groups/${id}/join`,
@@ -88,47 +90,47 @@ export const endpoints = {
     requestJoin: (id) => `/groups/${id}/request-join`,
     respondJoinRequest: (id) => `/groups/${id}/respond-join-request`,
   },
-  
+
   // Announcements
   announcements: {
-    base: '/announcements',
+    base: "/announcements",
     detail: (id) => `/announcements/${id}`,
-    create: '/announcements',
+    create: "/announcements",
     update: (id) => `/announcements/${id}`,
     delete: (id) => `/announcements/${id}`,
   },
-  
+
   // Competencies
   competencies: {
-    base: '/competencies',
+    base: "/competencies",
     detail: (id) => `/competencies/${id}`,
-    create: '/competencies',
+    create: "/competencies",
     update: (id) => `/competencies/${id}`,
     delete: (id) => `/competencies/${id}`,
-    search: '/competencies/search',
+    search: "/competencies/search",
   },
-  
+
   // Request Decisions
   requests: {
-    base: '/requests',
+    base: "/requests",
     detail: (id) => `/requests/${id}`,
-    my: '/requests/my',
-    create: '/requests',
+    my: "/requests/my",
+    create: "/requests",
     cancel: (id) => `/requests/${id}/cancel`,
   },
-  
+
   decisions: {
-    inbox: '/decisions/inbox',
-    history: '/decisions/history',
+    inbox: "/decisions/inbox",
+    history: "/decisions/history",
     approve: (id) => `/decisions/${id}/approve`,
     reject: (id) => `/decisions/${id}/reject`,
   },
-  
+
   // Admin
   admin: {
-    dashboard: '/admin/dashboard',
-    users: '/admin/users',
-    pendingRoles: '/admin/pending-roles',
+    dashboard: "/admin/dashboard",
+    users: "/admin/users",
+    pendingRoles: "/admin/pending-roles",
     approveRole: (id) => `/admin/users/${id}/approve-role`,
     rejectRole: (id) => `/admin/users/${id}/reject-role`,
   },
