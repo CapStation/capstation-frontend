@@ -43,6 +43,11 @@ const MyGroupsPage = () => {
     }
   };
 
+  const handleManageGroup = (groupId) => {
+    router.push(`/groups/${groupId}/manage`);
+  };
+
+
   const handleLeaveGroup = async (groupId) => {
     if (confirm('Apakah Anda yakin ingin meninggalkan grup ini?')) {
       try {
@@ -122,18 +127,24 @@ const MyGroupsPage = () => {
                 {myGroups.length} Grup Aktif
               </h2>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {myGroups.map((group) => (
-                  <GroupCard
-                    key={group._id}
-                    group={group}
-                    isOwner={group.owner?._id === user?._id}
-                    onAction={
-                      group.owner?._id === user?._id
-                        ? null
-                        : () => handleLeaveGroup(group._id)
-                    }
-                  />
-                ))}
+                {myGroups.map((group) => {
+                  const isOwner = group.owner?._id === user?._id;
+
+                  return (
+                    <GroupCard
+                      key={group._id}
+                      group={group}
+                      isOwner={isOwner}
+                      onAction={(id) => {
+                        if (isOwner) {
+                          handleManageGroup(id);
+                        } else {
+                          handleLeaveGroup(id);
+                        }
+                      }}
+                    />
+                  );
+                })}
               </div>
             </div>
           </div>

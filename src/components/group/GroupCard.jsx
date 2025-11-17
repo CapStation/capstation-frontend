@@ -8,14 +8,16 @@ import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import Link from 'next/link';
 
 const GroupCard = ({ group, isOwner = false, onAction = null }) => {
-  const getInitials = (name) => {
-    return name
-      ?.split(' ')
-      .map((n) => n[0])
-      .join('')
-      .toUpperCase()
-      .slice(0, 2) || 'GR';
-  };
+  const getInitials = (text) => {
+  if (!text) return 'GR';
+  return text
+    .split(' ')
+    .filter(Boolean)
+    .map((n) => n[0])
+    .join('')
+    .toUpperCase()
+    .slice(0, 2);
+};
 
   const getStatusColor = (status) => {
     switch (status) {
@@ -90,7 +92,7 @@ const GroupCard = ({ group, isOwner = false, onAction = null }) => {
                 className="h-8 w-8 border-2 border-white bg-secondary text-neutral-900"
               >
                 <AvatarFallback className="text-xs font-semibold bg-secondary">
-                  {getInitials(member.name)}
+                  {getInitials(member.name || member.email)}
                 </AvatarFallback>
               </Avatar>
             ))}
@@ -101,6 +103,7 @@ const GroupCard = ({ group, isOwner = false, onAction = null }) => {
             </span>
           )}
         </div>
+
 
         {/* Actions */}
         <div className="flex gap-2 pt-2">
