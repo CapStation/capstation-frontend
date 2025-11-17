@@ -9,9 +9,7 @@ class UserService {
    */
   static handleError(error) {
     const errorMessage =
-      error?.response?.data?.message ||
-      error?.message ||
-      "Terjadi kesalahan";
+      error?.response?.data?.message || error?.message || "Terjadi kesalahan";
     const errorData = error?.response?.data?.errors || null;
 
     return {
@@ -32,7 +30,7 @@ class UserService {
         params: { email: normalizedEmail },
       });
 
-      const payload = res?.data || res; 
+      const payload = res?.data || res;
 
       // Kalau backend sudah mengembalikan { success, data }
       if (payload && payload.success && payload.data) {
@@ -78,8 +76,7 @@ class UserService {
         : [];
 
       const found = users.find(
-        (u) =>
-          u.email && u.email.toLowerCase().trim() === normalizedEmail
+        (u) => u.email && u.email.toLowerCase().trim() === normalizedEmail
       );
 
       if (found) {
@@ -101,6 +98,46 @@ class UserService {
         success: false,
         error: normalized.message,
         data: null,
+      };
+    }
+  }
+
+  /**
+   * Autocomplete email search (for typeahead suggestions)
+   */
+  async autocompleteEmail(query) {
+    try {
+      const res = await apiClient.get("/users/autocomplete-email", {
+        params: { q: query.trim() },
+      });
+
+      const payload = res?.data || res;
+
+      if (payload && payload.success) {
+        return {
+          success: true,
+          data: payload.data || [],
+        };
+      }
+
+      // Fallback if no success field
+      if (Array.isArray(payload)) {
+        return {
+          success: true,
+          data: payload,
+        };
+      }
+
+      return {
+        success: true,
+        data: [],
+      };
+    } catch (error) {
+      console.error("❌ UserService.autocompleteEmail error:", error);
+      return {
+        success: false,
+        error: error.message || "Gagal mencari pengguna",
+        data: [],
       };
     }
   }
@@ -137,9 +174,7 @@ class UserService {
       const token =
         typeof window !== "undefined" ? localStorage.getItem("token") : null;
       if (!token) {
-        console.log(
-          "⚠️ UserService: No token found, skipping user fetch"
-        );
+        console.log("⚠️ UserService: No token found, skipping user fetch");
         return { success: false, error: "Not authenticated" };
       }
 
@@ -177,9 +212,7 @@ class UserService {
       const token =
         typeof window !== "undefined" ? localStorage.getItem("token") : null;
       if (!token) {
-        console.log(
-          "⚠️ UserService: No token found, skipping users fetch"
-        );
+        console.log("⚠️ UserService: No token found, skipping users fetch");
         return { success: false, error: "Not authenticated" };
       }
 

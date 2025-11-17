@@ -1,5 +1,5 @@
-import apiClient from '@/lib/api-client';
-import { endpoints } from '@/lib/api-config';
+import apiClient from "@/lib/api-client";
+import { endpoints } from "@/lib/api-config";
 
 class GroupService {
   /**
@@ -10,23 +10,26 @@ class GroupService {
       const params = {
         page,
         limit,
-        ...options
+        ...options,
       };
 
       const response = await apiClient.get(endpoints.groups.base, { params });
-      
+
       return {
         success: true,
         data: response.data || [],
         pagination: response.pagination,
-        message: response.message
+        message: response.message,
       };
     } catch (error) {
-      console.error('❌ getAllGroups error:', error);
+      console.error("❌ getAllGroups error:", error);
       return {
         success: false,
-        error: error.response?.data?.message || error.message || 'Gagal mengambil data grup',
-        data: []
+        error:
+          error.response?.data?.message ||
+          error.message ||
+          "Gagal mengambil data grup",
+        data: [],
       };
     }
   }
@@ -38,30 +41,35 @@ class GroupService {
   static async getUserGroups(page = 1, limit = 10) {
     try {
       const response = await apiClient.get(endpoints.groups.my, {
-        params: { page, limit }
+        params: { page, limit },
       });
-      
+
       // Backend returns single group object, convert to array for consistency
       const groupData = response.data;
       const groups = groupData ? [groupData] : [];
-      
+
       return {
         success: true,
-        data: groups
+        data: groups,
       };
     } catch (error) {
-      console.error('❌ getUserGroups error:', error);
+      console.error("❌ getUserGroups error:");
+      console.error("- Message:", error?.message || "No message");
+      console.error("- Response:", error?.response?.data || "No response data");
       if (error.response?.status === 404) {
         return {
           success: true,
           data: [],
-          message: 'Anda belum memiliki grup'
+          message: "Anda belum memiliki grup",
         };
       }
       return {
         success: false,
-        error: error.response?.data?.message || error.message || 'Gagal mengambil data grup',
-        data: []
+        error:
+          error.response?.data?.message ||
+          error.message ||
+          "Gagal mengambil data grup",
+        data: [],
       };
     }
   }
@@ -71,18 +79,21 @@ class GroupService {
    */
   static async getGroupDetail(groupId) {
     try {
-      if (!groupId) throw new Error('Group ID tidak valid');
+      if (!groupId) throw new Error("Group ID tidak valid");
 
       const response = await apiClient.get(endpoints.groups.detail(groupId));
       return {
         success: true,
-        data: response.data || response
+        data: response.data || response,
       };
     } catch (error) {
-      console.error('❌ getGroupDetail error:', error);
+      console.error("❌ getGroupDetail error:", error);
       return {
         success: false,
-        error: error.response?.data?.message || error.message || 'Gagal mengambil detail grup'
+        error:
+          error.response?.data?.message ||
+          error.message ||
+          "Gagal mengambil detail grup",
       };
     }
   }
@@ -92,54 +103,66 @@ class GroupService {
    */
   static async createGroup(groupData) {
     try {
-      const { name, description, maxMembers, inviteEmails = [], ...rest } = groupData;
+      const {
+        name,
+        description,
+        maxMembers,
+        inviteEmails = [],
+        ...rest
+      } = groupData;
 
       // Validation
       if (!name || name.trim().length === 0) {
-        throw new Error('Nama grup harus diisi');
+        throw new Error("Nama grup harus diisi");
       }
 
       if (name.trim().length < 3) {
-        throw new Error('Nama grup minimal 3 karakter');
+        throw new Error("Nama grup minimal 3 karakter");
       }
 
       if (name.trim().length > 100) {
-        throw new Error('Nama grup tidak boleh lebih dari 100 karakter');
+        throw new Error("Nama grup tidak boleh lebih dari 100 karakter");
       }
 
       if (description && description.length > 500) {
-        throw new Error('Deskripsi tidak boleh lebih dari 500 karakter');
+        throw new Error("Deskripsi tidak boleh lebih dari 500 karakter");
       }
 
       const maxMembersNum = parseInt(maxMembers);
       if (isNaN(maxMembersNum) || maxMembersNum < 2 || maxMembersNum > 5) {
-        throw new Error('Jumlah anggota harus antara 2-5');
+        throw new Error("Jumlah anggota harus antara 2-5");
       }
 
       const payload = {
         name: name.trim(),
-        description: description?.trim() || '',
+        description: description?.trim() || "",
         maxMembers: maxMembersNum,
         inviteEmails: Array.isArray(inviteEmails) ? inviteEmails : [],
-        ...rest
+        ...rest,
       };
 
-      console.log('📤 Creating group with payload:', payload);
+      console.log("📤 Creating group with payload:", payload);
 
       const response = await apiClient.post(endpoints.groups.base, payload);
 
-      console.log('✅ Group created successfully:', response);
+      console.log("✅ Group created successfully:", response);
 
       return {
         success: true,
         data: response.data || response,
-        message: response.message || 'Grup berhasil dibuat'
+        message: response.message || "Grup berhasil dibuat",
       };
     } catch (error) {
-      console.error('❌ createGroup error:', error);
+      // Properly log error with explicit properties
+      console.error("❌ createGroup error:");
+      console.error("- Message:", error?.message || "No message");
+      console.error("- Status:", error?.status || "No status");
+      console.error("- Data:", error?.data || "No data");
+      console.error("- Network Error:", !error?.status ? "Yes" : "No");
+
       return {
         success: false,
-        error: error.response?.data?.message || error.message || 'Gagal membuat grup'
+        error: error.message || error.data?.message || "Gagal membuat grup",
       };
     }
   }
@@ -149,29 +172,37 @@ class GroupService {
    */
   static async updateGroup(groupId, groupData) {
     try {
-      if (!groupId) throw new Error('Group ID tidak valid');
+      if (!groupId) throw new Error("Group ID tidak valid");
 
       const payload = {
-        ...groupData
+        ...groupData,
       };
 
-      const response = await apiClient.put(endpoints.groups.update(groupId), payload);
+      const response = await apiClient.put(
+        endpoints.groups.update(groupId),
+        payload
+      );
       return {
         success: true,
         data: response.data || response,
-        message: response.message || 'Grup berhasil diupdate'
+        message: response.message || "Grup berhasil diupdate",
       };
     } catch (error) {
-      console.error('❌ updateGroup error:', error);
+      console.error("❌ updateGroup error:");
+      console.error("- Message:", error?.message || "No message");
+      console.error("- Response:", error?.response?.data || "No response data");
       if (error.response?.status === 403) {
         return {
           success: false,
-          error: 'Hanya owner yang bisa mengupdate grup'
+          error: "Hanya owner yang bisa mengupdate grup",
         };
       }
       return {
         success: false,
-        error: error.response?.data?.message || error.message || 'Gagal mengupdate grup'
+        error:
+          error.response?.data?.message ||
+          error.message ||
+          "Gagal mengupdate grup",
       };
     }
   }
@@ -181,24 +212,29 @@ class GroupService {
    */
   static async deleteGroup(groupId) {
     try {
-      if (!groupId) throw new Error('Group ID tidak valid');
+      if (!groupId) throw new Error("Group ID tidak valid");
 
       const response = await apiClient.delete(endpoints.groups.delete(groupId));
       return {
         success: true,
-        message: response.message || 'Grup berhasil dihapus'
+        message: response.message || "Grup berhasil dihapus",
       };
     } catch (error) {
-      console.error('❌ deleteGroup error:', error);
+      console.error("❌ deleteGroup error:");
+      console.error("- Message:", error?.message || "No message");
+      console.error("- Response:", error?.response?.data || "No response data");
       if (error.response?.status === 403) {
         return {
           success: false,
-          error: 'Hanya owner yang bisa menghapus grup'
+          error: "Hanya owner yang bisa menghapus grup",
         };
       }
       return {
         success: false,
-        error: error.response?.data?.message || error.message || 'Gagal menghapus grup'
+        error:
+          error.response?.data?.message ||
+          error.message ||
+          "Gagal menghapus grup",
       };
     }
   }
@@ -208,19 +244,24 @@ class GroupService {
    */
   static async getAvailableUsers(groupId) {
     try {
-      if (!groupId) throw new Error('Group ID tidak valid');
+      if (!groupId) throw new Error("Group ID tidak valid");
 
-      const response = await apiClient.get(`${endpoints.groups.detail(groupId)}/available-users`);
+      const response = await apiClient.get(
+        `${endpoints.groups.detail(groupId)}/available-users`
+      );
       return {
         success: true,
-        data: response.data || []
+        data: response.data || [],
       };
     } catch (error) {
-      console.error('❌ getAvailableUsers error:', error);
+      console.error("❌ getAvailableUsers error:", error);
       return {
         success: false,
-        error: error.response?.data?.message || error.message || 'Gagal mengambil data pengguna',
-        data: []
+        error:
+          error.response?.data?.message ||
+          error.message ||
+          "Gagal mengambil data pengguna",
+        data: [],
       };
     }
   }
@@ -230,21 +271,28 @@ class GroupService {
    */
   static async inviteMember(groupId, userId) {
     try {
-      if (!groupId || !userId) throw new Error('Group ID dan User ID harus valid');
+      if (!groupId || !userId)
+        throw new Error("Group ID dan User ID harus valid");
 
-      const response = await apiClient.post(`${endpoints.groups.detail(groupId)}/invite`, {
-        userId
-      });
+      const response = await apiClient.post(
+        `${endpoints.groups.detail(groupId)}/invite`,
+        {
+          userId,
+        }
+      );
       return {
         success: true,
         data: response.data || response,
-        message: response.message || 'Undangan berhasil dikirim'
+        message: response.message || "Undangan berhasil dikirim",
       };
     } catch (error) {
-      console.error('❌ inviteMember error:', error);
+      console.error("❌ inviteMember error:", error);
       return {
         success: false,
-        error: error.response?.data?.message || error.message || 'Gagal mengirim undangan'
+        error:
+          error.response?.data?.message ||
+          error.message ||
+          "Gagal mengirim undangan",
       };
     }
   }
@@ -254,20 +302,27 @@ class GroupService {
    */
   static async removeMember(groupId, userId) {
     try {
-      if (!groupId || !userId) throw new Error('Group ID dan User ID harus valid');
+      if (!groupId || !userId)
+        throw new Error("Group ID dan User ID harus valid");
 
-      const response = await apiClient.post(`${endpoints.groups.detail(groupId)}/remove-member`, {
-        userId
-      });
+      const response = await apiClient.post(
+        `${endpoints.groups.detail(groupId)}/remove-member`,
+        {
+          userId,
+        }
+      );
       return {
         success: true,
-        message: response.message || 'Anggota berhasil dihapus'
+        message: response.message || "Anggota berhasil dihapus",
       };
     } catch (error) {
-      console.error('❌ removeMember error:', error);
+      console.error("❌ removeMember error:", error);
       return {
         success: false,
-        error: error.response?.data?.message || error.message || 'Gagal menghapus anggota'
+        error:
+          error.response?.data?.message ||
+          error.message ||
+          "Gagal menghapus anggota",
       };
     }
   }
@@ -277,20 +332,26 @@ class GroupService {
    */
   static async respondInvitation(groupId, response) {
     try {
-      if (!groupId) throw new Error('Group ID tidak valid');
+      if (!groupId) throw new Error("Group ID tidak valid");
 
-      const result = await apiClient.post(`${endpoints.groups.detail(groupId)}/respond-invitation`, {
-        response
-      });
+      const result = await apiClient.post(
+        `${endpoints.groups.detail(groupId)}/respond-invitation`,
+        {
+          response,
+        }
+      );
       return {
         success: true,
-        message: result.message || `Undangan ${response}`
+        message: result.message || `Undangan ${response}`,
       };
     } catch (error) {
-      console.error('❌ respondInvitation error:', error);
+      console.error("❌ respondInvitation error:", error);
       return {
         success: false,
-        error: error.response?.data?.message || error.message || 'Gagal merespons undangan'
+        error:
+          error.response?.data?.message ||
+          error.message ||
+          "Gagal merespons undangan",
       };
     }
   }
@@ -300,18 +361,23 @@ class GroupService {
    */
   static async requestJoin(groupId) {
     try {
-      if (!groupId) throw new Error('Group ID tidak valid');
+      if (!groupId) throw new Error("Group ID tidak valid");
 
-      const response = await apiClient.post(`${endpoints.groups.detail(groupId)}/request-join`);
+      const response = await apiClient.post(
+        `${endpoints.groups.detail(groupId)}/request-join`
+      );
       return {
         success: true,
-        message: response.message || 'Permintaan bergabung berhasil dikirim'
+        message: response.message || "Permintaan bergabung berhasil dikirim",
       };
     } catch (error) {
-      console.error('❌ requestJoin error:', error);
+      console.error("❌ requestJoin error:", error);
       return {
         success: false,
-        error: error.response?.data?.message || error.message || 'Gagal mengirim permintaan bergabung'
+        error:
+          error.response?.data?.message ||
+          error.message ||
+          "Gagal mengirim permintaan bergabung",
       };
     }
   }
@@ -321,7 +387,8 @@ class GroupService {
    */
   static async respondJoinRequest(groupId, userId, response) {
     try {
-      if (!groupId || !userId) throw new Error('Group ID dan User ID harus valid');
+      if (!groupId || !userId)
+        throw new Error("Group ID dan User ID harus valid");
 
       const result = await apiClient.post(
         `${endpoints.groups.detail(groupId)}/respond-join-request`,
@@ -329,13 +396,16 @@ class GroupService {
       );
       return {
         success: true,
-        message: result.message || `Permintaan bergabung ${response}`
+        message: result.message || `Permintaan bergabung ${response}`,
       };
     } catch (error) {
-      console.error('❌ respondJoinRequest error:', error);
+      console.error("❌ respondJoinRequest error:", error);
       return {
         success: false,
-        error: error.response?.data?.message || error.message || 'Gagal merespons permintaan bergabung'
+        error:
+          error.response?.data?.message ||
+          error.message ||
+          "Gagal merespons permintaan bergabung",
       };
     }
   }
@@ -345,18 +415,23 @@ class GroupService {
    */
   static async leaveGroup(groupId) {
     try {
-      if (!groupId) throw new Error('Group ID tidak valid');
+      if (!groupId) throw new Error("Group ID tidak valid");
 
-      const response = await apiClient.post(`${endpoints.groups.detail(groupId)}/leave`);
+      const response = await apiClient.post(
+        `${endpoints.groups.detail(groupId)}/leave`
+      );
       return {
         success: true,
-        message: response.message || 'Berhasil keluar dari grup'
+        message: response.message || "Berhasil keluar dari grup",
       };
     } catch (error) {
-      console.error('❌ leaveGroup error:', error);
+      console.error("❌ leaveGroup error:", error);
       return {
         success: false,
-        error: error.response?.data?.message || error.message || 'Gagal keluar dari grup'
+        error:
+          error.response?.data?.message ||
+          error.message ||
+          "Gagal keluar dari grup",
       };
     }
   }
@@ -370,19 +445,19 @@ class GroupService {
     return {
       _id: group._id,
       id: group._id,
-      name: group.name || '',
-      description: group.description || '',
+      name: group.name || "",
+      description: group.description || "",
       owner: group.owner,
       members: Array.isArray(group.members) ? group.members : [],
       memberCount: Array.isArray(group.members) ? group.members.length : 0,
       projects: Array.isArray(group.projects) ? group.projects : [],
       projectCount: Array.isArray(group.projects) ? group.projects.length : 0,
       maxMembers: group.maxMembers || 5,
-      status: group.status || 'active',
+      status: group.status || "active",
       isActive: group.isActive !== false,
       createdAt: group.createdAt,
       updatedAt: group.updatedAt,
-      capstone: group.capstone
+      capstone: group.capstone,
     };
   }
 
@@ -406,13 +481,14 @@ class GroupService {
    * Handle API errors (legacy compatibility)
    */
   static handleError(error) {
-    const errorMessage = error.response?.data?.message || error.message || 'Terjadi kesalahan';
+    const errorMessage =
+      error.response?.data?.message || error.message || "Terjadi kesalahan";
     const errorData = error.response?.data?.errors || null;
 
     return {
       message: errorMessage,
       errors: errorData,
-      status: error.response?.status
+      status: error.response?.status,
     };
   }
 }
