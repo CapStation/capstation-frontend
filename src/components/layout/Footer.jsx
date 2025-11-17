@@ -3,11 +3,9 @@ import Image from "next/image";
 
 export default function Footer() {
   return (
-    <footer className="mt-12">
-        
-      <div className="container mx-auto">
-        
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 py-12 px-8 bg-secondary">
+    <footer className="mt-12 w-full bg-neutral-50">
+      <div className=" w-full  mx-8 py-4">
+        <div className="w-full grid grid-cols-1 md:grid-cols-3 gap-8 py-8 bg-neutral-50 rounded-lg">
           <div>
             <h2 className="text-2xl font-bold text-neutral-900 mb-4">About Us</h2>
             <p className="text-neutral-700 leading-relaxed">
@@ -33,13 +31,23 @@ export default function Footer() {
               </div>
             </div>
           </div>
+          <Image 
+            src="/LogoVertical.png" 
+            alt="CapStation Logo" 
+            width={300} 
+            height={200}
+            className="my-auto mx-auto md:mx-0"
+          />
         </div>
 
-        <div className="px-6 py-3 border-t border-neutral-200 flex flex-col md:flex-row items-center justify-between text-sm text-neutral-600">
+      </div>
+
+      <div className="w-full bg-primary">
+        <div className="w-full  mx-auto px-6 py-3 border-t border-primary/30 flex flex-col md:flex-row items-center justify-between text-sm text-neutral-100">
           <div>© {new Date().getFullYear()} CapStation — Departemen Teknik Elektro dan Teknologi Informasi, UGM</div>
           <div className="mt-3 md:mt-0">
-            <a href="/privacy" className="mr-4 hover:underline">Privacy</a>
-            <a href="/terms" className="hover:underline">Terms</a>
+            <a href="/privacy" className="mr-4 hover:underline text-neutral-100">Privacy</a>
+            <a href="/terms" className="hover:underline text-neutral-100">Terms</a>
           </div>
         </div>
       </div>

@@ -380,8 +380,7 @@ export default function DashboardPage() {
         </Card>
 
         
-      </div>
-    <Footer />
+      </div> 
     </div>
   );
 }
