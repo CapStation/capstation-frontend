@@ -1,108 +1,283 @@
 import apiClient from "@/lib/api-client";
-import { API_ENDPOINTS } from "@/lib/api-config";
 
 class UserService {
   // Cache untuk menyimpan user data agar tidak fetch berulang kali
   static userCache = new Map();
 
+  /**
+   * Normalisasi error dari API
+   */
+  static handleError(error) {
+    const errorMessage =
+      error?.response?.data?.message || error?.message || "Terjadi kesalahan";
+    const errorData = error?.response?.data?.errors || null;
+
+    return {
+      message: errorMessage,
+      errors: errorData,
+      status: error?.response?.status,
+    };
+  }
+
+  /**
+   * Search user by email
+   */
+  async searchByEmail(email) {
+    const normalizedEmail = email.toLowerCase().trim();
+
+    try {
+      const res = await apiClient.get("/users/search-by-email", {
+        params: { email: normalizedEmail },
+      });
+
+      const payload = res?.data || res;
+
+      // Kalau backend sudah mengembalikan { success, data }
+      if (payload && payload.success && payload.data) {
+        return {
+          success: true,
+          data: payload.data,
+        };
+      }
+
+      // Kalau bentuknya cuma { _id, name, email } dsb
+      if (payload && payload._id && payload.email) {
+        return {
+          success: true,
+          data: payload,
+        };
+      }
+
+      // Kalau success tapi data kosong
+      return {
+        success: false,
+        error: `User dengan email "${email}" tidak ditemukan`,
+        data: null,
+      };
+    } catch (error) {
+      console.warn(
+        "⚠️ searchByEmail via /users/search-by-email gagal, fallback ke /users:",
+        error
+      );
+    }
+
+    // Fallback: ambil semua user lalu filter di frontend
+    try {
+      const resAll = await apiClient.get("/users");
+      const payloadAll = resAll?.data || resAll;
+
+      // Bentuk backend getUsers: { success: true, data: users }
+      const users = Array.isArray(payloadAll)
+        ? payloadAll
+        : Array.isArray(payloadAll?.data)
+        ? payloadAll.data
+        : Array.isArray(payloadAll?.users)
+        ? payloadAll.users
+        : [];
+
+      const found = users.find(
+        (u) => u.email && u.email.toLowerCase().trim() === normalizedEmail
+      );
+
+      if (found) {
+        return {
+          success: true,
+          data: found,
+        };
+      }
+
+      return {
+        success: false,
+        error: `User dengan email "${email}" tidak ditemukan`,
+        data: null,
+      };
+    } catch (error) {
+      console.error("❌ UserService.searchByEmail fallback error:", error);
+      const normalized = UserService.handleError(error);
+      return {
+        success: false,
+        error: normalized.message,
+        data: null,
+      };
+    }
+  }
+
+  /**
+   * Autocomplete email search (for typeahead suggestions)
+   */
+  async autocompleteEmail(query) {
+    try {
+      const res = await apiClient.get("/users/autocomplete-email", {
+        params: { q: query.trim() },
+      });
+
+      const payload = res?.data || res;
+
+      if (payload && payload.success) {
+        return {
+          success: true,
+          data: payload.data || [],
+        };
+      }
+
+      // Fallback if no success field
+      if (Array.isArray(payload)) {
+        return {
+          success: true,
+          data: payload,
+        };
+      }
+
+      return {
+        success: true,
+        data: [],
+      };
+    } catch (error) {
+      console.error("❌ UserService.autocompleteEmail error:", error);
+      return {
+        success: false,
+        error: error.message || "Gagal mencari pengguna",
+        data: [],
+      };
+    }
+  }
+
+  /**
+   * Get current user (profil user yang sedang login)
+   */
+  async getCurrentUser() {
+    try {
+      const response = await apiClient.get("/users/me");
+      return response.data;
+    } catch (error) {
+      throw UserService.handleError(error);
+    }
+  }
+
+  /**
+   * Get user by ID (dengan cache)
+   */
   async getUserById(userId) {
     try {
       // Validate userId
       if (!userId) {
-        return { success: false, error: 'User ID is required' };
+        return { success: false, error: "User ID is required" };
       }
 
       // Check cache first
       if (UserService.userCache.has(userId)) {
-        console.log('📦 UserService: Using cached user data for', userId);
+        console.log("📦 UserService: Using cached user data for", userId);
         return { success: true, data: UserService.userCache.get(userId) };
       }
 
       // Check if user is logged in (has token)
-      const token = localStorage.getItem('token');
+      const token =
+        typeof window !== "undefined" ? localStorage.getItem("token") : null;
       if (!token) {
-        console.log('⚠️ UserService: No token found, skipping user fetch');
-        return { success: false, error: 'Not authenticated' };
+        console.log("⚠️ UserService: No token found, skipping user fetch");
+        return { success: false, error: "Not authenticated" };
       }
 
-      console.log('🔍 UserService: Fetching user by ID:', userId);
+      console.log("🔍 UserService: Fetching user by ID:", userId);
       const response = await apiClient.get(`/users/profile/${userId}`);
-      
+
       // Backend returns { message: '...', user: {...} }
-      const userData = response.data?.user || response.user || response.data || response;
+      const userData =
+        response.data?.user || response.user || response.data || response;
+
       // Save to cache
       UserService.userCache.set(userId, userData);
-      
-      console.log('✅ UserService: User data fetched:', userData);
+
+      console.log("✅ UserService: User data fetched:", userData);
       return { success: true, data: userData };
     } catch (error) {
-      console.error('❌ UserService.getUserById error:', error);
+      console.error("❌ UserService.getUserById error:", error);
       return { success: false, error: error.message };
     }
   }
 
+  /**
+   * Get beberapa user sekaligus berdasarkan array ID
+   */
   async getUsersByIds(userIds) {
     try {
-      console.log('🔍 UserService: Fetching multiple users:', userIds);
-      
+      console.log("🔍 UserService: Fetching multiple users:", userIds);
+
       // Validate userIds
       if (!userIds || userIds.length === 0) {
         return { success: true, data: [] };
       }
 
       // Check if user is logged in (has token)
-      const token = localStorage.getItem('token');
+      const token =
+        typeof window !== "undefined" ? localStorage.getItem("token") : null;
       if (!token) {
-        console.log('⚠️ UserService: No token found, skipping users fetch');
-        return { success: false, error: 'Not authenticated' };
+        console.log("⚠️ UserService: No token found, skipping users fetch");
+        return { success: false, error: "Not authenticated" };
       }
-      
+
       // Fetch users yang belum ada di cache
-      const uncachedIds = userIds.filter(id => !UserService.userCache.has(id));
-      
+      const uncachedIds = userIds.filter(
+        (id) => !UserService.userCache.has(id)
+      );
+
       if (uncachedIds.length > 0) {
         // Fetch multiple users at once
-        const response = await apiClient.post('/users/batch', { userIds: uncachedIds });
-        const users = response.data || response;
-        
-        // Save to cache
-        users.forEach(user => {
-          UserService.userCache.set(user._id, user);
+        const response = await apiClient.post("/users/batch", {
+          userIds: uncachedIds,
         });
-      }
-      
-      // Return all users from cache
-      const allUsers = userIds.map(id => UserService.userCache.get(id)).filter(Boolean);
-      console.log('✅ UserService: Users data fetched:', allUsers);
-      
-      return { success: true, data: allUsers };
-    } catch (error) {
-      console.error('❌ UserService.getUsersByIds error:', error);
-      return { success: false, error: error.message };
-    }
-  }
+        const users = response.data || response;
 
-  async getAllUsers() {
-    try {
-      console.log('🔍 UserService: Fetching all users');
-      const response = await apiClient.get('/users');
-      
-      // Backend returns array of users or { users: [...] }
-      const users = response.data?.users || response.users || response.data || response;
-      
-      // Save to cache
-      if (Array.isArray(users)) {
-        users.forEach(user => {
+        // Save to cache
+        users.forEach((user) => {
           if (user._id) {
             UserService.userCache.set(user._id, user);
           }
         });
       }
-      
-      console.log('✅ UserService: All users fetched:', users.length, 'users');
+
+      // Return all users from cache
+      const allUsers = userIds
+        .map((id) => UserService.userCache.get(id))
+        .filter(Boolean);
+      console.log("✅ UserService: Users data fetched:", allUsers);
+
+      return { success: true, data: allUsers };
+    } catch (error) {
+      console.error("❌ UserService.getUsersByIds error:", error);
+      return { success: false, error: error.message };
+    }
+  }
+
+  /**
+   * Get semua user
+   */
+  async getAllUsers() {
+    try {
+      console.log("UserService: Fetching all users");
+      const response = await apiClient.get("/users");
+
+      // Backend returns array of users or { users: [...] }
+      const users =
+        response.data?.users || response.users || response.data || response;
+
+      // Save to cache
+      if (Array.isArray(users)) {
+        users.forEach((user) => {
+          if (user._id) {
+            UserService.userCache.set(user._id, user);
+          }
+        });
+      }
+
+      console.log(
+        "✅ UserService: All users fetched:",
+        Array.isArray(users) ? users.length : 0,
+        "users"
+      );
       return { success: true, data: users };
     } catch (error) {
-      console.error('❌ UserService.getAllUsers error:', error);
+      console.error("❌ UserService.getAllUsers error:", error);
       return { success: false, error: error.message };
     }
   }
@@ -114,4 +289,3 @@ class UserService {
 
 const userService = new UserService();
 export default userService;
-

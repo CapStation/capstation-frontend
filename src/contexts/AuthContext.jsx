@@ -96,12 +96,14 @@ export const AuthProvider = ({ children }) => {
 
       throw new Error("Login failed - no access token received");
     } catch (error) {
-      console.error("Login error:", {
-        message: error.message,
-        status: error.status,
-        data: error.data,
-        error: error,
-      });
+      // Properly log error with explicit properties
+      console.error("Login error:");
+      console.error("- Message:", error?.message || "No message");
+      console.error("- Status:", error?.status || "No status");
+      console.error("- Data:", error?.data || "No data");
+      if (error?.response) {
+        console.error("- Response:", error.response);
+      }
 
       let errorMessage = "Login gagal. Silakan coba lagi.";
 
