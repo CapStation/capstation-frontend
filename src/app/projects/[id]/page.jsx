@@ -77,6 +77,18 @@ const formatFileSize = (bytes) => {
   return Math.round(bytes / Math.pow(k, i) * 100) / 100 + ' ' + sizes[i];
 };
 
+// Helper function to format tema for display
+const formatTemaLabel = (tema) => {
+  if (!tema) return '';
+  // Replace dash and underscore with space, then capitalize each word
+  return tema
+    .replace(/-/g, ' ')
+    .replace(/_/g, ' ')
+    .split(' ')
+    .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(' ');
+};
+
 export default function ProjectDetailPage() {
   const router = useRouter();
   const params = useParams();
@@ -1098,22 +1110,31 @@ export default function ProjectDetailPage() {
     );
   }
 
+  const handleBackNavigation = () => {
+    // Check if there's a history to go back to
+    if (window.history.length > 1) {
+      router.back();
+    } else {
+      // Fallback to /projects if no history
+      router.push('/projects');
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-neutral-50 via-white to-neutral-50">
       <Navbar />
 
       <div className="max-w-screen-lg mx-auto px-4 py-8">
         <div className="max-w-4xl mx-auto">
-          <Link href="/projects">
-            <Button 
-              variant="ghost" 
-              size="sm" 
-              className="mb-4"
-            >
-              <ArrowLeft className="h-4 w-4 mr-2" />
-              Kembali
-            </Button>
-          </Link>
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            className="mb-4"
+            onClick={handleBackNavigation}
+          >
+            <ArrowLeft className="h-4 w-4 mr-2" />
+            Kembali
+          </Button>
 
           {/* Project Header */}
           <Card className="mb-6">
@@ -1128,7 +1149,7 @@ export default function ProjectDetailPage() {
                     </Badge>
                     {project.tema && (
                       <Badge variant="outline" className="capitalize">
-                        {project.tema.replace(/-/g, ' ')}
+                        {formatTemaLabel(project.tema)}
                       </Badge>
                     )}
                     {project.competencies && project.competencies.length > 0 ? (

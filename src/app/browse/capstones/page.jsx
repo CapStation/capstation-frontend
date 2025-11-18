@@ -91,6 +91,10 @@ export default function BrowseCapstonesPage() {
         const filteredData = result.data.filter(p => 
           p.status === 'active' || p.status === 'selesai' || p.status === 'dapat_dilanjutkan'
         );
+        
+        // Debug: Log tema values from real data
+        console.log('📊 Real projects tema values:', filteredData.map(p => ({ title: p.title, tema: p.tema })));
+        
         setAllProjects(filteredData);
       } else {
         
@@ -107,6 +111,11 @@ export default function BrowseCapstonesPage() {
 
   const applyFilters = () => {
     let result = [...allProjects];
+    
+    // Debug: Log all tema values before filtering
+    console.log('🔍 All projects tema before filter:', result.map(p => p.tema));
+    console.log('🎯 Selected category filter:', selectedCategory);
+
 
     
     if (activeTab === "new") {
@@ -174,10 +183,33 @@ export default function BrowseCapstonesPage() {
     }
 
     
+    // Filter by category/tema
     if (selectedCategory && selectedCategory !== "all") {
-      result = result.filter(p => 
-        p.tema?.toLowerCase() === selectedCategory.toLowerCase()
-      );
+      result = result.filter(p => {
+        if (!p.tema) return false;
+        
+        // Normalize both values: remove spaces, underscores, dashes, convert to lowercase
+        const normalizeString = (str) => {
+          return str.toLowerCase().replace(/[\s_-]/g, '');
+        };
+        
+        const projectTema = normalizeString(p.tema);
+        const filterCategory = normalizeString(selectedCategory);
+        
+        const match = projectTema === filterCategory;
+        
+        console.log('Filtering tema:', { 
+          original: p.tema, 
+          normalized: projectTema, 
+          filter: selectedCategory,
+          filterNormalized: filterCategory,
+          match 
+        });
+        
+        return match;
+      });
+      
+      console.log('🎯 Filtered result count:', result.length);
     }
 
     
@@ -240,7 +272,8 @@ export default function BrowseCapstonesPage() {
       "Smart City Dashboard untuk Monitoring Lingkungan Area Malioboro",
     ];
 
-    const mockCategories = ["Kesehatan", "Smart City", "IoT", "Pengelolaan Sampah", "AI/ML"];
+    // Use dash format to match backend
+    const mockTemas = ["kesehatan", "smart-city", "pengelolaan-sampah", "transportasi-ramah-lingkungan"];
     const statuses = ["active", "inactive", "selesai", "dapat_dilanjutkan"];
     const capstoneStatuses = ["new", "pending"];
 
@@ -249,9 +282,8 @@ export default function BrowseCapstonesPage() {
       title: titles[i % titles.length],
       author: { name: "John Doe" },
       supervisor: { name: `Prof. Dr. Eng. Supervisor ${i % 5 + 1}` },
-      category: mockCategories[i % mockCategories.length],
-      theme: mockCategories[i % mockCategories.length],
-      keywords: `IoT, ${mockCategories[i % mockCategories.length]}, Smart Systems`,
+      tema: mockTemas[i % mockTemas.length], // Use 'tema' field with dash format
+      keywords: `IoT, ${mockTemas[i % mockTemas.length]}, Smart Systems`,
       createdAt: new Date(2026 - (i % 2), Math.floor(Math.random() * 12), Math.floor(Math.random() * 28)).toISOString(),
       status: statuses[i % 2],
       capstoneStatus: capstoneStatuses[i % 3],
@@ -322,9 +354,9 @@ export default function BrowseCapstonesPage() {
                   <SelectContent>
                     <SelectItem value="all">Semua Tema</SelectItem>
                     <SelectItem value="kesehatan">Kesehatan</SelectItem>
-                    <SelectItem value="smart_city">Smart City</SelectItem>
-                    <SelectItem value="pengelolaan_sampah">Pengelolaan Sampah</SelectItem>
-                    <SelectItem value="transportasi_ramah_lingkungan">Transportasi Ramah Lingkungan</SelectItem>
+                    <SelectItem value="smart-city">Smart City</SelectItem>
+                    <SelectItem value="pengelolaan-sampah">Pengelolaan Sampah</SelectItem>
+                    <SelectItem value="transportasi-ramah-lingkungan">Transportasi Ramah Lingkungan</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
