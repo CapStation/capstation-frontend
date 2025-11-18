@@ -510,7 +510,7 @@ export default function AdminAnnouncementsPage() {
 
       {/* Success Dialog - Redirect to Main Page */}
       <Dialog open={showSuccessDialog} onOpenChange={setShowSuccessDialog}>
-        <DialogContent>
+        <DialogContent className="w-[90vw] max-w-sm sm:max-w-md md:max-w-lg">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <Megaphone className="h-5 w-5 text-green-600" />
@@ -543,7 +543,7 @@ export default function AdminAnnouncementsPage() {
 
       {/* Detail Dialog */}
       <Dialog open={showDetailDialog} onOpenChange={setShowDetailDialog}>
-        <DialogContent className="max-w-2xl">
+        <DialogContent className="w-[90vw] max-w-sm sm:max-w-md md:max-w-xl lg:max-w-2xl">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <Megaphone className="h-5 w-5 text-orange-500" />
@@ -606,7 +606,7 @@ export default function AdminAnnouncementsPage() {
 
       {/* Create Dialog */}
       <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
-        <DialogContent>
+        <DialogContent className="w-[90vw] max-w-sm sm:max-w-md md:max-w-lg">
           <DialogHeader>
             <DialogTitle>Tambah Pengumuman Baru</DialogTitle>
             <DialogDescription>
@@ -671,7 +671,7 @@ export default function AdminAnnouncementsPage() {
 
       {/* Edit Dialog */}
       <Dialog open={showEditDialog} onOpenChange={setShowEditDialog}>
-        <DialogContent>
+        <DialogContent className="w-[90vw] max-w-sm sm:max-w-md md:max-w-lg">
           <DialogHeader>
             <DialogTitle>Edit Pengumuman</DialogTitle>
             <DialogDescription>Perbarui informasi pengumuman</DialogDescription>
@@ -735,7 +735,7 @@ export default function AdminAnnouncementsPage() {
 
       {/* Delete Dialog */}
       <Dialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
-        <DialogContent>
+        <DialogContent className="w-[90vw] max-w-sm sm:max-w-md">
           <DialogHeader>
             <DialogTitle>Hapus Pengumuman</DialogTitle>
             <DialogDescription>

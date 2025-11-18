@@ -26,44 +26,25 @@ export default function EditAnnouncementPage() {
     }
   }, [id, authLoading]);
 
-  const fetchAnnouncements = async () => {
-  try {
-    setLoading(true);
-    setError(null);
+  const fetchAnnouncement = async () => {
+    try {
+      setIsFetching(true);
+      setError(null);
 
-    const result = await AnnouncementService.getAnnouncements(
-      page,
-      10,
-      null,
-      'newest',
-      search || null
-    );
+      const result = await AnnouncementService.getAnnouncementById(id);
 
-    if (result.success) {
-      let data = result.data || [];
-
-      // 🔍 Filter tambahan di frontend (jaga-jaga kalau backend nggak ngefilter)
-      const keyword = (search || '').trim().toLowerCase();
-      if (keyword) {
-        data = data.filter((item) => {
-          const title = (item.title || '').toLowerCase();
-          const content = (item.content || '').toLowerCase();
-          return title.includes(keyword) || content.includes(keyword);
-        });
+      if (result.success) {
+        setAnnouncement(result.data);
+      } else {
+        setError(result.error || 'Gagal mengambil data pengumuman');
       }
-
-      setAnnouncements(data);
-      setPagination(result.pagination || {});
-    } else {
-      setError(result.error || 'Gagal mengambil data pengumuman');
+    } catch (err) {
+      console.error('❌ Error fetching announcement:', err);
+      setError(err.message || 'Terjadi kesalahan saat mengambil pengumuman');
+    } finally {
+      setIsFetching(false);
     }
-  } catch (err) {
-    console.error('❌ Error fetching announcements:', err);
-    setError(err.message || 'Terjadi kesalahan saat mengambil pengumuman');
-  } finally {
-    setLoading(false);
-  }
-};
+  };
 
 
   const handleSubmit = async (formData) => {
