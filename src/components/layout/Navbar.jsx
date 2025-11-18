@@ -103,15 +103,6 @@ export default function Navbar({ className = "" }) {
                       </Button>
                     </Link>
 
-                    {(user?.role === "admin" || user?.role === "dosen") && (
-                      <Link href="/documents">
-                        <Button variant="ghost" size="sm">
-                          <FolderOpen className="h-4 w-4 mr-2" />
-                          Documents
-                        </Button>
-                      </Link>
-                    )}
-
                     <Link href="/request">
                       <Button variant="ghost" size="sm">
                         <History className="h-4 w-4 mr-2"/>
@@ -254,12 +245,6 @@ export default function Navbar({ className = "" }) {
                     <Link href="/announcements" onClick={() => setMobileOpen(false)}>
                       <Button variant="ghost" className="w-full justify-start"><Bell className="h-4 w-4 mr-2" /> Announcement</Button>
                     </Link>
-
-                    {(user?.role === "admin" || user?.role === "dosen") && (
-                      <Link href="/documents" onClick={() => setMobileOpen(false)}>
-                        <Button variant="ghost" className="w-full justify-start"><FolderOpen className="h-4 w-4 mr-2" /> Documents</Button>
-                      </Link>
-                    )}
 
                     <Link href="/request" onClick={() => setMobileOpen(false)}>
                       <Button variant="ghost" className="w-full justify-start"><History className="h-4 w-4 mr-2" /> Request</Button>

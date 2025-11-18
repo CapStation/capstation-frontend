@@ -253,7 +253,7 @@ export default function ProjectsPage() {
                 </div>
                 <div className="mt-3 md:mt-0">
                   <Link href={`/projects/${myProject._id}`}>
-                    <Button className="bg-white hover:bg-neutral-700 text-black shadow-sm transition-all">
+                    <Button className="bg-white hover:bg-neutral-50 text-black shadow-sm transition-all">
                       Lihat Detail
                     </Button>
                   </Link>

@@ -6,21 +6,27 @@ import { useRouter } from 'next/navigation';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { AlertCircle, Plus, Trash2, Edit, Loader2 } from 'lucide-react';
 import AnnouncementService from '@/services/AnnouncementService';
 import { useAuth } from '@/contexts/AuthContext';
+import { useToast } from '@/hooks/use-toast';
 import Navbar from '@/components/layout/Navbar';
 
 export default function AnnouncementsPage() {
   const router = useRouter();
   const { user, loading: authLoading } = useAuth();
+  const { toast } = useToast();
   const [announcements, setAnnouncements] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [search, setSearch] = useState('');
   const [page, setPage] = useState(1);
   const [pagination, setPagination] = useState({});
-  const [deleteConfirmId, setDeleteConfirmId] = useState(null);
+  
+  // Delete dialog states
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [announcementToDelete, setAnnouncementToDelete] = useState(null);
   const [isDeleting, setIsDeleting] = useState(false);
 
   const canCreateAnnouncement = user?.role === 'admin' || user?.role === 'dosen';
@@ -71,29 +77,37 @@ export default function AnnouncementsPage() {
     }
   };
 
-  const handleDelete = async (id) => {
-    setDeleteConfirmId(id);
+  const handleDelete = async () => {
+    if (!announcementToDelete) return;
 
-    if (!confirm('Apakah Anda yakin ingin menghapus pengumuman ini?')) {
-      setDeleteConfirmId(null);
-      return;
-    }
-
+    setIsDeleting(true);
     try {
-      setIsDeleting(true);
-      const result = await AnnouncementService.deleteAnnouncement(id);
+      const result = await AnnouncementService.deleteAnnouncement(announcementToDelete);
 
       if (result.success) {
-        setAnnouncements((prev) => prev.filter((a) => a._id !== id));
+        setAnnouncements((prev) => prev.filter((a) => a._id !== announcementToDelete));
+        toast({
+          title: "Berhasil",
+          description: "Pengumuman berhasil dihapus",
+        });
+        setShowDeleteDialog(false);
+        setAnnouncementToDelete(null);
       } else {
-        setError(result.error || 'Gagal menghapus pengumuman');
+        toast({
+          title: "Error",
+          description: result.error || 'Gagal menghapus pengumuman',
+          variant: "destructive",
+        });
       }
     } catch (err) {
       console.error('❌ Error deleting announcement:', err);
-      setError(err.message || 'Terjadi kesalahan');
+      toast({
+        title: "Error",
+        description: err.message || 'Terjadi kesalahan',
+        variant: "destructive",
+      });
     } finally {
       setIsDeleting(false);
-      setDeleteConfirmId(null);
     }
   };
 
@@ -225,15 +239,14 @@ export default function AnnouncementsPage() {
                           <Button
                             variant="outline"
                             size="sm"
-                            onClick={() => handleDelete(announcement._id)}
-                            disabled={isDeleting && deleteConfirmId === announcement._id}
+                            onClick={() => {
+                              setAnnouncementToDelete(announcement._id);
+                              setShowDeleteDialog(true);
+                            }}
+                            disabled={isDeleting}
                             className="border-red-300 text-red-700 hover:bg-red-50"
                           >
-                            {isDeleting && deleteConfirmId === announcement._id ? (
-                              <Loader2 className="w-4 h-4 animate-spin" />
-                            ) : (
-                              <Trash2 className="w-4 h-4" />
-                            )}
+                            <Trash2 className="w-4 h-4" />
                           </Button>
                         </div>
                       )}
@@ -287,6 +300,48 @@ export default function AnnouncementsPage() {
           </div>
         )}
       </div>
+
+      {/* Delete Confirmation Dialog */}
+      <Dialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Hapus Pengumuman</DialogTitle>
+            <DialogDescription>
+              Apakah Anda yakin ingin menghapus pengumuman ini? Tindakan ini tidak dapat dibatalkan.
+            </DialogDescription>
+          </DialogHeader>
+
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setShowDeleteDialog(false);
+                setAnnouncementToDelete(null);
+              }}
+              disabled={isDeleting}
+            >
+              Batal
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={handleDelete}
+              disabled={isDeleting}
+            >
+              {isDeleting ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  Menghapus...
+                </>
+              ) : (
+                <>
+                  <Trash2 className="w-4 h-4 mr-2" />
+                  Ya, Hapus
+                </>
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
