@@ -3,6 +3,7 @@
 import { useState, useEffect, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
+import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -18,6 +19,7 @@ function OAuthSetupContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { loginWithOAuth } = useAuth();
+  const { toast } = useToast();
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -58,13 +60,27 @@ function OAuthSetupContent() {
 
       if (result.success) {
         if (result.isPending) {
-          // Pending approval - show message and redirect to login
-          alert(
-            result.message || "Role Anda sedang menunggu persetujuan admin."
-          );
-          router.push("/login");
+          // Pending approval - show custom toast notification and redirect to login
+          toast({
+            title: "Menunggu Persetujuan Admin",
+            description:
+              result.message ||
+              "Akun Anda dengan role Dosen sedang menunggu persetujuan dari admin. Anda akan diberitahu melalui email setelah akun Anda disetujui.",
+            variant: "default",
+            duration: 5000,
+          });
+
+          // Redirect to login after showing notification
+          setTimeout(() => {
+            router.push("/login");
+          }, 1500);
         } else {
-          // Success - redirect to dashboard
+          // Success - show success toast and redirect to dashboard
+          toast({
+            title: "Setup Berhasil",
+            description: "Selamat datang di CapStation!",
+            variant: "default",
+          });
           router.push("/dashboard");
         }
       } else {
