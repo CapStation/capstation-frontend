@@ -36,6 +36,7 @@ import {
   Menu,
   X,
   Bell,
+  FolderKanban,
 } from "lucide-react";
 
 import Image from "next/image";
@@ -52,7 +53,7 @@ export default function Navbar({ className = "" }) {
     try {
       await logout();
       setShowLogoutDialog(false);
-      router.push("/");
+      router.push("/dashboard");
     } catch (error) {
       console.error("Logout error:", error);
     } finally {
@@ -78,15 +79,8 @@ export default function Navbar({ className = "" }) {
           <div className="hidden md:flex items-center gap-3">
                                 <Link href="/projects">
                       <Button variant="ghost" size="sm">
-                        <BookOpen className="h-4 w-4 mr-2" />
+                        <FolderKanban className="h-4 w-4 mr-2" />
                         Project
-                      </Button>
-                    </Link>
-
-                    <Link href="/groups">
-                      <Button variant="ghost" size="sm">
-                        <Users className="h-4 w-4 mr-2" />
-                        Group
                       </Button>
                     </Link>
 
@@ -94,6 +88,13 @@ export default function Navbar({ className = "" }) {
                       <Button variant="ghost" size="sm">
                         <FileText className="h-4 w-4 mr-2" />
                         Browse
+                      </Button>
+                    </Link>
+
+                    <Link href="/groups">
+                      <Button variant="ghost" size="sm">
+                        <Users className="h-4 w-4 mr-2" />
+                        Group
                       </Button>
                     </Link>
 
@@ -172,7 +173,7 @@ export default function Navbar({ className = "" }) {
                       </DropdownMenu>
                     ) : (
                       <Link href="/login">
-                        <Button variant="outline" size="sm" className="border-orange-500 text-orange-500 hover:bg-orange-50">
+                        <Button variant="outline" size="sm" className="border-orange-500 text-orange-500 hover:bg-orange-500 hover:text-white">
                           <LogIn className="h-4 w-4 mr-2" />
                           Masuk
                         </Button>
@@ -235,15 +236,15 @@ export default function Navbar({ className = "" }) {
                     )}
 
                     <Link href="/projects" onClick={() => setMobileOpen(false)}>
-                      <Button variant="ghost" className="w-full justify-start"><BookOpen className="h-4 w-4 mr-2" /> Project</Button>
-                    </Link>
-
-                    <Link href="/groups" onClick={() => setMobileOpen(false)}>
-                      <Button variant="ghost" className="w-full justify-start"><Users className="h-4 w-4 mr-2" /> Group</Button>
+                      <Button variant="ghost" className="w-full justify-start"><FolderKanban className="h-4 w-4 mr-2" /> Project</Button>
                     </Link>
 
                     <Link href="/browse/capstones" onClick={() => setMobileOpen(false)}>
                       <Button variant="ghost" className="w-full justify-start"><FileText className="h-4 w-4 mr-2" /> Browse</Button>
+                    </Link>
+
+                    <Link href="/groups" onClick={() => setMobileOpen(false)}>
+                      <Button variant="ghost" className="w-full justify-start"><Users className="h-4 w-4 mr-2" /> Group</Button>
                     </Link>
 
                     <Link href="/announcements" onClick={() => setMobileOpen(false)}>
@@ -265,7 +266,7 @@ export default function Navbar({ className = "" }) {
                       </>
                     ) : (
                       <Link href="/login" onClick={() => setMobileOpen(false)}>
-                        <Button variant="outline" className="w-full justify-start border-orange-500 text-orange-500 hover:bg-orange-50">
+                        <Button variant="outline" className="w-full justify-start border-orange-500 text-orange-500 hover:bg-orange-500 hover:text-white">
                           <LogIn className="h-4 w-4 mr-2" />
                           Masuk
                         </Button>

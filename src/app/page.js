@@ -278,7 +278,7 @@ export default function Home() {
             </Link>
 
             <Link
-              href="/projects"
+              href="/browse/capstones"
               className="group flex flex-col items-center gap-3 transition-transform "
             >
               <div className="w-20 h-20 md:w-21 md:h-21 bg-gradient-to-br from-accent to-accent-dark rounded-full flex items-center justify-center shadow-xl group-hover:scale-110 group-hover:shadow-3xl transition-all">

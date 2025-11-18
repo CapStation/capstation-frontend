@@ -13,10 +13,15 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { ArrowLeft, Loader2, Search } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { Badge } from "@/components/ui/badge";
+import { ArrowLeft, Loader2, Search, X, Plus } from "lucide-react";
 import Link from "next/link";
 import UserService from "@/services/UserService";
+import CompetencyService from "@/services/CompetencyService";
 import { useToast } from "@/hooks/use-toast";
+import { getAuthHeader } from "@/utils/authUtils";
+import ProjectService from "@/services/ProjectService";
 
 const TEMA_OPTIONS = [
   { value: "kesehatan", label: "Kesehatan" },
@@ -48,17 +53,30 @@ export default function AdminEditProjectPage() {
     supervisorName: "",
     owner: "",
     ownerName: "",
-    keywords: "",
     semester: "",
     year: "",
     academicYear: "",
     status: "",
     tema: "",
   });
+  
+  // Competency states
+  const [projectCompetencies, setProjectCompetencies] = useState([]);
+  const [showAddCompetencyDialog, setShowAddCompetencyDialog] = useState(false);
+  const [allCompetencies, setAllCompetencies] = useState([]);
+  const [filteredCompetencies, setFilteredCompetencies] = useState([]);
+  const [competencyCategories, setCompetencyCategories] = useState([]);
+  const [selectedCompetencyCategory, setSelectedCompetencyCategory] = useState('all');
+  const [competencySearchQuery, setCompetencySearchQuery] = useState('');
+  const [loadingCompetencyDialog, setLoadingCompetencyDialog] = useState(false);
+  const [addingCompetency, setAddingCompetency] = useState(false);
+  const [showRemoveCompDialog, setShowRemoveCompDialog] = useState(false);
+  const [compIndexToRemove, setCompIndexToRemove] = useState(null);
 
   useEffect(() => {
     loadUserLists();
     loadProject();
+    loadProjectCompetencies();
   }, [params.id]);
 
   useEffect(() => {
@@ -72,14 +90,30 @@ export default function AdminEditProjectPage() {
   const loadProject = async () => {
     setLoadingProject(true);
     try {
+      const token = localStorage.getItem('token');
+      console.log('🔑 Token exists:', !!token);
+      
       const response = await fetch(
         `${process.env.NEXT_PUBLIC_API_URL}/projects/${params.id}`,
         {
           headers: {
-            Authorization: `Bearer ${localStorage.getItem("token")}`,
+            'Content-Type': 'application/json',
+            ...getAuthHeader(),
           },
         }
       );
+
+      console.log('📡 Project fetch response status:', response.status);
+
+      if (!response.ok && response.status === 401) {
+        toast({
+          title: "Session Expired",
+          description: "Your session has expired. Please login again.",
+          variant: "destructive",
+        });
+        router.push("/login");
+        return;
+      }
 
       if (response.ok) {
         const data = await response.json();
@@ -121,7 +155,6 @@ export default function AdminEditProjectPage() {
           ownerName:
             project.owner?.name ||
             (typeof project.owner === "string" ? "" : ""),
-          keywords: project.keywords || "",
           semester,
           year,
           academicYear: project.academicYear || "",
@@ -144,14 +177,18 @@ export default function AdminEditProjectPage() {
               `${process.env.NEXT_PUBLIC_API_URL}/groups/${groupId}`,
               {
                 headers: {
-                  Authorization: `Bearer ${localStorage.getItem("token")}`,
+                  'Content-Type': 'application/json',
+                  ...getAuthHeader(),
                 },
               }
             );
 
             console.log('Group response status:', groupResponse.status);
 
-            if (groupResponse.ok) {
+            if (groupResponse.status === 401) {
+              console.warn('⚠️ Unauthorized access to group endpoint');
+              // Continue with fallback, don't redirect here
+            } else if (groupResponse.ok) {
               const groupData = await groupResponse.json();
               const group = groupData.data || groupData;
               
@@ -246,6 +283,91 @@ export default function AdminEditProjectPage() {
       setLoadingProject(false);
     }
   };
+
+  const loadProjectCompetencies = async () => {
+    try {
+      const result = await ProjectService.getProjectCompetencies(params.id);
+      if (result.success && result.data) {
+        setProjectCompetencies(result.data);
+      }
+    } catch (error) {
+      console.error('Error loading project competencies:', error);
+    }
+  };
+
+  const loadCompetenciesForDialog = async () => {
+    setLoadingCompetencyDialog(true);
+    try {
+      const [compResult, catResult] = await Promise.all([
+        CompetencyService.getAllCompetencies(),
+        CompetencyService.getCompetencyCategories()
+      ]);
+      if (compResult.success) {
+        setAllCompetencies(compResult.data || []);
+        setFilteredCompetencies(compResult.data || []);
+      }
+      if (catResult.success) {
+        setCompetencyCategories(catResult.data || []);
+      }
+    } catch (error) {
+      console.error('Error loading competencies:', error);
+      toast({
+        title: 'Error',
+        description: 'Gagal memuat daftar kompetensi',
+        variant: 'destructive'
+      });
+    } finally {
+      setLoadingCompetencyDialog(false);
+    }
+  };
+
+  const handleAddProjectCompetency = async (competencyId) => {
+    setAddingCompetency(true);
+    try {
+      const comp = allCompetencies.find(c => (c._id || c.id) === competencyId);
+      if (comp) {
+        const exists = projectCompetencies.some(c => (c._id || c.id || c) === (comp._id || comp.id || comp));
+        if (!exists) {
+          setProjectCompetencies(prev => [...prev, comp]);
+        }
+      } else {
+        setProjectCompetencies(prev => [...prev, competencyId]);
+      }
+      setShowAddCompetencyDialog(false);
+      toast({ title: 'Berhasil', description: 'Kompetensi ditambahkan' });
+    } catch (error) {
+      console.error('Add competency error:', error);
+      toast({ title: 'Error', description: 'Gagal menambahkan kompetensi', variant: 'destructive' });
+    } finally {
+      setAddingCompetency(false);
+    }
+  };
+
+  const handleRemoveProjectCompetency = () => {
+    if (compIndexToRemove === null) return;
+    setProjectCompetencies(prev => prev.filter((_, i) => i !== compIndexToRemove));
+    setShowRemoveCompDialog(false);
+    setCompIndexToRemove(null);
+    toast({
+      title: "Berhasil",
+      description: "Kompetensi berhasil dihapus dari proyek",
+    });
+  };
+
+  useEffect(() => {
+    if (!allCompetencies.length) return;
+    let filtered = [...allCompetencies];
+    if (selectedCompetencyCategory && selectedCompetencyCategory !== 'all') {
+      filtered = filtered.filter(c => c.category === selectedCompetencyCategory);
+    }
+    if (competencySearchQuery.trim()) {
+      const q = competencySearchQuery.toLowerCase();
+      filtered = filtered.filter(c => (c.name || '').toLowerCase().includes(q) || (c.description || '').toLowerCase().includes(q));
+    }
+    const existingIds = projectCompetencies.map(c => c._id?.toString() || c.toString());
+    filtered = filtered.filter(c => !existingIds.includes(c._id?.toString() || c.toString()));
+    setFilteredCompetencies(filtered);
+  }, [selectedCompetencyCategory, competencySearchQuery, allCompetencies, projectCompetencies]);
 
   const loadUserLists = async () => {
     setLoadingDosen(true);
@@ -347,7 +469,7 @@ export default function AdminEditProjectPage() {
         category: formData.category,
         supervisor: formData.supervisor || undefined,
         owner: formData.owner || undefined,
-        keywords: formData.keywords,
+        competencies: projectCompetencies ? projectCompetencies.map(c => c._id || c.id || c) : [],
         academicYear: formData.academicYear || undefined,
         status: formData.status,
         tema: formData.tema,
@@ -359,7 +481,7 @@ export default function AdminEditProjectPage() {
           method: "PUT",
           headers: {
             "Content-Type": "application/json",
-            Authorization: `Bearer ${localStorage.getItem("token")}`,
+            ...getAuthHeader(),
           },
           body: JSON.stringify(submitData),
         }
@@ -639,6 +761,45 @@ export default function AdminEditProjectPage() {
                 </Select>
               </div>
 
+              {/* Competencies */}
+              <div>
+                <Label>Kompetensi</Label>
+                <div className="mt-2 flex flex-wrap gap-2">
+                  {projectCompetencies.length > 0 ? (
+                    projectCompetencies.map((c, idx) => (
+                      <Badge key={idx} variant="secondary" className="flex items-center gap-1">
+                        {c.name || c}
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setCompIndexToRemove(idx);
+                            setShowRemoveCompDialog(true);
+                          }}
+                          className="ml-1 hover:bg-neutral-300 rounded-full p-0.5"
+                        >
+                          <X className="h-3 w-3" />
+                        </button>
+                      </Badge>
+                    ))
+                  ) : (
+                    <p className="text-sm text-neutral-500">Belum ada kompetensi ditambahkan</p>
+                  )}
+                </div>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  className="mt-3"
+                  onClick={() => {
+                    setShowAddCompetencyDialog(true);
+                    loadCompetenciesForDialog();
+                  }}
+                >
+                  <Plus className="h-4 w-4 mr-1" />
+                  Tambah Kompetensi
+                </Button>
+              </div>
+
               <div>
                 <Label>Tahun Ajaran</Label>
                 <div className="grid grid-cols-2 gap-4 mt-2">
@@ -729,6 +890,94 @@ export default function AdminEditProjectPage() {
             </form>
           </CardContent>
         </Card>
+
+        {/* Add Competency Dialog */}
+        <Dialog open={showAddCompetencyDialog} onOpenChange={setShowAddCompetencyDialog}>
+          <DialogContent className="max-w-2xl max-h-[80vh] overflow-hidden flex flex-col">
+            <DialogHeader>
+              <DialogTitle>Tambah Kompetensi</DialogTitle>
+              <DialogDescription>Pilih kompetensi yang relevan dengan proyek Anda</DialogDescription>
+            </DialogHeader>
+            {loadingCompetencyDialog ? (
+              <div className="flex justify-center p-8">
+                <Loader2 className="h-8 w-8 animate-spin text-primary" />
+              </div>
+            ) : (
+              <>
+                <div className="flex gap-2 mb-4">
+                  <div className="flex-1">
+                    <Input
+                      placeholder="Cari kompetensi..."
+                      value={competencySearchQuery}
+                      onChange={(e) => setCompetencySearchQuery(e.target.value)}
+                    />
+                  </div>
+                  <Select value={selectedCompetencyCategory} onValueChange={setSelectedCompetencyCategory}>
+                    <SelectTrigger className="w-48">
+                      <SelectValue placeholder="Kategori" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">Semua Kategori</SelectItem>
+                      {competencyCategories.map(cat => (
+                        <SelectItem key={cat} value={cat}>{cat}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="flex-1 overflow-y-auto border rounded-md">
+                  {filteredCompetencies.length === 0 ? (
+                    <div className="p-8 text-center text-neutral-500">
+                      {competencySearchQuery || selectedCompetencyCategory !== 'all'
+                        ? 'Tidak ada kompetensi yang cocok'
+                        : 'Semua kompetensi sudah ditambahkan'}
+                    </div>
+                  ) : (
+                    <div className="divide-y">
+                      {filteredCompetencies.map(comp => (
+                        <div
+                          key={comp._id || comp.id}
+                          className="p-3 hover:bg-neutral-50 cursor-pointer flex items-start justify-between"
+                          onClick={() => handleAddProjectCompetency(comp._id || comp.id)}
+                        >
+                          <div className="flex-1">
+                            <div className="font-medium text-neutral-900">{comp.name}</div>
+                            {comp.description && (
+                              <div className="text-sm text-neutral-600 mt-1">{comp.description}</div>
+                            )}
+                            {comp.category && (
+                              <Badge variant="outline" className="mt-2">{comp.category}</Badge>
+                            )}
+                          </div>
+                          <Plus className="h-5 w-5 text-neutral-400 flex-shrink-0 ml-2" />
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </>
+            )}
+          </DialogContent>
+        </Dialog>
+
+        {/* Remove Competency Confirmation Dialog */}
+        <Dialog open={showRemoveCompDialog} onOpenChange={setShowRemoveCompDialog}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Hapus Kompetensi</DialogTitle>
+              <DialogDescription>
+                Apakah Anda yakin ingin menghapus kompetensi ini dari proyek?
+              </DialogDescription>
+            </DialogHeader>
+            <div className="flex justify-end gap-3 mt-4">
+              <Button variant="outline" onClick={() => setShowRemoveCompDialog(false)}>
+                Batal
+              </Button>
+              <Button variant="destructive" onClick={handleRemoveProjectCompetency}>
+                Hapus
+              </Button>
+            </div>
+          </DialogContent>
+        </Dialog>
       </div>
     </div>
   );

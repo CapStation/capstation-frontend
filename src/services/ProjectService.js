@@ -339,6 +339,23 @@ class ProjectService {
       };
     }
   }
+
+  async getProjectCompetencies(projectId) {
+    try {
+      console.log('🔍 ProjectService: Fetching project competencies for', projectId);
+      const url = `${API_ENDPOINTS.projects.detail(projectId)}/competencies`;
+      const response = await apiClient.get(url);
+      console.log('✅ ProjectService: Project competencies response:', response);
+      
+      return {
+        success: true,
+        data: response.data || response,
+      };
+    } catch (error) {
+      console.error('❌ ProjectService.getProjectCompetencies error:', error);
+      return { success: false, error: error.message };
+    }
+  }
 }
 
 const projectService = new ProjectService();

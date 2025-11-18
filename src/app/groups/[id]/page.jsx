@@ -80,6 +80,61 @@ const GroupDetailPage = () => {
     }
   }, [params.id]);
 
+  const loadAvailableUsers = async () => {
+    try {
+      setLoadingAvailableUsers(true);
+      const result = await GroupService.getAvailableUsers(params.id);
+      
+      if (result.success) {
+        setAvailableUsers(result.data || []);
+      } else {
+        console.error('Failed to load available users:', result.error);
+        setAvailableUsers([]);
+      }
+    } catch (error) {
+      console.error('Error loading available users:', error);
+      setAvailableUsers([]);
+    } finally {
+      setLoadingAvailableUsers(false);
+    }
+  };
+
+  const handleInviteClick = () => {
+    setInviteDialogOpen(true);
+    loadAvailableUsers();
+  };
+
+  const handleInviteMember = async (userId) => {
+    try {
+      setActionLoading(true);
+      const result = await GroupService.inviteMember(params.id, userId);
+      
+      if (result.success) {
+        toast({
+          title: "Berhasil",
+          description: "Undangan berhasil dikirim",
+        });
+        setInviteDialogOpen(false);
+        await loadGroupDetail(); // Refresh data
+      } else {
+        toast({
+          title: "Error",
+          description: result.error || "Gagal mengirim undangan",
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      console.error('Error inviting member:', error);
+      toast({
+        title: "Error",
+        description: "Terjadi kesalahan saat mengirim undangan",
+        variant: "destructive",
+      });
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
   const loadGroupDetail = async () => {
     try {
       setLoading(true);
@@ -110,40 +165,7 @@ const GroupDetailPage = () => {
     }
   };
 
-  const loadAvailableUsers = async () => {
-    if (!group) return;
-    try {
-      setLoadingAvailableUsers(true);
-      const result = await GroupService.getAvailableUsers(group._id);
-      setAvailableUsers(result.data || []);
-    } catch (err) {
-      console.error('Error loading available users:', err);
-      setAvailableUsers([]);
-    } finally {
-      setLoadingAvailableUsers(false);
-    }
-  };
 
-  const handleInviteMember = async (userId) => {
-    if (!group) return;
-    try {
-      setActionLoading(true);
-      setError(null); // Clear any previous errors
-      
-      const result = await GroupService.inviteMember(group._id, userId);
-      
-      if (result.success) {
-        await loadGroupDetail();
-        setInviteDialogOpen(false);
-      } else {
-        setError(result.error || 'Gagal mengirim undangan');
-      }
-    } catch (err) {
-      setError(err.message || 'Gagal mengirim undangan');
-    } finally {
-      setActionLoading(false);
-    }
-  };
 
   const handleRemoveMember = async () => {
     if (!group || !memberToRemove) return;
@@ -620,10 +642,7 @@ const GroupDetailPage = () => {
               {isOwner && (
                 <Button
                   size="sm"
-                  onClick={() => {
-                    setInviteDialogOpen(true);
-                    loadAvailableUsers();
-                  }}
+                  onClick={handleInviteClick}
                   className="bg-primary hover:bg-primary/90"
                 >
                   <UserPlus className="w-4 h-4" />
