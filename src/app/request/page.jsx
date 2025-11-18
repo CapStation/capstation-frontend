@@ -4,6 +4,7 @@ import { useEffect, useState, Suspense } from "react";
 import Link from "next/link";
 import Navbar from "@/components/layout/Navbar";
 import UserService from "@/services/UserService";
+import { useAuth } from "@/contexts/AuthContext";
 
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Card, CardContent } from "@/components/ui/card";
@@ -102,8 +103,10 @@ const getStatusClass = (status) => {
 };
 
 function RequestPageContent() {
+  const { user } = useAuth();
   const [availableProjects, setAvailableProjects] = useState([]);
   const [myRequests, setMyRequests] = useState([]);
+  const [hasProjectDapatDilanjutkan, setHasProjectDapatDilanjutkan] = useState(false);
 
   // state untuk modal batal request
   const [cancelDialogOpen, setCancelDialogOpen] = useState(false);
@@ -157,9 +160,32 @@ function RequestPageContent() {
   useEffect(() => {
     loadProjects();
     loadMyRequests();
-    loadInbox();
-    loadDecisionHistory();
-  }, []);
+  }, [user]);
+
+  // Refresh data when page becomes visible (e.g., after returning from decision page)
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (!document.hidden) {
+        console.log("Page is visible, refreshing data...");
+        loadProjects();
+        loadMyRequests();
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
+  }, [user]);
+
+  // Load inbox and decision history when user has project with dapat_dilanjutkan status
+  useEffect(() => {
+    if (hasProjectDapatDilanjutkan) {
+      loadInbox();
+      loadDecisionHistory();
+    }
+  }, [hasProjectDapatDilanjutkan]);
 
   const loadProjects = async () => {
     setLoadingProjects(true);
@@ -172,6 +198,22 @@ function RequestPageContent() {
         const candidates = projects.filter(
           (p) => p.status === "dapat_dilanjutkan"
         );
+
+        // Check if current user owns any project with status dapat_dilanjutkan
+        const userHasProjectDapatDilanjutkan = projects.some((p) => {
+          if (p.status !== "dapat_dilanjutkan") return false;
+          
+          const userId = user?._id || user?.id;
+          const ownerId = typeof p.owner === "object" ? p.owner?._id || p.owner?.id : p.owner;
+          const supervisorId = typeof p.supervisor === "object" ? p.supervisor?._id || p.supervisor?.id : p.supervisor;
+          
+          const isOwner = ownerId && userId && (ownerId === userId || ownerId.toString() === userId.toString());
+          const isSupervisor = supervisorId && userId && (supervisorId === userId || supervisorId.toString() === userId.toString());
+          
+          return isOwner || isSupervisor;
+        });
+        
+        setHasProjectDapatDilanjutkan(userHasProjectDapatDilanjutkan);
 
         const enriched = await Promise.all(
           candidates.map(async (p) => {
@@ -428,11 +470,11 @@ function RequestPageContent() {
 
     const titleLength = title.length;
 
-    let titleSizeClass = "text-lg";
+    let titleSizeClass = "text-base sm:text-lg";
     if (titleLength > 60 && titleLength <= 100) {
-      titleSizeClass = "text-base";
+      titleSizeClass = "text-sm sm:text-base";
     } else if (titleLength > 100) {
-      titleSizeClass = "text-sm";
+      titleSizeClass = "text-xs sm:text-sm";
     }
 
     const categoryLabel = getThemeLabel(
@@ -453,16 +495,16 @@ function RequestPageContent() {
       <Card
         key={project._id}
         className="
-        flex h-full min-h-[220px] flex-col
+        flex h-full min-h-[200px] sm:min-h-[220px] flex-col
         rounded-2xl border border-neutral-200 bg-white
         shadow-sm
         transition-all duration-200 ease-out
         hover:-translate-y-1 hover:shadow-md
       "
       >
-        <CardContent className="flex flex-1 flex-col justify-between px-6 pt-6 pb-6">
-          <div className="space-y-3">
-            <div className="min-h-[48px]">
+        <CardContent className="flex flex-1 flex-col justify-between px-4 sm:px-6 pt-4 sm:pt-6 pb-4 sm:pb-6">
+          <div className="space-y-2 sm:space-y-3">
+            <div className="min-h-[40px] sm:min-h-[48px]">
               <h3 className={`${titleSizeClass} font-semibold leading-tight`}>
                 {title}
               </h3>
@@ -470,11 +512,11 @@ function RequestPageContent() {
 
             <Badge
               variant="outline"
-              className="mt-1 rounded-full px-3 py-1 text-xs font-medium"
+              className="mt-1 rounded-full px-2 sm:px-3 py-1 text-xs font-medium"
             >
               {categoryLabel}
             </Badge>
-            <div className="mt-3 space-y-1 text-sm text-neutral-700">
+            <div className="mt-2 sm:mt-3 space-y-1 text-xs sm:text-sm text-neutral-700">
               <p>
                 <span className="font-semibold text-neutral-800">
                   Pemilik:{" "}
@@ -488,12 +530,12 @@ function RequestPageContent() {
             </div>
           </div>
 
-          <div className="mt-6">
+          <div className="mt-4 sm:mt-6">
             <Button
               asChild
               className="
               w-full rounded-lg font-semibold text-neutral-900
-              bg-[#C4F58C]
+              bg-[#C4F58C] min-h-[44px]
               transition-all duration-200 ease-out
               hover:bg-[#FFD86A]
               active:bg-[#FFD86A]
@@ -572,7 +614,7 @@ function RequestPageContent() {
     return (
       <div
         key={id}
-        className="grid grid-cols-12 items-center gap-3 border-b border-neutral-200 px-4 py-3 text-sm"
+        className="grid grid-cols-12 items-center gap-3 border-b border-neutral-200 px-4 py-3 text-xs sm:text-sm min-w-[640px]"
       >
         <div className="col-span-5 truncate font-medium text-neutral-900">
           {title}
@@ -581,14 +623,14 @@ function RequestPageContent() {
         <div className="col-span-1 text-neutral-700">{year}</div>
         <div className="col-span-1">
           <span
-            className={`inline-flex items-center justify-center rounded-full px-3 py-0.5 text-xs font-medium ${statusClass}`}
+            className={`inline-flex items-center justify-center rounded-full px-2 sm:px-3 py-0.5 text-xs font-medium ${statusClass}`}
           >
             {statusLabel}
           </span>
         </div>
 
         <div className="col-span-2 flex justify-end">
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 sm:gap-3">
             <Button
               variant="outline"
               size="sm"
@@ -600,6 +642,7 @@ function RequestPageContent() {
                 hover:bg-[#C4F58C]
                 active:bg-[#FFD86A]
                 active:scale-[0.99]
+                whitespace-nowrap
               "
               onClick={() =>
                 router.push(
@@ -613,7 +656,8 @@ function RequestPageContent() {
               }
             >
               <History className="h-3 w-3" />
-              <span>Lihat Riwayat</span>
+              <span className="hidden sm:inline">Lihat Riwayat</span>
+              <span className="sm:hidden">Riwayat</span>
             </Button>
 
             {isPending && (
@@ -720,41 +764,41 @@ function RequestPageContent() {
             hover:-translate-y-1 hover:shadow-md
           "
       >
-        <CardContent className="flex flex-col justify-between gap-4 px-6 py-5 md:flex-row md:items-center">
-          <div className="space-y-3">
-            <h3 className="text-base font-bold text-neutral-900">
+        <CardContent className="flex flex-col justify-between gap-4 px-4 sm:px-6 py-4 sm:py-5 md:flex-row md:items-center">
+          <div className="space-y-2 sm:space-y-3">
+            <h3 className="text-sm sm:text-base font-bold text-neutral-900">
               {projectTitle}
             </h3>
 
             <Badge
               variant="outline"
-              className="inline-flex rounded-full px-3 py-1 text-xs font-medium"
+              className="inline-flex rounded-full px-2 sm:px-3 py-1 text-xs font-medium"
             >
               {categoryLabel}
             </Badge>
 
-            <p className="text-sm text-neutral-700">
+            <p className="text-xs sm:text-sm text-neutral-700">
               <span className="font-semibold">Nama Grup: </span>
               {groupName}
             </p>
-            <p className="text-sm text-neutral-700">
+            <p className="text-xs sm:text-sm text-neutral-700">
               <span className="font-semibold">Tahun: </span>
               {tahun}
             </p>
-            <p className="text-sm text-neutral-700">
+            <p className="text-xs sm:text-sm text-neutral-700">
               <span className="font-semibold">Anggota Tim: </span>
               {membersLabel}
             </p>
           </div>
 
-          <div className="flex flex-shrink-0 gap-3">
+          <div className="flex flex-shrink-0 gap-2 sm:gap-3 flex-col sm:flex-row w-full sm:w-auto">
             <Button
               type="button"
               variant="outline"
               disabled={isDeciding}
               className="
-                w-full rounded-lg font-semibold text-neutral-900
-                bg-white
+                w-full sm:w-auto rounded-lg font-semibold text-neutral-900
+                bg-white min-h-[44px]
                 transition-all duration-200 ease-out
                 hover:bg-[#F97373]
                 active:bg-[#FFD86A]
@@ -770,8 +814,8 @@ function RequestPageContent() {
               variant="outline"
               disabled={isDeciding}
               className="
-                w-full rounded-lg font-semibold text-neutral-900
-                bg-white
+                w-full sm:w-auto rounded-lg font-semibold text-neutral-900
+                bg-white min-h-[44px]
                 transition-all duration-200 ease-out
                 hover:bg-[#C4F58C]
                 active:bg-[#FFD86A]
@@ -811,85 +855,108 @@ function RequestPageContent() {
   };
 
   return (
-    <div className="min-h-screen bg-[#EEF3F7]">
+    <div className="min-h-screen bg-neutral-100">
       <Navbar />
 
-      <main className="container mx-auto px-6 py-10">
-        <h1 className="text-3xl font-bold text-neutral-900">Request</h1>
-        <p className="text-neutral-600 mb-6">
-          Kelola pengajuan untuk melanjutkan capstone.
-        </p>
+      {/* Header with gradient background */}
+      <div className="bg-gradient-to-r from-[#FF8730] to-[#FFB464] px-4">
+        <div className="container mx-auto px-4 sm:px-6 lg:px-12 py-8 sm:py-10 lg:py-12">
+          <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+            <div>
+              <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold text-white">Request</h1>
+              <p className="mt-2 text-sm sm:text-base text-neutral-50">
+                Kelola pengajuan untuk melanjutkan capstone
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <main className="container mx-auto px-4 sm:px-6 lg:px-12 py-8">
 
         <Tabs defaultValue="submit" className="w-full">
           <TabsList
             className="
-            flex w-full items-center gap-2
+            flex w-full items-center gap-1 sm:gap-2
             rounded-xl bg-[#F3F4F6]
             p-1
-            border border-neutral-200"
+            border border-neutral-200
+            overflow-x-auto overflow-y-hidden"
           >
             <TabsTrigger
               value="submit"
               className="
-                flex-1 px-4 py-2 text-sm font-semibold
+                flex-1 px-2 sm:px-4 py-2 text-xs sm:text-sm font-semibold
                 rounded-lg border-0
                 bg-[#F3F4F6]
                 text-neutral-700
                 transition-all
+                whitespace-nowrap
                 data-[state=active]:bg-[#FFE196]
                 data-[state=active]:text-neutral-900
                 data-[state=active]:shadow-[0_2px_6px_rgba(0,0,0,0.08)]"
             >
-              Submit Request
+              <span className="hidden sm:inline">Submit Request</span>
+              <span className="sm:hidden">Submit</span>
             </TabsTrigger>
             <TabsTrigger
               value="my-request"
               className="
-                flex-1 px-4 py-2 text-sm font-semibold
+                flex-1 px-2 sm:px-4 py-2 text-xs sm:text-sm font-semibold
                 rounded-lg border-0
                 bg-[#F3F4F6]
                 text-neutral-700
                 transition-all
+                whitespace-nowrap
                 data-[state=active]:bg-[#FFE196]
                 data-[state=active]:text-neutral-900
                 data-[state=active]:shadow-[0_2px_6px_rgba(0,0,0,0.08)]"
             >
-              My Request
+              <span className="hidden sm:inline">My Request</span>
+              <span className="sm:hidden">My</span>
             </TabsTrigger>
-            <TabsTrigger
-              value="inbox"
-              className="
-                flex-1 px-4 py-2 text-sm font-semibold
-                rounded-lg border-0
-                bg-[#F3F4F6]
-                text-neutral-700
-                transition-all
-                data-[state=active]:bg-[#FFE196]
-                data-[state=active]:text-neutral-900
-                data-[state=active]:shadow-[0_2px_6px_rgba(0,0,0,0.08)]"
-            >
-              Decision Inbox
-            </TabsTrigger>
-            <TabsTrigger
-              value="history"
-              className="
-                flex-1 px-4 py-2 text-sm font-semibold
-                rounded-lg border-0
-                bg-[#F3F4F6]
-                text-neutral-700
-                transition-all
-                data-[state=active]:bg-[#FFE196]
-                data-[state=active]:text-neutral-900
-                data-[state=active]:shadow-[0_2px_6px_rgba(0,0,0,0.08)]"
-            >
-              Decision History
-            </TabsTrigger>
+            {/* Only show Decision Inbox and History for users with project dapat_dilanjutkan */}
+            {hasProjectDapatDilanjutkan && (
+              <>
+                <TabsTrigger
+                  value="inbox"
+                  className="
+                    flex-1 px-2 sm:px-4 py-2 text-xs sm:text-sm font-semibold
+                    rounded-lg border-0
+                    bg-[#F3F4F6]
+                    text-neutral-700
+                    transition-all
+                    whitespace-nowrap
+                    data-[state=active]:bg-[#FFE196]
+                    data-[state=active]:text-neutral-900
+                    data-[state=active]:shadow-[0_2px_6px_rgba(0,0,0,0.08)]"
+                >
+                  <span className="hidden sm:inline">Decision Inbox</span>
+                  <span className="sm:hidden">Inbox</span>
+                </TabsTrigger>
+                <TabsTrigger
+                  value="history"
+                  className="
+                    flex-1 px-2 sm:px-4 py-2 text-xs sm:text-sm font-semibold
+                    rounded-lg border-0
+                    bg-[#F3F4F6]
+                    text-neutral-700
+                    transition-all
+                    whitespace-nowrap
+                    data-[state=active]:bg-[#FFE196]
+                    data-[state=active]:text-neutral-900
+                    data-[state=active]:shadow-[0_2px_6px_rgba(0,0,0,0.08)]"
+                >
+                  Decision History
+                </TabsTrigger>
+              </>
+            )}
           </TabsList>
 
           <Card className="mt-4 rounded-xl border border-neutral-200 bg-white shadow-sm">
-            <TabsContent value="submit" className="p-6">
-              <h2 className="text-lg font-semibold">Submit Request</h2>
-              <p className="text-sm text-neutral-600 mb-6">
+            <TabsContent value="submit" className="p-4 sm:p-6">
+              <h2 className="text-base sm:text-lg font-semibold">Submit Request</h2>
+              <p className="text-xs sm:text-sm text-neutral-600 mb-4 sm:mb-6">
                 Pilih proyek yang ingin Anda lanjutkan.
               </p>
 
@@ -898,19 +965,19 @@ function RequestPageContent() {
                   <Loader2 className="h-6 w-6 animate-spin text-primary" />
                 </div>
               ) : availableProjects.length === 0 ? (
-                <div className="rounded-lg border border-dashed border-neutral-200 bg-neutral-50 py-16 text-center text-sm text-neutral-500">
+                <div className="rounded-lg border border-dashed border-neutral-200 bg-neutral-50 py-16 text-center text-xs sm:text-sm text-neutral-500">
                   Belum ada proyek yang dapat dilanjutkan.
                 </div>
               ) : (
-                <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
+                <div className="grid grid-cols-1 gap-4 sm:gap-6 sm:grid-cols-2 lg:grid-cols-3">
                   {submitProjects.map((project) => renderProjectCard(project))}
                 </div>
               )}
             </TabsContent>
 
-            <TabsContent value="my-request" className="p-6">
-              <h2 className="text-lg font-semibold mb-1">My Request</h2>
-              <p className="text-sm text-neutral-600 mb-4">
+            <TabsContent value="my-request" className="p-4 sm:p-6">
+              <h2 className="text-base sm:text-lg font-semibold mb-1">My Request</h2>
+              <p className="text-xs sm:text-sm text-neutral-600 mb-4">
                 Lihat dan pantau semua permintaan yang telah Anda ajukan.
               </p>
 
@@ -919,17 +986,18 @@ function RequestPageContent() {
                   <Loader2 className="h-6 w-6 animate-spin text-primary" />
                 </div>
               ) : myRequests.length === 0 ? (
-                <div className="rounded-lg border border-dashed border-neutral-200 bg-neutral-50 py-16 text-center text-sm text-neutral-500">
+                <div className="rounded-lg border border-dashed border-neutral-200 bg-neutral-50 py-16 text-center text-xs sm:text-sm text-neutral-500">
                   Belum ada request yang diajukan.
                 </div>
               ) : (
-                <div className="rounded-xl border border-neutral-200 bg-white">
+                <div className="rounded-xl border border-neutral-200 bg-white overflow-x-auto">
                   <div
                     className="
                     grid grid-cols-12 gap-3
                     border-b border-neutral-200 bg-neutral-50
                     px-4 py-3
-                    text-sm font-semibold text-neutral-700
+                    text-xs sm:text-sm font-semibold text-neutral-700
+                    min-w-[640px]
                   "
                   >
                     <div className="col-span-5">Judul Capstone</div>
@@ -944,9 +1012,9 @@ function RequestPageContent() {
               )}
             </TabsContent>
 
-            <TabsContent value="inbox" className="p-6">
-              <h2 className="mb-1 text-lg font-semibold">Decision Inbox</h2>
-              <p className="mb-4 text-sm text-neutral-600">
+            <TabsContent value="inbox" className="p-4 sm:p-6">
+              <h2 className="mb-1 text-base sm:text-lg font-semibold">Decision Inbox</h2>
+              <p className="mb-4 text-xs sm:text-sm text-neutral-600">
                 Tinjau dan beri keputusan permintaan melanjutkan proyek.
               </p>
 
@@ -955,19 +1023,19 @@ function RequestPageContent() {
                   <Loader2 className="h-6 w-6 animate-spin text-neutral-500" />
                 </div>
               ) : inboxRequests.length === 0 ? (
-                <div className="rounded-lg border border-dashed border-neutral-200 bg-neutral-50 py-16 text-center text-sm text-neutral-500">
+                <div className="rounded-lg border border-dashed border-neutral-200 bg-neutral-50 py-16 text-center text-xs sm:text-sm text-neutral-500">
                   Tidak ada pengajuan yang menunggu keputusan.
                 </div>
               ) : (
-                <div className="space-y-4">
+                <div className="space-y-3 sm:space-y-4">
                   {inboxRequests.map((req) => renderInboxCard(req))}
                 </div>
               )}
             </TabsContent>
 
-            <TabsContent value="history" className="p-6">
-              <h2 className="text-lg font-semibold mb-1">Decision History</h2>
-              <p className="text-sm text-neutral-600 mb-4">
+            <TabsContent value="history" className="p-4 sm:p-6">
+              <h2 className="text-base sm:text-lg font-semibold mb-1">Decision History</h2>
+              <p className="text-xs sm:text-sm text-neutral-600 mb-4">
                 Lihat riwayat keputusan yang Anda buat.
               </p>
 
@@ -976,17 +1044,18 @@ function RequestPageContent() {
                   <Loader2 className="h-6 w-6 animate-spin text-primary" />
                 </div>
               ) : decisionHistory.length === 0 ? (
-                <div className="rounded-lg border border-dashed border-neutral-200 bg-neutral-50 py-16 text-center text-sm text-neutral-500">
+                <div className="rounded-lg border border-dashed border-neutral-200 bg-neutral-50 py-16 text-center text-xs sm:text-sm text-neutral-500">
                   Riwayat keputusan masih kosong.
                 </div>
               ) : (
-                <div className="rounded-xl border border-neutral-200 bg-white">
+                <div className="rounded-xl border border-neutral-200 bg-white overflow-x-auto">
                   <div
                     className="
                     grid grid-cols-12 gap-3
                     border-b border-neutral-200 bg-neutral-50
                     px-4 py-3
-                    text-sm font-semibold text-neutral-700
+                    text-xs sm:text-sm font-semibold text-neutral-700
+                    min-w-[640px]
                   "
                   >
                     <div className="col-span-4">Judul Capstone</div>
@@ -997,7 +1066,7 @@ function RequestPageContent() {
                     <div className="col-span-1 text-right">Aksi</div>
                   </div>
 
-                  <div className="divide-y divide-neutral-100">
+                  <div className="divide-y divide-neutral-100 min-w-[640px]">
                     {visibleDecisionHistory.map((item, idx) => {
                       const title =
                         item.capstoneTitle ||
@@ -1027,7 +1096,7 @@ function RequestPageContent() {
                       return (
                         <div
                           key={item.id || item._id || idx}
-                          className="grid grid-cols-12 items-center gap-3 px-4 py-3 text-sm text-neutral-800 hover:bg-neutral-50"
+                          className="grid grid-cols-12 items-center gap-3 px-4 py-3 text-xs sm:text-sm text-neutral-800 hover:bg-neutral-50"
                         >
                           <div className="col-span-4 truncate pr-4">
                             {title}
@@ -1036,7 +1105,7 @@ function RequestPageContent() {
                           <div className="col-span-1">{year}</div>
                           <div className="col-span-2">
                             <span
-                              className={`inline-flex items-center rounded-full px-3 py-0.5 text-xs font-medium ${getDecisionStatusClass(
+                              className={`inline-flex items-center rounded-full px-2 sm:px-3 py-0.5 text-xs font-medium ${getDecisionStatusClass(
                                 status
                               )}`}
                             >
@@ -1059,6 +1128,7 @@ function RequestPageContent() {
                                 hover:bg-[#C4F58C]
                                 active:bg-[#FFD86A]
                                 active:scale-[0.99]
+                                whitespace-nowrap
                               "
                               onClick={() => {
                                 router.push(
@@ -1076,7 +1146,8 @@ function RequestPageContent() {
                                 );
                               }}
                             >
-                              Ubah Keputusan
+                              <span className="hidden sm:inline">Ubah Keputusan</span>
+                              <span className="sm:hidden">Ubah</span>
                             </Button>
                           </div>
                         </div>
@@ -1091,11 +1162,11 @@ function RequestPageContent() {
 
         {/* Modal konfirmasi batal request */}
         {cancelDialogOpen && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4">
             <div className="w-full max-w-md rounded-xl bg-white shadow-lg">
-              <div className="flex items-center justify-between border-b px-6 py-4">
+              <div className="flex items-center justify-between border-b px-4 sm:px-6 py-4">
                 <div className="flex items-center gap-2">
-                  <h3 className="text-base font-semibold text-neutral-900">
+                  <h3 className="text-sm sm:text-base font-semibold text-neutral-900">
                     Konfirmasi Membatalkan Request
                   </h3>
                 </div>
@@ -1113,7 +1184,7 @@ function RequestPageContent() {
                 </button>
               </div>
 
-              <div className="px-6 py-4 text-sm text-neutral-700">
+              <div className="px-4 sm:px-6 py-4 text-xs sm:text-sm text-neutral-700">
                 <p className="mb-2">
                   Apakah Anda yakin ingin membatalkan request ini?
                 </p>
@@ -1128,15 +1199,16 @@ function RequestPageContent() {
                 )}
 
                 {cancelError && (
-                  <p className="mt-3 text-sm text-red-600">{cancelError}</p>
+                  <p className="mt-3 text-xs sm:text-sm text-red-600">{cancelError}</p>
                 )}
               </div>
 
-              <div className="flex justify-end gap-3 border-t px-6 py-4">
+              <div className="flex flex-col sm:flex-row justify-end gap-2 sm:gap-3 border-t px-4 sm:px-6 py-4">
                 <Button
                   type="button"
                   variant="outline"
                   disabled={cancelling}
+                  className="w-full sm:w-auto min-h-[44px]"
                   onClick={() => {
                     if (cancelling) return;
                     setCancelDialogOpen(false);
@@ -1148,7 +1220,7 @@ function RequestPageContent() {
                 </Button>
                 <Button
                   type="button"
-                  className="bg-red-600 text-white hover:bg-red-700"
+                  className="bg-red-600 text-white hover:bg-red-700 w-full sm:w-auto min-h-[44px]"
                   disabled={cancelling}
                   onClick={handleCancelRequest}
                 >

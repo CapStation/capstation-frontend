@@ -189,29 +189,35 @@ export default function ProjectsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-neutral-50 via-white to-neutral-50">
+    <div className="min-h-screen bg-neutral-100">
       <Navbar />
 
-      <div className="container mx-auto px-20 py-5">
-        {/* Header */}
-        <div className="flex flex-col md:flex-row items-start md:items-center justify-between mb-8 gap-4">
-          <div>
-            <h1 className="text-2xl sm:text-3xl font-bold text-neutral-900">Proyek Saya</h1>
-            <p className="text-neutral-600 mt-2 text-sm sm:text-base">
-              Kelola proyek capstone dan riwayat request Anda
-            </p>
-          </div>
-          {!myProject && (
-            <div className="w-full md:w-auto">
-              <Link href="/projects/new">
-                <Button className="w-full md:w-auto bg-[#FF8730] hover:bg-[#FF8730]/90 text-white font-medium shadow-md hover:shadow-lg transition-all">
-                  <Plus className="h-4 w-4 mr-1" />
-                  Buat Proyek Baru
-                </Button>
-              </Link>
+      {/* Header with gradient background */}
+      <div className="bg-gradient-to-r from-[#FF8730] to-[#FFB464] px-4">
+        <div className="container mx-auto px-12 py-12">
+          <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+            <div>
+              <h1 className="text-4xl md:text-5xl font-bold text-white">Proyek Saya</h1>
+              <p className="mt-2 text-neutral-50">
+                Kelola proyek capstone dan riwayat request Anda
+              </p>
             </div>
-          )}
+
+            <div className="flex gap-2">
+              {!myProject && (
+                <Link href="/projects/new">
+                  <Button className="bg-white hover:bg-neutral-100 text-primary font-semibold">
+                    <Plus className="w-5 h-5" />
+                    Buat Proyek Baru
+                  </Button>
+                </Link>
+              )}
+            </div>
+          </div>
         </div>
+      </div>
+
+      <div className="container mx-auto px-12 py-8">
 
         {/* Main Project Card - Large and Detailed */}
         {myProject ? (

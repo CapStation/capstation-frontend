@@ -102,73 +102,82 @@ export default function AnnouncementsPage() {
   };
 
   return (
-    <>
+    <div className="min-h-screen bg-neutral-100">
       <Navbar />
-      <div className="min-h-screen bg-gradient-to-br from-neutral-50 to-neutral-100 p-6">
-        <div className="max-w-6xl mx-auto">
-          {/* Header */}
-          <div className="flex items-center justify-between mb-8">
+
+      {/* Header with gradient background */}
+      <div className="bg-gradient-to-r from-[#FF8730] to-[#FFB464] px-4">
+        <div className="container mx-auto px-12 py-12">
+          <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
             <div>
-              <h1 className="text-3xl font-bold text-neutral-900">Pengumuman</h1>
-              <p className="text-neutral-600">Lihat dan kelola pengumuman terbaru</p>
+              <h1 className="text-4xl md:text-5xl font-bold text-white">Pengumuman</h1>
+              <p className="mt-2 text-neutral-50">
+                Lihat dan kelola pengumuman terbaru
+              </p>
             </div>
-            {canCreateAnnouncement && (
-              <Button
-                onClick={() => router.push('/announcements/create')}
-                className="bg-primary hover:bg-primary-dark text-white font-semibold"
-              >
-                <Plus className="w-4 h-4 mr-2" />
-                Buat Pengumuman
-              </Button>
-            )}
+
+            <div className="flex gap-2">
+              {canCreateAnnouncement && (
+                <Button
+                  onClick={() => router.push('/announcements/create')}
+                  className="bg-white hover:bg-neutral-100 text-primary font-semibold"
+                >
+                  <Plus className="w-5 h-5" />
+                  Buat Pengumuman
+                </Button>
+              )}
+            </div>
           </div>
+        </div>
+      </div>
 
-          {/* Filters */}
-          <Card className="border-neutral-200 bg-white mb-6">
-            <CardContent className="pt-6">
-              <div className="space-y-4">
-                {/* Search */}
-                <div>
-                  <label className="block text-sm font-medium text-neutral-700 mb-2">
-                    Cari Pengumuman
-                  </label>
-                  <Input
-                    placeholder="Cari berdasarkan judul atau konten..."
-                    value={search}
-                    onChange={(e) => {
-                      setSearch(e.target.value);
-                      setPage(1);
-                    }}
-                    className="border-neutral-300"
-                  />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Error Message */}
-          {error && (
-            <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg flex items-start gap-3">
-              <AlertCircle className="w-5 h-5 text-red-600 shrink-0 mt-0.5" />
-              <div>
-                <p className="font-semibold text-red-900">Error</p>
-                <p className="text-sm text-red-700">{error}</p>
-              </div>
-            </div>
-          )}
-
-          {/* Loading State */}
-          {loading && (
-            <div className="text-center py-12">
-              <Loader2 className="h-12 w-12 animate-spin text-primary mx-auto" />
-              <p className="mt-4 text-neutral-600">Memuat pengumuman...</p>
-            </div>
-          )}
-
-          {/* Announcements Grid */}
-          {!loading && announcements.length > 0 && (
+      <div className="container mx-auto px-12 py-8">
+        {/* Filters */}
+        <Card className="border-neutral-200 bg-white mb-6">
+          <CardContent className="pt-6">
             <div className="space-y-4">
-              {announcements.map((announcement) => (
+              {/* Search */}
+              <div>
+                <label className="block text-sm font-medium text-neutral-700 mb-2">
+                  Cari Pengumuman
+                </label>
+                <Input
+                  placeholder="Cari berdasarkan judul atau konten..."
+                  value={search}
+                  onChange={(e) => {
+                    setSearch(e.target.value);
+                    setPage(1);
+                  }}
+                  className="border-neutral-300"
+                />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Error Message */}
+        {error && (
+          <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg flex items-start gap-3">
+            <AlertCircle className="w-5 h-5 text-red-600 shrink-0 mt-0.5" />
+            <div>
+              <p className="font-semibold text-red-900">Error</p>
+              <p className="text-sm text-red-700">{error}</p>
+            </div>
+          </div>
+        )}
+
+        {/* Loading State */}
+        {loading && (
+          <div className="text-center py-12">
+            <Loader2 className="h-12 w-12 animate-spin text-primary mx-auto" />
+            <p className="mt-4 text-neutral-600">Memuat pengumuman...</p>
+          </div>
+        )}
+
+        {/* Announcements Grid */}
+        {!loading && announcements.length > 0 && (
+          <div className="space-y-4">
+            {announcements.map((announcement) => (
                 <Card
                   key={announcement._id}
                   className="border-neutral-200 bg-white hover:shadow-lg transition-shadow"
@@ -235,50 +244,49 @@ export default function AnnouncementsPage() {
             </div>
           )}
 
-          {/* Empty State */}
-          {!loading && announcements.length === 0 && (
-            <Card className="border-neutral-200 bg-white">
-              <CardContent className="pt-12 pb-12 text-center">
-                <p className="text-neutral-600 mb-4">Tidak ada pengumuman yang ditemukan</p>
-                {canCreateAnnouncement && (
-                  <Button
-                    onClick={() => router.push('/announcements/create')}
-                    className="bg-primary hover:bg-primary-dark text-white"
-                  >
-                    <Plus className="w-4 h-4 mr-2" />
-                    Buat Pengumuman Pertama
-                  </Button>
-                )}
-              </CardContent>
-            </Card>
-          )}
+        {/* Empty State */}
+        {!loading && announcements.length === 0 && (
+          <Card className="border-neutral-200 bg-white">
+            <CardContent className="pt-12 pb-12 text-center">
+              <p className="text-neutral-600 mb-4">Tidak ada pengumuman yang ditemukan</p>
+              {canCreateAnnouncement && (
+                <Button
+                  onClick={() => router.push('/announcements/create')}
+                  className="bg-primary hover:bg-primary-dark text-white"
+                >
+                  <Plus className="w-4 h-4 mr-2" />
+                  Buat Pengumuman Pertama
+                </Button>
+              )}
+            </CardContent>
+          </Card>
+        )}
 
-          {/* Pagination */}
-          {pagination.pages > 1 && !loading && (
-            <div className="mt-8 flex items-center justify-center gap-2">
-              <Button
-                variant="outline"
-                disabled={page === 1}
-                onClick={() => setPage((p) => p - 1)}
-                className="border-neutral-300"
-              >
-                Sebelumnya
-              </Button>
-              <span className="text-sm text-neutral-600">
-                Halaman {page} dari {pagination.pages}
-              </span>
-              <Button
-                variant="outline"
-                disabled={page === pagination.pages}
-                onClick={() => setPage((p) => p + 1)}
-                className="border-neutral-300"
-              >
-                Berikutnya
-              </Button>
-            </div>
-          )}
-        </div>
+        {/* Pagination */}
+        {pagination.pages > 1 && !loading && (
+          <div className="mt-8 flex items-center justify-center gap-2">
+            <Button
+              variant="outline"
+              disabled={page === 1}
+              onClick={() => setPage((p) => p - 1)}
+              className="border-neutral-300"
+            >
+              Sebelumnya
+            </Button>
+            <span className="text-sm text-neutral-600">
+              Halaman {page} dari {pagination.pages}
+            </span>
+            <Button
+              variant="outline"
+              disabled={page === pagination.pages}
+              onClick={() => setPage((p) => p + 1)}
+              className="border-neutral-300"
+            >
+              Berikutnya
+            </Button>
+          </div>
+        )}
       </div>
-    </>
+    </div>
   );
 }
