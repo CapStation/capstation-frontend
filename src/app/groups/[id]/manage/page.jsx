@@ -185,17 +185,33 @@ const ManageGroupPage = () => {
   };
 
   if (authLoading || !user) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
-      </div>
-    );
+    return null;
   }
 
   if (loading) {
     return (
-      <>
+      <div className="min-h-screen bg-neutral-100">
         <Navbar />
+        <main className="container mx-auto px-12 py-8">
+          <div className="h-10 w-32 bg-neutral-200 rounded animate-pulse mb-6" />
+          <div className="mb-8">
+            <div className="h-10 bg-neutral-200 rounded animate-pulse w-64 mb-2" />
+            <div className="h-5 bg-neutral-200 rounded animate-pulse w-96" />
+          </div>
+          <Card>
+            <CardHeader>
+              <div className="h-6 bg-neutral-200 rounded animate-pulse w-48" />
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {[...Array(5)].map((_, i) => (
+                <div key={i} className="h-16 bg-neutral-200 rounded animate-pulse" />
+              ))}
+            </CardContent>
+          </Card>
+        </main>
+      </div>
+    );
+  }
         <div className="min-h-screen flex items-center justify-center">
           <Loader2 className="h-8 w-8 animate-spin text-primary" />
         </div>

@@ -18,8 +18,16 @@ export default function AdminLayout({ children }) {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-neutral-50">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      <div className="min-h-screen bg-neutral-50">
+        <div className="h-16 bg-white border-b border-neutral-200 animate-pulse" />
+        <div className="container mx-auto px-4 py-8">
+          <div className="h-8 w-48 bg-neutral-200 rounded animate-pulse mb-6" />
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="h-32 bg-white rounded-lg shadow-sm animate-pulse" />
+            <div className="h-32 bg-white rounded-lg shadow-sm animate-pulse" />
+            <div className="h-32 bg-white rounded-lg shadow-sm animate-pulse" />
+          </div>
+        </div>
       </div>
     );
   }

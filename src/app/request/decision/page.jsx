@@ -211,8 +211,23 @@ function RequestDecisionPageContent() {
           <Card className="rounded-2xl border border-neutral-200 bg-white shadow-sm">
             <CardContent className="px-8 py-8">
               {loading ? (
-                <div className="flex items-center justify-center py-16">
-                  <Loader2 className="h-6 w-6 animate-spin text-neutral-500" />
+                <div className="space-y-6 py-8">
+                  <div className="space-y-3">
+                    <div className="h-8 w-64 bg-neutral-200 rounded animate-pulse" />
+                    <div className="flex gap-2">
+                      <div className="h-6 w-24 bg-neutral-200 rounded-full animate-pulse" />
+                      <div className="h-6 w-32 bg-neutral-200 rounded-full animate-pulse" />
+                    </div>
+                  </div>
+                  <div className="space-y-4">
+                    <div className="h-4 w-full bg-neutral-200 rounded animate-pulse" />
+                    <div className="h-4 w-full bg-neutral-200 rounded animate-pulse" />
+                    <div className="h-4 w-3/4 bg-neutral-200 rounded animate-pulse" />
+                  </div>
+                  <div className="flex gap-4">
+                    <div className="h-10 w-32 bg-neutral-200 rounded animate-pulse" />
+                    <div className="h-10 w-32 bg-neutral-200 rounded animate-pulse" />
+                  </div>
                 </div>
               ) : !hasAnyData ? (
                 <div className="py-8 text-center text-sm text-red-600">

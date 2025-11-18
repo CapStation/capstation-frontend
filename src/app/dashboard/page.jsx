@@ -135,10 +135,46 @@ export default function DashboardPage() {
     }
   };
 
-  if (authLoading) {
+  if (authLoading || !user) {
+    return null;
+  }
+
+  if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      <div className="min-h-screen bg-white">
+        <Navbar />
+        <div className="bg-gradient-to-r from-orange-600 via-orange-500 to-orange-400 px-4 py-20">
+          <div className="container mx-auto text-center">
+            <div className="h-14 w-96 mx-auto bg-white/30 rounded animate-pulse" />
+          </div>
+        </div>
+        <div className="container mx-auto px-4 py-12">
+          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 mb-12">
+            {[...Array(3)].map((_, i) => (
+              <Card key={i} className="border-neutral-200">
+                <CardContent className="p-6 space-y-3">
+                  <div className="h-12 w-12 bg-neutral-200 rounded-full animate-pulse" />
+                  <div className="h-6 bg-neutral-200 rounded animate-pulse w-32" />
+                  <div className="h-10 bg-neutral-200 rounded animate-pulse w-20" />
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+          <div className="grid gap-6 lg:grid-cols-2">
+            {[...Array(2)].map((_, i) => (
+              <Card key={i} className="border-neutral-200">
+                <CardHeader>
+                  <div className="h-6 bg-neutral-200 rounded animate-pulse w-48" />
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  {[...Array(3)].map((_, j) => (
+                    <div key={j} className="h-20 bg-neutral-200 rounded animate-pulse" />
+                  ))}
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </div>
       </div>
     );
   }

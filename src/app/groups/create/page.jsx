@@ -93,30 +93,22 @@ const CreateGroupPage = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-neutral-50 via-white to-neutral-50">
+    <div className="min-h-screen bg-neutral-100">
       <Navbar />
-
-      {/* Header with gradient */}
-      <div className="bg-gradient-to-r from-primary via-secondary to-accent">
-        <div className="container mx-auto px-4 py-12">
-          <Button
-            variant="ghost"
-            onClick={() => router.push('/groups')}
-            className="mb-4 text-white hover:bg-white/20"
-          >
-            <ArrowLeft className="w-5 h-5 mr-2" />
-            Kembali
-          </Button>
-          <h1 className="text-4xl md:text-5xl font-bold text-white">Buat Grup Baru</h1>
-          <p className="mt-2 text-neutral-50">
-            Buat grup kolaborasi untuk proyek Anda
-          </p>
-        </div>
-      </div>
 
       {/* Content */}
       <div className="container mx-auto px-4 py-8">
         <div className="max-w-2xl mx-auto">
+          {/* Back Button */}
+          <Button
+            variant="ghost"
+            onClick={() => router.push('/groups')}
+            className="mb-4 text-neutral-700 hover:bg-neutral-200"
+          >
+            <ArrowLeft className="w-5 h-5 mr-2" />
+            Kembali
+          </Button>
+
           {loadingProjects ? (
             <Card className="border-neutral-200 bg-white p-8 flex items-center justify-center">
               <Loader2 className="h-6 w-6 animate-spin text-primary mr-2" />

@@ -361,8 +361,17 @@ export default function AdminGroupsPage() {
       <Card>
         <CardContent className="p-0">
           {loading ? (
-            <div className="flex justify-center items-center py-12">
-              <Loader2 className="h-8 w-8 animate-spin text-primary" />
+            <div className="p-6 space-y-4">
+              {[1, 2, 3, 4, 5].map((i) => (
+                <div key={i} className="flex items-center gap-4">
+                  <div className="flex-1 space-y-2">
+                    <div className="h-5 w-48 bg-neutral-200 rounded animate-pulse" />
+                    <div className="h-4 w-32 bg-neutral-200 rounded animate-pulse" />
+                  </div>
+                  <div className="h-8 w-24 bg-neutral-200 rounded animate-pulse" />
+                  <div className="h-8 w-8 bg-neutral-200 rounded animate-pulse" />
+                </div>
+              ))}
             </div>
           ) : filteredGroups.length === 0 ? (
             <div className="text-center py-12">
@@ -547,8 +556,21 @@ export default function AdminGroupsPage() {
             <DialogDescription>Informasi lengkap tentang grup</DialogDescription>
           </DialogHeader>
           {loadingDetail ? (
-            <div className="flex justify-center items-center py-12">
-              <Loader2 className="h-8 w-8 animate-spin text-primary" />
+            <div className="space-y-6 py-8">
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <div className="h-4 w-24 bg-neutral-200 rounded animate-pulse" />
+                  <div className="h-5 w-32 bg-neutral-200 rounded animate-pulse" />
+                </div>
+                <div className="space-y-2">
+                  <div className="h-4 w-24 bg-neutral-200 rounded animate-pulse" />
+                  <div className="h-5 w-32 bg-neutral-200 rounded animate-pulse" />
+                </div>
+              </div>
+              <div className="space-y-2">
+                <div className="h-4 w-20 bg-neutral-200 rounded animate-pulse" />
+                <div className="h-20 bg-neutral-200 rounded animate-pulse" />
+              </div>
             </div>
           ) : groupToView && (
             <div className="space-y-4 py-4">

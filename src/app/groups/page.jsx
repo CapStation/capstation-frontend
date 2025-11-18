@@ -6,7 +6,17 @@ import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent } from '@/components/ui/card';
+import {
+  Pagination,
+  PaginationContent,
+  PaginationEllipsis,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from '@/components/ui/pagination';
 import GroupCard from '@/components/group/GroupCard';
+import GroupCardSkeleton from '@/components/group/GroupCardSkeleton';
 import GroupService from '@/services/GroupService';
 import Navbar from '@/components/layout/Navbar';
 import { Plus, Search, AlertCircle, Loader2 } from 'lucide-react';
@@ -19,10 +29,13 @@ const GroupListPage = () => {
   const [error, setError] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [userHasGroup, setUserHasGroup] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 9;
 
   useEffect(() => {
     if (!authLoading && !user) {
-      router.push('/login');
+      router.replace('/login');
+      return;
     }
   }, [user, authLoading, router]);
 
@@ -79,12 +92,24 @@ const GroupListPage = () => {
     group.description?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
+  // Pagination logic
+  const totalPages = Math.ceil(filteredGroups.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  const currentGroups = filteredGroups.slice(startIndex, endIndex);
+
+  const goToPage = (page) => {
+    setCurrentPage(page);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  // Reset to page 1 when search changes
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm]);
+
   if (authLoading || !user) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
-      </div>
-    );
+    return null;
   }
 
   return (
@@ -150,39 +175,66 @@ const GroupListPage = () => {
         </div>
 
         {/* Main Content */}
-        {loading ? (
-          <div className="flex items-center justify-center py-12">
-            <Loader2 className="w-8 h-8 text-primary animate-spin" />
-          </div>
-        ) : filteredGroups.length === 0 ? (
-          <Card className="border-neutral-200 bg-white text-center py-12">
-            <CardContent>
-              <p className="text-neutral-600 mb-4">
-                {searchTerm ? 'Tidak ada grup yang cocok dengan pencarian' : 'Belum ada grup tersedia'}
-              </p>
-              {!userHasGroup && (
-                <Button
-                  onClick={() => router.push('/groups/create')}
-                  className="bg-primary hover:bg-primary-dark text-white font-semibold"
-                >
-                  <Plus className="w-5 h-5 mr-2" />
-                  Buat Grup Pertama
-                </Button>
-              )}
-              {userHasGroup && (
-                <p className="text-sm text-neutral-500">
-                  Anda sudah memiliki grup. Satu pengguna hanya dapat memiliki satu grup.
+        <div>
+          <h2 className="text-2xl font-bold text-neutral-900 mb-6">
+            {loading ? (
+              <span className="inline-block h-7 w-48 bg-neutral-200 rounded animate-pulse" />
+            ) : (
+              `Semua Grup (${filteredGroups.length})`
+            )}
+          </h2>
+          
+          {loading && allGroups.length === 0 ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {[...Array(6)].map((_, index) => (
+                <GroupCardSkeleton key={index} />
+              ))}
+            </div>
+          ) : filteredGroups.length === 0 ? (
+            <Card className="border-neutral-200 bg-white text-center py-12">
+              <CardContent>
+                <p className="text-neutral-600 mb-4">
+                  {searchTerm ? 'Tidak ada grup yang cocok dengan pencarian' : 'Belum ada grup tersedia'}
+                </p>
+                {!userHasGroup && (
+                  <Button
+                    onClick={() => router.push('/groups/create')}
+                    className="bg-primary hover:bg-primary-dark text-white font-semibold"
+                  >
+                    <Plus className="w-5 h-5 mr-2" />
+                    Buat Grup Pertama
+                  </Button>
+                )}
+                {userHasGroup && (
+                  <p className="text-sm text-neutral-500">
+                    Anda sudah memiliki grup. Satu pengguna hanya dapat memiliki satu grup.
+                  </p>
+                )}
+              </CardContent>
+            </Card>
+          ) : (
+          <div>
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-xl font-semibold text-neutral-900">
+                {loading ? (
+                  <span className="inline-block h-6 w-32 bg-neutral-200 rounded animate-pulse" />
+                ) : (
+                  `${filteredGroups.length} Grup Tersedia`
+                )}
+              </h2>
+              {!loading && (
+                <p className="text-sm text-neutral-600">
+                  Halaman {currentPage} dari {totalPages}
                 </p>
               )}
-            </CardContent>
-          </Card>
-        ) : (
-          <div>
-            <h2 className="text-xl font-semibold text-neutral-900 mb-4">
-              {filteredGroups.length} Grup Tersedia
-            </h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {filteredGroups.map((group) => {
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+              {loading ? (
+                [...Array(itemsPerPage)].map((_, index) => (
+                  <GroupCardSkeleton key={index} />
+                ))
+              ) : (
+                currentGroups.map((group) => {
                 // User ID bisa berupa user.id atau user._id
                 const userId = (user?.id || user?._id)?.toString();
                 
@@ -223,10 +275,89 @@ const GroupListPage = () => {
                     }
                   />
                 );
-              })}
+              }))}
             </div>
+
+            {/* Pagination */}
+            {!loading && totalPages > 1 && (
+              <Pagination className="mb-8">
+                <PaginationContent>
+                  <PaginationItem>
+                    <PaginationPrevious 
+                      onClick={() => currentPage > 1 && goToPage(currentPage - 1)}
+                      className={currentPage === 1 ? "pointer-events-none opacity-50" : "cursor-pointer"}
+                    />
+                  </PaginationItem>
+                  
+                  {/* First page */}
+                  {currentPage > 2 && (
+                    <PaginationItem>
+                      <PaginationLink onClick={() => goToPage(1)} className="cursor-pointer">
+                        1
+                      </PaginationLink>
+                    </PaginationItem>
+                  )}
+                  
+                  {/* Ellipsis before */}
+                  {currentPage > 3 && (
+                    <PaginationItem>
+                      <PaginationEllipsis />
+                    </PaginationItem>
+                  )}
+                  
+                  {/* Previous page */}
+                  {currentPage > 1 && (
+                    <PaginationItem>
+                      <PaginationLink onClick={() => goToPage(currentPage - 1)} className="cursor-pointer">
+                        {currentPage - 1}
+                      </PaginationLink>
+                    </PaginationItem>
+                  )}
+                  
+                  {/* Current page */}
+                  <PaginationItem>
+                    <PaginationLink isActive className="cursor-default">
+                      {currentPage}
+                    </PaginationLink>
+                  </PaginationItem>
+                  
+                  {/* Next page */}
+                  {currentPage < totalPages && (
+                    <PaginationItem>
+                      <PaginationLink onClick={() => goToPage(currentPage + 1)} className="cursor-pointer">
+                        {currentPage + 1}
+                      </PaginationLink>
+                    </PaginationItem>
+                  )}
+                  
+                  {/* Ellipsis after */}
+                  {currentPage < totalPages - 2 && (
+                    <PaginationItem>
+                      <PaginationEllipsis />
+                    </PaginationItem>
+                  )}
+                  
+                  {/* Last page */}
+                  {currentPage < totalPages - 1 && (
+                    <PaginationItem>
+                      <PaginationLink onClick={() => goToPage(totalPages)} className="cursor-pointer">
+                        {totalPages}
+                      </PaginationLink>
+                    </PaginationItem>
+                  )}
+                  
+                  <PaginationItem>
+                    <PaginationNext 
+                      onClick={() => currentPage < totalPages && goToPage(currentPage + 1)}
+                      className={currentPage === totalPages ? "pointer-events-none opacity-50" : "cursor-pointer"}
+                    />
+                  </PaginationItem>
+                </PaginationContent>
+              </Pagination>
+            )}
           </div>
-        )}
+          )}
+        </div>
       </div>
     </div>
   );
