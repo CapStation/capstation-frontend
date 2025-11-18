@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import Image from "next/image";
 import { useAuth } from "@/contexts/AuthContext";
 import apiClient from "@/lib/api-client";
 import { useToast } from "@/hooks/use-toast";
@@ -135,26 +136,21 @@ export default function LoginPage() {
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary/10 via-secondary/10 to-accent/10 p-4 sm:p-6 md:p-8">
       <Card className="w-full max-w-md shadow-xl mx-auto">
         <CardHeader className="space-y-1 text-center px-4 sm:px-6 py-6">
-          <div className="flex justify-center mb-3 sm:mb-4">
-            <div className="bg-primary rounded-full p-2 sm:p-3">
-              <svg
-                className="w-6 h-6 sm:w-8 sm:h-8 text-white"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"
-                />
-              </svg>
+          <div className="flex flex-col items-center justify-center mb-3 sm:mb-4">
+            <div className="mb-3">
+              <Image
+                src="/Logo.png"
+                alt="CapStation Logo"
+                width={80}
+                height={80}
+                className="w-16 h-16 sm:w-20 sm:h-20"
+                priority
+              />
             </div>
+            <h1 className="text-2xl sm:text-3xl font-bold text-neutral-900">
+              CapStation
+            </h1>
           </div>
-          <CardTitle className="text-2xl sm:text-3xl font-bold text-neutral-900">
-            CapStation
-          </CardTitle>
           <CardDescription className="text-sm sm:text-base text-neutral-600">
             Masuk ke akun Anda untuk melanjutkan
           </CardDescription>

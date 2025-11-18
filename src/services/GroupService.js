@@ -440,13 +440,27 @@ class GroupService {
         message: response.message || "Berhasil keluar dari grup",
       };
     } catch (error) {
-      console.error("❌ leaveGroup error:", error);
+      if (process.env.NODE_ENV === "development") {
+        console.error("❌ leaveGroup error:", {
+          status: error?.status,
+          message: error?.message,
+          data: error?.data,
+          response: error?.response?.data,
+        });
+      }
+      
+      // Extract error message from various possible locations
+      const errorMessage = 
+        error?.data?.message || 
+        error?.data?.error ||
+        error?.response?.data?.message ||
+        error?.response?.data?.error ||
+        error?.message ||
+        "Gagal keluar dari grup";
+      
       return {
         success: false,
-        error:
-          error.response?.data?.message ||
-          error.message ||
-          "Gagal keluar dari grup",
+        error: errorMessage,
       };
     }
   }

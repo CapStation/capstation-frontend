@@ -30,6 +30,7 @@ import {
   History,
   User,
   LogOut,
+  LogIn,
   UserCircle,
   ChevronDown,
   Menu,
@@ -171,7 +172,10 @@ export default function Navbar({ className = "" }) {
                       </DropdownMenu>
                     ) : (
                       <Link href="/login">
-                        <Button variant="default" size="sm">Masuk</Button>
+                        <Button variant="outline" size="sm" className="border-orange-500 text-orange-500 hover:bg-orange-50">
+                          <LogIn className="h-4 w-4 mr-2" />
+                          Masuk
+                        </Button>
                       </Link>
                     )}
                   </>
@@ -261,7 +265,10 @@ export default function Navbar({ className = "" }) {
                       </>
                     ) : (
                       <Link href="/login" onClick={() => setMobileOpen(false)}>
-                        <Button variant="default" className="w-full justify-start">Masuk</Button>
+                        <Button variant="outline" className="w-full justify-start border-orange-500 text-orange-500 hover:bg-orange-50">
+                          <LogIn className="h-4 w-4 mr-2" />
+                          Masuk
+                        </Button>
                       </Link>
                     )}
                   </nav>
