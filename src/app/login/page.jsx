@@ -42,6 +42,7 @@ export default function LoginPage() {
         const response = await apiClient.get("/health");
 
         if (response && response.success) {
+          console.log("✅ Backend terhubung");
           setApiStatus("connected");
         } else {
           setApiStatus("error");
@@ -160,12 +161,6 @@ export default function LoginPage() {
             <div className="text-xs text-neutral-500 flex items-center justify-center gap-2">
               <div className="animate-spin h-3 w-3 border-2 border-primary border-t-transparent rounded-full"></div>
               Memeriksa koneksi...
-            </div>
-          )}
-          {apiStatus === "connected" && (
-            <div className="text-xs text-success flex items-center justify-center gap-2">
-              <div className="h-2 w-2 bg-success rounded-full"></div>
-              Backend terhubung
             </div>
           )}
           {apiStatus === "offline" && (
