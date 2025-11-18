@@ -18,6 +18,15 @@ Fitur utama meliputi manajemen proyek, manajemen kelompok, manajemen pengumuman,
 | 4 | Moses Saidasdo | 23/523274/TK/57854 |
 | 5 | Hayunitya Edadwi Pratita | 23/518670/TK/57134 |
 
+## 🔗 URL Video Presentasi dan Deploy Aplikasi
+
+[📁 Tautan Google Drive Video Presentasi](https://drive.google.com/drive/folders/1fFMRZPwvRuDq-ByW4OGUO7r0bu8n-_Le?usp=drive_link)
+
+[📁 Tautan Deployment Frontend](https://capstation-frontend.vercel.app/)
+
+[📁 Tautan Deployment Backend](https://capstation-backend.vercel.app/)
+
+
 ## 📂 Struktur Folder
 ```
 capstation-frontend/
@@ -264,13 +273,7 @@ Dalam pengembangan CapStation-Frontend, teknologi utama yang digunakan meliputi:
 - Development & Build Tools
   - ESLint 
 
-## 🔗 URL Video Presentasi dan Deploy Aplikasi
 
-[📁 Tautan Google Drive Video Presentasi]()
-
-[📁 Tautan Deployment Frontend](https://capstation-frontend.vercel.app/)
-
-[📁 Tautan Deployment Backend](https://capstation-backend.vercel.app/)
 
 ## ⚒️ Instalasi
 1. Clone repository   
