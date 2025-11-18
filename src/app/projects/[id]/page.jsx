@@ -444,7 +444,7 @@ export default function ProjectDetailPage() {
   
   // Handle request to continue project
   const handleRequestContinue = () => {
-    router.push(`/projects/${params.id}/continue-request`);
+    router.push(`/request/new?projectId=${params.id}`);
   };
 
   const handleSetContinuable = async () => {

@@ -12,6 +12,7 @@ import { Label } from "@/components/ui/label";
 import { Loader2, ArrowLeft } from "lucide-react";
 
 import RequestService from "@/services/RequestService";
+import { useToast } from "@/hooks/use-toast";
 
 const getThemeLabel = (tema) => {
   const themeMap = {
@@ -41,6 +42,7 @@ const getStatusBadgeClass = (status) => {
 function RequestDecisionPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const { toast } = useToast();
 
   const requestId = searchParams.get("requestId");
   const action = searchParams.get("action") || "accepted"; // "accepted" | "rejected"
@@ -122,6 +124,15 @@ function RequestDecisionPageContent() {
       const res = await RequestService.decideRequest(requestId, payload);
 
       if (res.success) {
+        const successMessage = decisionValue === "accept" 
+          ? "Pengajuan berhasil disetujui."
+          : "Pengajuan berhasil ditolak.";
+        
+        toast({
+          title: "Berhasil!",
+          description: successMessage,
+          variant: "default",
+        });
         router.push("/request?tab=inbox");
       } else {
         setSubmitError(res.error || "Gagal menyimpan keputusan.");

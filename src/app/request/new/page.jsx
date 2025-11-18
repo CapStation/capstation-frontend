@@ -10,12 +10,20 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Loader2, ArrowLeft, Search } from "lucide-react";
 
 import ProjectService from "@/services/ProjectService";
 import RequestService from "@/services/RequestService";
 import UserService from "@/services/UserService";
 import GroupService from "@/services/GroupService";
+import { useToast } from "@/hooks/use-toast";
 
 if (typeof window !== "undefined") {
   const originalConsoleError = console.error;
@@ -72,6 +80,7 @@ function NewRequestPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const projectId = searchParams.get("projectId");
+  const { toast } = useToast();
 
   const [project, setProject] = useState(null);
   const [loadingProject, setLoadingProject] = useState(true);
@@ -80,9 +89,9 @@ function NewRequestPageContent() {
   const [group, setGroup] = useState(null);
   const [loadingGroup, setLoadingGroup] = useState(true);
 
-  const [submissionYear, setSubmissionYear] = useState(
-    new Date().getFullYear()
-  );
+  const [semester, setSemester] = useState("");
+  const [year, setYear] = useState("");
+  const [academicYear, setAcademicYear] = useState("");
   const [lecturerName, setLecturerName] = useState("");
 
   // state dropdown dosen
@@ -97,13 +106,17 @@ function NewRequestPageContent() {
 
   // load list dosen
   useEffect(() => {
-    const loadDosenList = async () => {
+      const loadDosenList = async () => {
       setLoadingDosen(true);
       try {
         const result = await UserService.getAllUsers();
         if (result.success && result.data) {
+          // Filter hanya dosen yang terverifikasi dan role approved
           const dosenUsers = result.data.filter(
-            (user) => user.role === "dosen"
+            (user) => 
+              user.role === "dosen" && 
+              user.isVerified === true && 
+              user.roleApproved === true
           );
           setDosenList(dosenUsers);
           setFilteredDosenList(dosenUsers);
@@ -113,9 +126,7 @@ function NewRequestPageContent() {
       } finally {
         setLoadingDosen(false);
       }
-    };
-
-    loadDosenList();
+    };    loadDosenList();
   }, []);
 
   // load grup saya
@@ -170,6 +181,26 @@ function NewRequestPageContent() {
     setFilteredDosenList(dosenList);
   };
 
+  // Auto-generate academicYear when semester and year are selected
+  useEffect(() => {
+    if (semester && year) {
+      const generatedAcademicYear = `${semester}-${year}`;
+      setAcademicYear(generatedAcademicYear);
+    } else {
+      setAcademicYear("");
+    }
+  }, [semester, year]);
+
+  // Generate year options for dropdown
+  const generateYearOptions = () => {
+    const currentYear = new Date().getFullYear();
+    const years = [];
+    for (let i = currentYear - 2; i <= currentYear + 2; i++) {
+      years.push(i.toString());
+    }
+    return years;
+  };
+
   // load project yang mau diajukan
   useEffect(() => {
     if (!projectId) {
@@ -204,12 +235,20 @@ function NewRequestPageContent() {
     e.preventDefault();
     setErrorMessage("");
 
+    console.log("=== HANDLE SUBMIT CALLED ===");
+    console.log("projectId:", projectId);
+    console.log("groupName:", groupName);
+    console.log("semester:", semester);
+    console.log("year:", year);
+    console.log("academicYear:", academicYear);
+    console.log("lecturerName:", lecturerName);
+
     if (!projectId) {
       setErrorMessage("Proyek tidak ditemukan.");
       return;
     }
 
-    if (!groupName.trim() || !submissionYear || !lecturerName.trim()) {
+    if (!groupName.trim() || !semester || !year || !lecturerName.trim()) {
       setErrorMessage("Mohon lengkapi semua field wajib.");
       return;
     }
@@ -217,16 +256,26 @@ function NewRequestPageContent() {
     const payload = {
       capstoneId: projectId,
       groupName: groupName.trim(),
-      tahunPengajuan: submissionYear,
+      tahunPengajuan: academicYear,
       namaDosenPembimbing: lecturerName.trim(),
     };
+
+    console.log("Submitting request with payload:", payload);
 
     setSubmitting(true);
     try {
       const res = await RequestService.createRequest(payload);
+      console.log("Request response:", res);
+      
       if (res.success) {
+        toast({
+          title: "Berhasil!",
+          description: "Pengajuan berhasil dibuat.",
+          variant: "default",
+        });
         router.push("/request?tab=my-request");
       } else {
+        console.error("Request failed:", res.error);
         setErrorMessage(
           res.error || "Gagal membuat pengajuan. Silakan coba lagi."
         );
@@ -282,8 +331,23 @@ function NewRequestPageContent() {
                   <Loader2 className="h-6 w-6 animate-spin text-neutral-500" />
                 </div>
               ) : !project ? (
-                <div className="text-center text-sm text-neutral-600 py-10">
-                  Proyek tidak ditemukan.
+                <div className="text-center py-16">
+                  <p className="text-neutral-600 mb-4">
+                    {projectId 
+                      ? "Proyek tidak ditemukan." 
+                      : "Tidak ada proyek yang tersedia untuk diajukan saat ini."}
+                  </p>
+                  <p className="text-sm text-neutral-500 mb-6">
+                    {projectId 
+                      ? "Proyek yang Anda cari tidak dapat ditemukan atau sudah tidak tersedia."
+                      : "Semua proyek yang dapat dilanjutkan sudah Anda ajukan, atau belum ada proyek yang berstatus 'dapat dilanjutkan'."}
+                  </p>
+                  <Button
+                    onClick={() => router.push("/browse")}
+                    className="bg-[#0B61AA] hover:bg-[#094d8a]"
+                  >
+                    Lihat Proyek Tersedia
+                  </Button>
                 </div>
               ) : (
                 <>
@@ -343,22 +407,47 @@ function NewRequestPageContent() {
                   {/* form pengajuan */}
                   <form onSubmit={handleSubmit} className="space-y-5">
                     <div className="space-y-1">
-                      <Label
-                        htmlFor="submissionYear"
-                        className="text-sm font-semibold"
-                      >
-                        Tahun Pengajuan <span className="text-red-500">*</span>
+                      <Label className="text-sm font-semibold">
+                        Tahun Ajaran <span className="text-red-500">*</span>
                       </Label>
-                      <Input
-                        id="submissionYear"
-                        type="number"
-                        min="2000"
-                        max="2100"
-                        value={submissionYear}
-                        onChange={(e) => setSubmissionYear(e.target.value)}
-                        required
-                        className="bg-white border border-neutral-200 focus-visible:ring-0 focus-visible:ring-offset-0"
-                      />
+                      <div className="grid grid-cols-2 gap-4 mt-2">
+                        <div>
+                          <Select
+                            value={semester}
+                            onValueChange={(value) => setSemester(value)}
+                          >
+                            <SelectTrigger className="bg-white border border-neutral-200 focus-visible:ring-0 focus-visible:ring-offset-0">
+                              <SelectValue placeholder="Pilih Semester" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="Gasal">Gasal</SelectItem>
+                              <SelectItem value="Genap">Genap</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        <div>
+                          <Select
+                            value={year}
+                            onValueChange={(value) => setYear(value)}
+                          >
+                            <SelectTrigger className="bg-white border border-neutral-200 focus-visible:ring-0 focus-visible:ring-offset-0">
+                              <SelectValue placeholder="Pilih Tahun" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {generateYearOptions().map((yearOption) => (
+                                <SelectItem key={yearOption} value={yearOption}>
+                                  {yearOption}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
+                      </div>
+                      {academicYear && (
+                        <p className="text-xs text-neutral-500 mt-2">
+                          Tahun Ajaran: <span className="font-semibold text-neutral-700">{academicYear}</span>
+                        </p>
+                      )}
                     </div>
 
                     <div className="space-y-1 relative">
@@ -430,8 +519,7 @@ function NewRequestPageContent() {
                         </div>
                       )}
                       <p className="text-xs text-amber-600 mt-2 font-medium">
-                        ⚠️ Pastikan Nama Dosen sesuai dengan plottingan yang
-                        sudah ada.
+                        ⚠️ Pastikan Nama Dosen sesuai dengan plottingan yang sudah ada. Nama dosen tidak dapat diubah setelah proyek dibuat.
                       </p>
                     </div>
 
