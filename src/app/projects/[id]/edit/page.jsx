@@ -776,17 +776,6 @@ export default function EditProjectPage() {
                   </p>
                 </div>
 
-                <div>
-                  <Label htmlFor="tags">Tags</Label>
-                  <Input
-                    id="tags"
-                    name="tags"
-                    value={formData.tags}
-                    onChange={handleChange}
-                    placeholder="Pisahkan dengan koma: iot, sensor, monitoring"
-                    className="mt-2"
-                  />
-                </div>
 
                 {groupInfo && (
                   <div>

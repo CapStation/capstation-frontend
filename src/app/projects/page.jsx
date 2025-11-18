@@ -192,39 +192,41 @@ export default function ProjectsPage() {
     <div className="min-h-screen bg-gradient-to-br from-neutral-50 via-white to-neutral-50">
       <Navbar />
 
-      <div className="container mx-auto px-4 py-5">
+      <div className="max-w-screen-xl mx-auto px-4 sm:px-6 md:px-10 py-5">
         {/* Header */}
-        <div className="flex items-center justify-between mb-8">
+        <div className="flex flex-col md:flex-row items-start md:items-center justify-between mb-8 gap-4">
           <div>
-            <h1 className="text-3xl font-bold text-neutral-900">Proyek Saya</h1>
-            <p className="text-neutral-600 mt-2">
+            <h1 className="text-2xl sm:text-3xl font-bold text-neutral-900">Proyek Saya</h1>
+            <p className="text-neutral-600 mt-2 text-sm sm:text-base">
               Kelola proyek capstone dan riwayat request Anda
             </p>
           </div>
           {!myProject && (
-            <Link href="/projects/new">
-              <Button className="bg-[#FF8730] hover:bg-[#FF8730]/90 text-white font-medium shadow-md hover:shadow-lg transition-all">
-                <Plus className="h-4 w-4 mr-1" />
-                Buat Proyek Baru
-              </Button>
-            </Link>
+            <div className="w-full md:w-auto">
+              <Link href="/projects/new">
+                <Button className="w-full md:w-auto bg-[#FF8730] hover:bg-[#FF8730]/90 text-white font-medium shadow-md hover:shadow-lg transition-all">
+                  <Plus className="h-4 w-4 mr-1" />
+                  Buat Proyek Baru
+                </Button>
+              </Link>
+            </div>
           )}
         </div>
 
         {/* Main Project Card - Large and Detailed */}
         {myProject ? (
-          <Card className="mb-8 border-2 border-neutral-200 hover:shadow-2xl transition-all duration-300">
-            <CardHeader className="bg-gradient-to-r from-[#B6EB75] to-[#FFE49C] pb-6">
-              <div className="flex items-start justify-between">
-                <div className="flex-1">
+          <Card className="mb-8 border-2 border-neutral-200 hover:shadow-lg transition-all duration-300">
+            <CardHeader className="bg-gradient-to-br from-secondary to-accent pb-6">
+                <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+                  <div className="flex-1">
                   <div className="flex items-center gap-3 mb-3">
                     {/* Hanya tampilkan status (active atau selesai) */}
-                    <Badge className={`${getStatusBadge(myProject.status).color} flex items-center gap-1`}>
+                    <Badge className={`${getStatusBadge(myProject.status).color} flex items-center gap-1 px-2`}>
                       {React.createElement(getStatusBadge(myProject.status).icon, { className: "h-3 w-3" })}
                       {getStatusBadge(myProject.status).label}
                     </Badge>
                     {myProject.tema && (
-                      <Badge variant="outline" className="bg-white/80">
+                      <Badge variant="outline" className="bg-white/80 px-2">
                         {getThemeLabel(myProject.tema)}
                       </Badge>
                     )}
@@ -238,11 +240,13 @@ export default function ProjectsPage() {
                     </p>
                   )}
                 </div>
-                <Link href={`/projects/${myProject._id}`}>
-                  <Button className="bg-black hover:bg-neutral-700 text-white shadow-sm transition-all">
-                    Lihat Detail
-                  </Button>
-                </Link>
+                <div className="mt-3 md:mt-0">
+                  <Link href={`/projects/${myProject._id}`}>
+                    <Button className="bg-white hover:bg-neutral-700 text-black shadow-sm transition-all">
+                      Lihat Detail
+                    </Button>
+                  </Link>
+                </div>
               </div>
             </CardHeader>
             <CardContent className="pt-6">
@@ -323,16 +327,16 @@ export default function ProjectsPage() {
               </div>
 
               {/* Action Buttons */}
-              <div className="flex gap-3 mt-6 pt-6 border-t border-neutral-200">
+              <div className="flex flex-col md:flex-row gap-3 mt-6 pt-6 border-t border-neutral-200">
                 {myProject.status === 'active' ? (
                   // Tombol untuk project yang masih aktif
                   <>
-                    <Link href={`/projects/${myProject._id}/edit`} className="flex-1">
+                    <Link href={`/projects/${myProject._id}/edit`} className="w-full md:flex-1">
                       <Button variant="outline" className="w-full">
                         Edit Proyek
                       </Button>
                     </Link>
-                    <Link href={`/projects/${myProject._id}/documents`} className="flex-1">
+                    <Link href={`/projects/${myProject._id}/documents`} className="w-full md:flex-1">
                       <Button variant="outline" className="w-full">
                         Detail Grup
                       </Button>
@@ -341,12 +345,12 @@ export default function ProjectsPage() {
                 ) : myProject.status === 'dapat_dilanjutkan' ? (
                   // Tombol untuk project yang dapat dilanjutkan
                   <>
-                    <Link href={`/projects/${myProject._id}/documents`} className="flex-1">
+                    <Link href={`/projects/${myProject._id}/documents`} className="w-full md:flex-1">
                       <Button variant="outline" className="w-full">
                         Lihat Grup
                       </Button>
                     </Link>
-                    <Link href={`/request`} className="flex-1">
+                    <Link href={`/request`} className="w-full md:flex-1">
                       <Button className="w-full bg-[#FF8730] hover:bg-[#FF8730]/90 text-white">
                         Lihat Request
                       </Button>
@@ -375,15 +379,15 @@ export default function ProjectsPage() {
               <p className="text-neutral-600 mb-6">
                 Anda belum memiliki proyek capstone. Mulai dengan membuat proyek baru atau melanjutkan proyek yang tersedia!
               </p>
-              <div className="flex gap-3 justify-center">
-                <Link href="/projects/new">
-                  <Button className="bg-[#FF8730] hover:bg-[#FF8730]/90 text-white font-medium shadow-md hover:shadow-lg transition-all">
+              <div className="flex flex-col sm:flex-row gap-3 justify-center">
+                <Link href="/projects/new" className="w-full sm:w-auto">
+                  <Button className="w-full sm:w-auto bg-[#FF8730] hover:bg-[#FF8730]/90 text-white font-medium shadow-md hover:shadow-lg transition-all">
                     <Plus className="h-4 w-4 mr-1" />
                     Buat Proyek Baru
                   </Button>
                 </Link>
-                <Link href="/browse/capstones">
-                  <Button variant="outline">
+                <Link href="/browse/capstones" className="w-full sm:w-auto">
+                  <Button variant="outline" className="w-full sm:w-auto">
                     Browse Proyek
                   </Button>
                 </Link>
@@ -394,9 +398,9 @@ export default function ProjectsPage() {
 
         {/* Request History Section */}
         <div>
-          <div className="flex items-center gap-3 mb-6">
+          <div className="flex flex-col md:flex-row items-start md:items-center gap-3 mb-6">
             <div className="h-8 w-1 bg-gradient-to-b from-blue-500 to-blue-300 rounded-full" />
-            <h2 className="text-2xl font-bold text-neutral-900">Riwayat Request Melanjutkan Proyek</h2>
+            <h2 className="text-xl md:text-2xl font-bold text-neutral-900">Riwayat Request Melanjutkan Proyek</h2>
             <Badge className="bg-blue-100 text-blue-700 border-blue-300">
               {requestHistory.length}
             </Badge>

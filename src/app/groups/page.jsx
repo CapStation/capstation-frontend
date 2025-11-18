@@ -68,12 +68,12 @@ const GroupListPage = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-neutral-50 via-white to-neutral-50">
+    <div className="min-h-screen bg-neutral-100">
       <Navbar />
 
       {/* Header with gradient background */}
-      <div className="bg-gradient-to-r from-primary via-secondary to-accent">
-        <div className="container mx-auto px-4 py-12">
+      <div className="bg-primary px-4">
+        <div className="container mx-auto px-12 py-12">
           <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
             <div>
               <h1 className="text-4xl md:text-5xl font-bold text-white">Semua Grup</h1>
@@ -92,9 +92,9 @@ const GroupListPage = () => {
               </Button>
               <Button
                 onClick={() => router.push('/groups/create')}
-                className="bg-white hover:bg-neutral-100 text-primary font-semibold shadow-lg"
+                className="bg-white hover:bg-neutral-100 text-primary font-semibold "
               >
-                <Plus className="w-5 h-5 mr-2" />
+                <Plus className="w-5 h-5" />
                 Buat Grup Baru
               </Button>
             </div>
@@ -102,7 +102,7 @@ const GroupListPage = () => {
         </div>
       </div>
 
-      <div className="container mx-auto px-4 py-8">
+      <div className="container mx-auto px-12 py-8">
         {/* Error Alert */}
         {error && (
           <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg flex items-start gap-3">

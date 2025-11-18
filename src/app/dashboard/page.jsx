@@ -138,26 +138,26 @@ export default function DashboardPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-neutral-50 via-white to-neutral-50">
+    <div className="min-h-screen bg-white">
       <Navbar />
 
-      {/* Header */}
-      <div className="bg-gradient-to-r from-primary to-primary px-4 py-20">
+      {/* Header - orange theme */}
+      
+      <div className="bg-gradient-to-r from-orange-600 via-orange-500 to-orange-400 px-4 py-20 overflow-hidden relative  relative z-0">
+        <div className="absolute -top-[350px] -left-[200px] w-[500px] h-[500px] rounded-full bg-orange-300/20" />
+        <div className="absolute -top-[520px] -left-[400px] w-[800px] h-[800px] rounded-full bg-orange-300/20" />  
+        <div className="absolute -bottom-[350px] -right-[200px] w-[500px] h-[500px] rounded-full bg-orange-300/20 hidden lg:block" />
+        <div className="absolute -bottom-[520px] -right-[400px] w-[800px] h-[800px] rounded-full bg-orange-300/20 hidden lg:block" />  
         <div className="container mx-auto text-center">
-          <h1 className="text-5xl md:text-6xl font-bold text-white pb-5">Dashboard Capstone</h1>
-          {!user && (
-            <p className="text-white/90 text-lg mt-2">
-              Viewing as guest. <Link href="/login" className="underline font-semibold hover:text-white">Login</Link> to see your projects.
-            </p>
-          )}
+          <h1 className="text-5xl md:text-6xl font-extrabold bg-gradient-to-r from-white via-white to-secondary bg-clip-text text-transparent pb-5 tracking-tight">Dashboard Capstone</h1>
         </div>
       </div>
 
-      <div className="container mx-auto px-20 -mt-10">
+      <div className="container mx-auto px-8 md:px-20 -mt-10 relative z-20">
         {/* Stats */}
         <div className="grid grid-cols-[repeat(auto-fit,minmax(250px,1fr))] 
         md:grid-cols-[repeat(auto-fit,minmax(320px,1fr))]
-        gap-4 mb-8 items-stretch">
+        gap-4 mb-8 items-stretch ">
 
           <Card className="my-auto text-left overflow-hidden h-full">
             <Link href="/browse/capstones">
@@ -274,7 +274,7 @@ export default function DashboardPage() {
           <section className="mb-8">
             <div className="mb-4">
               <h2 className="text-xl font-semibold text-neutral-900 mb-2">Proyek Saya</h2>
-              <p className="text-neutral-600">Daftar proyek capstone yang Anda miliki / ikuti.</p>
+              <p className="text-neutral-600">Daftar proyek capstone yang Anda miliki.</p>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
