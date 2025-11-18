@@ -247,27 +247,6 @@ export default function Navbar({ className = "" }) {
                       <Button variant="ghost" className="w-full justify-start"><Users className="h-4 w-4 mr-2" /> Group</Button>
                     </Link>
 
-                  {user ? (
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="font-semibold flex items-center gap-2 hover:bg-primary/10"
-                        >
-                          <UserCircle className="h-4 w-4" />
-                          Halo, {firstName}
-                          <ChevronDown className="h-3 w-3 opacity-50" />
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end" className="w-56">
-                        <DropdownMenuLabel className="font-normal">
-                          <div className="flex flex-col space-y-1">
-                            <p className="text-sm font-medium leading-none">{firstName}</p>
-                            <p className="text-xs leading-none text-muted-foreground">{user?.email}</p>
-                          </div>
-                        </DropdownMenuLabel>
-                        <DropdownMenuSeparator />
                     <Link href="/browse/capstones" onClick={() => setMobileOpen(false)}>
                       <Button variant="ghost" className="w-full justify-start"><FileText className="h-4 w-4 mr-2" /> Browse</Button>
                     </Link>
