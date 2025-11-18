@@ -5,40 +5,112 @@ import { useRouter, useParams } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import GroupService from '@/services/GroupService';
-import MemberList from '@/components/group/MemberList';
 import InviteMemberDialog from '@/components/group/InviteMemberDialog';
 import Navbar from '@/components/layout/Navbar';
-import { AlertCircle, Loader2, ArrowLeft, Edit2, Trash2, LogOut } from 'lucide-react';
+import { 
+  Loader2, 
+  Users, 
+  Calendar, 
+  User, 
+  Edit2,
+  Trash2,
+  UserPlus,
+  UserMinus,
+  AlertCircle,
+  Save,
+  Briefcase,
+  ExternalLink,
+  CheckCircle2,
+  ArrowLeft
+} from 'lucide-react';
+
 
 const GroupDetailPage = () => {
   const router = useRouter();
   const params = useParams();
-  const { user } = useAuth();
-  const groupId = params.id;
-
+  const { user, loading: authLoading } = useAuth();
   const [group, setGroup] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [inviteDialogOpen, setInviteDialogOpen] = useState(false);
   const [actionLoading, setActionLoading] = useState(false);
+  const [inviteDialogOpen, setInviteDialogOpen] = useState(false);
   const [availableUsers, setAvailableUsers] = useState([]);
   const [loadingAvailableUsers, setLoadingAvailableUsers] = useState(false);
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const [leaveDialogOpen, setLeaveDialogOpen] = useState(false);
+  const [leaveConfirmText, setLeaveConfirmText] = useState('');
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [deleteConfirmText, setDeleteConfirmText] = useState('');
+  const [project, setProject] = useState(null);
+  
+  // Form state untuk edit
+  const [formData, setFormData] = useState({
+    name: '',
+    description: '',
+    status: 'active'
+  });
+
+  const getThemeLabel = (tema) => {
+    const themeMap = {
+      'kesehatan': 'Kesehatan',
+      'pengelolaan-sampah': 'Pengelolaan Sampah',
+      'smart-city': 'Smart City',
+      'transportasi-ramah-lingkungan': 'Transportasi Ramah Lingkungan',
+      'iot': 'IoT',
+      'ai': 'Artificial Intelligence',
+    };
+    return themeMap[tema?.toLowerCase()] || tema?.replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase()) || 'Lainnya';
+  };
 
   useEffect(() => {
-    loadGroupDetail();
-    // Reload every 5 seconds for real-time updates
-    const interval = setInterval(loadGroupDetail, 5000);
-    return () => clearInterval(interval);
-  }, [groupId]);
+    if (params.id) {
+      loadGroupDetail();
+    }
+  }, [params.id]);
+
+  const loadGroupDetail = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      const result = await GroupService.getGroupDetail(params.id);
+      
+      if (result.success && result.data) {
+        const groupData = result.data;
+        setGroup(groupData);
+        
+        // Set project data if exists
+        if (groupData.projects && groupData.projects.length > 0) {
+          setProject(groupData.projects[0]);
+        }
+        
+        // Set form data untuk edit
+        setFormData({
+          name: groupData.name || '',
+          description: groupData.description || '',
+          status: groupData.status || 'active'
+        });
+      }
+    } catch (err) {
+      console.error('Error loading group:', err);
+      setError(err.message || 'Gagal memuat grup');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const loadAvailableUsers = async () => {
+    if (!group) return;
     try {
       setLoadingAvailableUsers(true);
-      const result = await GroupService.getAvailableUsers(groupId);
+      const result = await GroupService.getAvailableUsers(group._id);
       setAvailableUsers(result.data || []);
     } catch (err) {
       console.error('Error loading available users:', err);
@@ -48,27 +120,20 @@ const GroupDetailPage = () => {
     }
   };
 
-  const loadGroupDetail = async () => {
-    try {
-      setError(null);
-      const result = await GroupService.getGroupDetail(groupId);
-      if (result.success) {
-        setGroup(result.data);
-      }
-    } catch (err) {
-      setError(err.message || 'Gagal memuat detail grup');
-      console.error('Load group detail error:', err);
-    } finally {
-      setLoading(false);
-    }
-  };
-
   const handleInviteMember = async (userId) => {
+    if (!group) return;
     try {
       setActionLoading(true);
-      await GroupService.inviteMember(groupId, userId);
-      await loadGroupDetail();
-      setInviteDialogOpen(false);
+      setError(null); // Clear any previous errors
+      
+      const result = await GroupService.inviteMember(group._id, userId);
+      
+      if (result.success) {
+        await loadGroupDetail();
+        setInviteDialogOpen(false);
+      } else {
+        setError(result.error || 'Gagal mengirim undangan');
+      }
     } catch (err) {
       setError(err.message || 'Gagal mengirim undangan');
     } finally {
@@ -77,10 +142,18 @@ const GroupDetailPage = () => {
   };
 
   const handleRemoveMember = async (userId) => {
-    if (confirm('Apakah Anda yakin ingin menghapus anggota ini?')) {
+    if (!group) return;
+    
+    if (project) {
+      setError('Tidak dapat mengeluarkan anggota karena grup masih memiliki project yang terhubung');
+      return;
+    }
+    
+    if (confirm('Apakah Anda yakin ingin menghapus anggota ini dari grup?')) {
       try {
         setActionLoading(true);
-        await GroupService.removeMember(groupId, userId);
+        setError(null);
+        await GroupService.removeMember(group._id, userId);
         await loadGroupDetail();
       } catch (err) {
         setError(err.message || 'Gagal menghapus anggota');
@@ -90,140 +163,220 @@ const GroupDetailPage = () => {
     }
   };
 
-  const handleLeaveGroup = async () => {
-    if (confirm('Apakah Anda yakin ingin meninggalkan grup ini?')) {
-      try {
-        setActionLoading(true);
-        await GroupService.leaveGroup(groupId);
-        router.push('/groups');
-      } catch (err) {
-        setError(err.message || 'Gagal meninggalkan grup');
-        setActionLoading(false);
-      }
-    }
-  };
-
   const handleDeleteGroup = async () => {
-    if (confirm('Apakah Anda yakin ingin menghapus grup ini? Tindakan ini tidak bisa dibatalkan.')) {
-      try {
-        setActionLoading(true);
-        await GroupService.deleteGroup(groupId);
+    if (!group) return;
+    
+    if (deleteConfirmText !== 'HAPUS') {
+      setError('Ketik "HAPUS" untuk konfirmasi');
+      return;
+    }
+
+    if (project) {
+      setError('Tidak dapat menghapus grup karena masih ada project yang terhubung');
+      return;
+    }
+
+    try {
+      setActionLoading(true);
+      setError(null);
+      const result = await GroupService.deleteGroup(group._id);
+      
+      if (result.success) {
         router.push('/groups');
-      } catch (err) {
-        setError(err.message || 'Gagal menghapus grup');
-        setActionLoading(false);
+      } else {
+        setError(result.error || 'Gagal menghapus grup');
       }
+    } catch (err) {
+      setError(err.message || 'Gagal menghapus grup');
+    } finally {
+      setActionLoading(false);
+      setDeleteDialogOpen(false);
+      setDeleteConfirmText('');
     }
   };
 
-  const isOwner = group && user && group.owner._id === user._id;
-  const isMember = group && user && group.members.some(m => m._id === user._id);
+  const handleLeaveGroup = async () => {
+    if (!group) return;
+    
+    if (leaveConfirmText !== 'KELUAR') {
+      setError('Ketik "KELUAR" untuk konfirmasi');
+      return;
+    }
 
-  if (loading) {
+    if (project) {
+      setError('Tidak dapat keluar dari grup karena masih ada project yang terhubung');
+      return;
+    }
+
+    try {
+      setActionLoading(true);
+      setError(null);
+      const result = await GroupService.leaveGroup(group._id);
+      
+      if (result.success) {
+        router.push('/groups');
+      } else {
+        setError(result.error || 'Gagal keluar dari grup');
+      }
+    } catch (err) {
+      setError(err.message || 'Gagal keluar dari grup');
+    } finally {
+      setActionLoading(false);
+      setLeaveDialogOpen(false);
+      setLeaveConfirmText('');
+    }
+  };
+
+  const handleUpdateGroup = async (e) => {
+    e.preventDefault();
+    if (!group) return;
+    
+    if (!formData.name.trim()) {
+      setError('Nama grup harus diisi');
+      return;
+    }
+
+    try {
+      setActionLoading(true);
+      setError(null);
+
+      await GroupService.updateGroup(group._id, {
+        name: formData.name,
+        description: formData.description,
+        status: formData.status
+      });
+
+      await loadGroupDetail();
+      setEditDialogOpen(false);
+    } catch (err) {
+      setError(err.message || 'Gagal memperbarui grup');
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const isOwner = React.useMemo(() => {
+    if (!group || !user) {
+      console.log('🔒 isOwner check: Missing data', { hasGroup: !!group, hasUser: !!user });
+      return false;
+    }
+    
+    // User ID bisa berupa user.id atau user._id
+    const userId = (user.id || user._id)?.toString();
+    
+    // Owner bisa berupa string (ObjectId) atau object yang sudah di-populate
+    const ownerId = (typeof group.owner === 'string' 
+      ? group.owner 
+      : (group.owner?._id || group.owner?.id))?.toString();
+    
+    const result = userId === ownerId;
+    
+    console.log('🔍 isOwner check:', {
+      userId,
+      ownerId,
+      ownerType: typeof group.owner,
+      isOwner: result,
+      userObj: user,
+      ownerObj: group.owner
+    });
+    
+    return result;
+  }, [group, user]);
+
+  const isMember = React.useMemo(() => {
+    if (!group || !user) {
+      console.log('🔒 isMember check: Missing data', { hasGroup: !!group, hasUser: !!user });
+      return false;
+    }
+    
+    const userId = (user.id || user._id)?.toString();
+    
+    const result = group.members?.some(member => {
+      const memberId = (typeof member === 'string' ? member : (member._id || member.id))?.toString();
+      return memberId === userId;
+    }) || false;
+    
+    console.log('🔍 isMember check:', {
+      userId,
+      membersCount: group.members?.length,
+      isMember: result,
+      members: group.members
+    });
+    
+    return result;
+  }, [group, user]);
+
+
+  if (authLoading || loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-neutral-50 via-white to-neutral-50 flex items-center justify-center">
-        <Loader2 className="w-8 h-8 text-primary animate-spin" />
+      <div className="min-h-screen flex items-center justify-center bg-neutral-100">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
       </div>
     );
   }
 
   if (!group) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-neutral-50 via-white to-neutral-50">
+      <div className="min-h-screen bg-neutral-100">
         <Navbar />
-        <div className="container mx-auto px-4 py-8">
-          <Button
-            variant="ghost"
-            onClick={() => router.back()}
-            className="mb-4"
-          >
-            <ArrowLeft className="w-5 h-5 mr-2" />
-            Kembali
-          </Button>
-          <Card className="border-red-200 bg-red-50">
-            <CardContent className="pt-6">
-              <p className="text-red-700">Grup tidak ditemukan</p>
+        <main className="container mx-auto px-12 py-8">
+          <Card className="max-w-2xl mx-auto">
+            <CardContent className="text-center py-16">
+              <AlertCircle className="h-16 w-16 text-neutral-400 mx-auto mb-4" />
+              <h2 className="text-2xl font-bold text-neutral-900 mb-2">
+                Grup Tidak Ditemukan
+              </h2>
+              <p className="text-neutral-600 mb-6">
+                Grup yang Anda cari tidak ditemukan atau telah dihapus.
+              </p>
+              <Button onClick={() => router.push('/groups')}>
+                Kembali ke Daftar Grup
+              </Button>
             </CardContent>
           </Card>
-        </div>
+        </main>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-neutral-50 via-white to-neutral-50">
+    <div className="min-h-screen bg-neutral-100">
       <Navbar />
 
-      {/* Header with gradient background */}
-      <div className="bg-gradient-to-r from-primary via-secondary to-accent">
-        <div className="container mx-auto px-4 py-12">
-          <Button
-            variant="ghost"
-            onClick={() => router.back()}
-            className="mb-4 text-white hover:bg-white/20"
-          >
-            <ArrowLeft className="w-5 h-5 mr-2" />
-            Kembali
-          </Button>
-
-          <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
-            <div className="flex items-start gap-4">
-              <Avatar className="h-16 w-16 bg-white text-primary text-xl shadow-lg">
-                <AvatarFallback className="bg-white text-primary font-bold">
-                  {group.name.substring(0, 2).toUpperCase()}
-                </AvatarFallback>
-              </Avatar>
-
-              <div>
-                <h1 className="text-4xl md:text-5xl font-bold text-white">{group.name}</h1>
-                <p className="mt-2 text-neutral-50">
-                  {group.capstone?.title || 'Capstone tidak ada'}
-                </p>
-                <div className="mt-3 flex items-center gap-2">
-                  <Badge className={`
-                    ${group.status === 'active' ? 'bg-accent text-neutral-900' : ''}
-                    ${group.status === 'inactive' ? 'bg-neutral-200 text-neutral-700' : ''}
-                    ${group.status === 'archived' ? 'bg-neutral-600 text-white' : ''}
-                  `}>
-                    {group.status}
-                  </Badge>
-                  <span className="text-sm text-neutral-50">
-                    Dibuat {new Date(group.createdAt).toLocaleDateString('id-ID')}
-                  </span>
-                </div>
-              </div>
+      {/* Header */}
+      <div className="bg-gradient-to-r from-[#FF8730] to-[#FFB464] px-4">
+        <div className="container mx-auto px-12 py-12">
+          <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+            <div>
+              <h1 className="text-4xl md:text-5xl font-bold text-white">Detail Grup</h1>
+              <p className="mt-2 text-neutral-50">Informasi lengkap tentang grup</p>
             </div>
 
-            {/* Action Buttons */}
-            <div className="flex gap-2 flex-wrap">
+            <div className="flex gap-2">
+              <Button
+                onClick={() => router.push('/groups')}
+                variant="outline"
+                className="bg-white/20 border-white text-white hover:bg-white/30"
+              >
+                <ArrowLeft className="w-5 h-5 mr-2" />
+                Kembali
+              </Button>
               {isOwner && (
-                <>
-                  <Button
-                    onClick={() => router.push(`/groups/${groupId}/edit`)}
-                    className="bg-white hover:bg-neutral-100 text-primary font-semibold shadow-lg"
-                  >
-                    <Edit2 className="w-4 h-4 mr-2" />
-                    Edit
-                  </Button>
-                  <Button
-                    onClick={handleDeleteGroup}
-                    disabled={actionLoading}
-                    className="bg-red-600 hover:bg-red-700 text-white shadow-lg"
-                  >
-                    <Trash2 className="w-4 h-4 mr-2" />
-                    Hapus
-                  </Button>
-                </>
-              )}
-
-              {!isOwner && isMember && (
                 <Button
-                  onClick={handleLeaveGroup}
-                  disabled={actionLoading}
-                  className="bg-red-600 hover:bg-red-700 text-white shadow-lg"
+                  onClick={() => setEditDialogOpen(true)}
+                  className="bg-white hover:bg-neutral-100 text-primary font-semibold"
                 >
-                  <LogOut className="w-4 h-4 mr-2" />
-                  Tinggalkan
+                  <Edit2 className="w-4 h-4 mr-2" />
+                  Edit Grup
+                </Button>
+              )}
+              {isMember && !isOwner && (
+                <Button
+                  onClick={() => setLeaveDialogOpen(true)}
+                  className="bg-red-600 hover:bg-red-700 text-white"
+                >
+                  <UserMinus className="w-4 h-4 mr-2" />
+                  Keluar dari Grup
                 </Button>
               )}
             </div>
@@ -231,114 +384,481 @@ const GroupDetailPage = () => {
         </div>
       </div>
 
-      {/* Error Alert */}
-      {error && (
-        <div className="container mx-auto px-4 py-4">
-          <div className="p-4 bg-red-50 border border-red-200 rounded-lg flex items-start gap-3">
+      <main className="container mx-auto px-12 py-8">
+        {/* Error Alert */}
+        {error && (
+          <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg flex items-start gap-3">
             <AlertCircle className="w-5 h-5 text-red-600 shrink-0 mt-0.5" />
             <p className="text-sm text-red-700">{error}</p>
           </div>
+        )}
+
+        {/* Group Header Info */}
+        <div className="flex items-center justify-between mb-8 p-6 bg-white rounded-lg border">
+          <div className="flex items-center gap-4">
+            <Avatar className="h-16 w-16 bg-primary text-white text-xl">
+              <AvatarFallback className="bg-primary text-white font-bold">
+                {group.name.substring(0, 2).toUpperCase()}
+              </AvatarFallback>
+            </Avatar>
+            <div>
+              <h2 className="text-2xl font-bold text-neutral-900">{group.name}</h2>
+              <p className="text-neutral-600 mt-1">
+                {group.description || 'Tidak ada deskripsi'}
+              </p>
+            </div>
+          </div>
+
+          {isOwner && (
+            <Button
+              onClick={() => setDeleteDialogOpen(true)}
+              disabled={actionLoading}
+              variant="destructive"
+            >
+              <Trash2 className="w-4 h-4 mr-2" />
+              Hapus Grup
+            </Button>
+          )}
         </div>
+
+        {/* Content */}
+        <div className="grid grid-cols-3 gap-6">
+          {/* Info Section */}
+          <Card className="col-span-2">
+            <CardHeader>
+              <CardTitle>Informasi Grup</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <div className="grid grid-cols-2 gap-4">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center">
+                    <User className="w-5 h-5 text-primary" />
+                  </div>
+                  <div>
+                    <p className="text-sm text-neutral-600">Owner</p>
+                    <p className="font-semibold text-neutral-900">
+                      {group.owner?.name || 'Tidak diketahui'}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center">
+                    <Calendar className="w-5 h-5 text-primary" />
+                  </div>
+                  <div>
+                    <p className="text-sm text-neutral-600">Dibuat</p>
+                    <p className="font-semibold text-neutral-900">
+                      {new Date(group.createdAt).toLocaleDateString('id-ID')}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center">
+                    <Users className="w-5 h-5 text-primary" />
+                  </div>
+                  <div>
+                    <p className="text-sm text-neutral-600">Anggota</p>
+                    <p className="font-semibold text-neutral-900">
+                      {group.members.length}/5 mahasiswa
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center">
+                    <CheckCircle2 className="w-5 h-5 text-primary" />
+                  </div>
+                  <div>
+                    <p className="text-sm text-neutral-600">Status</p>
+                    <Badge 
+                      className={group.isActive ? 'bg-[#FF8730] hover:bg-[#FF8730]/90 text-white' : 'bg-neutral-400 text-white'}
+                    >
+                      {group.isActive ? 'Aktif' : 'Tidak Aktif'}
+                    </Badge>
+                  </div>
+                </div>
+              </div>
+
+              {/* Project Terhubung */}
+              <div className="pt-4 border-t">
+                <div className="flex items-center gap-2 mb-4">
+                  <Briefcase className="w-5 h-5 text-primary" />
+                  <h3 className="font-semibold text-neutral-900">Project Terhubung</h3>
+                </div>
+                
+                {project ? (
+                  <div className="bg-neutral-50 rounded-lg p-4 space-y-2">
+                    <div className="flex items-start justify-between gap-2">
+                      <p className="font-semibold text-neutral-900 flex-1">
+                        {project.title || 'Tidak ada judul'}
+                      </p>
+                      {project.tema && (
+                        <Badge variant="outline" className="text-xs">
+                          {getThemeLabel(project.tema)}
+                        </Badge>
+                      )}
+                    </div>
+                    <p className="text-sm text-neutral-600 line-clamp-2">
+                      {project.description || 'Tidak ada deskripsi'}
+                    </p>
+                    <Button
+                      onClick={() => router.push(`/projects/${project._id}`)}
+                      variant="outline"
+                      size="sm"
+                      className="mt-2"
+                    >
+                      <ExternalLink className="w-4 h-4 mr-2" />
+                      Lihat Detail Project
+                    </Button>
+                  </div>
+                ) : (
+                  <p className="text-sm text-neutral-500 italic">
+                    Belum ada project terhubung
+                  </p>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Members Section */}
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle>Anggota</CardTitle>
+              {isOwner && (
+                <Button
+                  size="sm"
+                  onClick={() => {
+                    setInviteDialogOpen(true);
+                    loadAvailableUsers();
+                  }}
+                  className="bg-primary hover:bg-primary/90"
+                >
+                  <UserPlus className="w-4 h-4" />
+                </Button>
+              )}
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-3">
+                {/* Owner */}
+                <div className="flex items-center gap-3 p-2 rounded-lg bg-primary/5">
+                  <Avatar className="h-10 w-10 bg-primary text-white">
+                    <AvatarFallback className="bg-primary text-white text-sm">
+                      {group.owner?.name?.substring(0, 2).toUpperCase()}
+                    </AvatarFallback>
+                  </Avatar>
+                  <div className="flex-1">
+                    <p className="font-semibold text-sm text-neutral-900">
+                      {group.owner?.name}
+                    </p>
+                    <p className="text-xs text-neutral-600">Owner</p>
+                  </div>
+                </div>
+
+                {/* Members */}
+                {group.members.filter((member) => {
+                  const memberId = typeof member === 'string' ? member : (member._id || member.id);
+                  const ownerId = typeof group.owner === 'string' ? group.owner : (group.owner?._id || group.owner?.id);
+                  return memberId !== ownerId;
+                }).map((member) => {
+                  const memberName = typeof member === 'string' ? 'Unknown' : member.name;
+                  const memberId = typeof member === 'string' ? member : (member._id || member.id);
+                  
+                  return (
+                    <div key={memberId} className="flex items-center gap-3 p-2 rounded-lg hover:bg-neutral-50">
+                      <Avatar className="h-10 w-10 bg-neutral-200 text-neutral-700">
+                        <AvatarFallback className="bg-neutral-200 text-neutral-700 text-sm">
+                          {memberName.substring(0, 2).toUpperCase()}
+                        </AvatarFallback>
+                      </Avatar>
+                      <div className="flex-1">
+                        <p className="font-semibold text-sm text-neutral-900">
+                          {memberName}
+                        </p>
+                        <p className="text-xs text-neutral-600">Anggota</p>
+                      </div>
+                      {isOwner && (
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          onClick={() => handleRemoveMember(memberId)}
+                          disabled={actionLoading}
+                          className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                        >
+                          <UserMinus className="w-4 h-4" />
+                        </Button>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      </main>
+
+
+      {/* Dialogs - Only show based on user role */}
+      {group && isOwner && (
+        <InviteMemberDialog
+          isOpen={inviteDialogOpen}
+          onClose={() => {
+            setInviteDialogOpen(false);
+            setError(null); // Clear error when closing dialog
+          }}
+          onInvite={handleInviteMember}
+          isLoading={actionLoading || loadingAvailableUsers}
+          availableUsers={availableUsers}
+          error={error}
+        />
       )}
 
-      {/* Content */}
-      <div className="container mx-auto px-4 py-8">
-        <Tabs defaultValue="overview" className="w-full">
-          <TabsList className="bg-white border border-neutral-200 rounded-lg p-1 mb-6">
-            <TabsTrigger 
-              value="overview"
-              className="data-[state=active]:bg-primary data-[state=active]:text-white"
-            >
-              Ikhtisar
-            </TabsTrigger>
-            <TabsTrigger 
-              value="members"
-              className="data-[state=active]:bg-primary data-[state=active]:text-white"
-            >
-              Anggota ({group.members.length})
-            </TabsTrigger>
-          </TabsList>
+      {isOwner && (
+        <>
+          {/* Edit Dialog */}
+          <Dialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>
+            <DialogContent className="max-w-2xl">
+              <DialogHeader>
+                <DialogTitle>Edit Informasi Grup</DialogTitle>
+              </DialogHeader>
+              
+              <form onSubmit={handleUpdateGroup} className="space-y-6">
+                <div className="space-y-2">
+                  <Label htmlFor="edit-name">
+                    Nama Grup <span className="text-red-500">*</span>
+                  </Label>
+                  <Input
+                    id="edit-name"
+                    value={formData.name}
+                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                    placeholder="Masukkan nama grup"
+                    required
+                  />
+                </div>
 
-          {/* Overview Tab */}
-          <TabsContent value="overview" className="mt-0 space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              {/* Group Info */}
-              <Card className="md:col-span-2 border-neutral-200 bg-white shadow-sm">
-                <CardHeader className="bg-gradient-to-r from-primary/10 to-secondary/10">
-                  <CardTitle className="text-primary">Informasi Grup</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4 pt-6">
-                  {group.description && (
-                    <div>
-                      <p className="text-sm font-semibold text-neutral-600 mb-1">
-                        Deskripsi
+                <div className="space-y-2">
+                  <Label htmlFor="edit-description">Deskripsi</Label>
+                  <Textarea
+                    id="edit-description"
+                    value={formData.description}
+                    onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                    placeholder="Masukkan deskripsi grup (opsional)"
+                    rows={4}
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="edit-status">Status</Label>
+                  <Select
+                    value={formData.status}
+                    onValueChange={(value) => setFormData({ ...formData, status: value })}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Pilih status" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="active">Aktif</SelectItem>
+                      <SelectItem value="inactive">Tidak Aktif</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="flex gap-3 justify-end">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => setEditDialogOpen(false)}
+                    disabled={actionLoading}
+                  >
+                    Batal
+                  </Button>
+                  <Button
+                    type="submit"
+                    disabled={actionLoading}
+                    className="bg-primary hover:bg-primary/90"
+                  >
+                    {actionLoading ? (
+                      <>
+                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                        Menyimpan...
+                      </>
+                    ) : (
+                      <>
+                        <Save className="w-4 h-4 mr-2" />
+                        Simpan Perubahan
+                      </>
+                    )}
+                  </Button>
+                </div>
+              </form>
+            </DialogContent>
+          </Dialog>
+
+          {/* Delete Group Dialog */}
+          <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+            <DialogContent className="max-w-md">
+              <DialogHeader>
+                <DialogTitle className="flex items-center gap-2 text-red-600">
+                  <AlertCircle className="w-5 h-5" />
+                  Hapus Grup
+                </DialogTitle>
+              </DialogHeader>
+              
+              <div className="space-y-4">
+                <div className="space-y-2">
+                  <p className="text-sm text-neutral-700">
+                    Apakah Anda yakin ingin menghapus grup ini? Tindakan ini tidak dapat dibatalkan.
+                  </p>
+                  {project && (
+                    <div className="p-3 bg-red-50 border border-red-200 rounded-lg">
+                      <p className="text-sm text-red-700 font-medium">
+                        ⚠️ Tidak dapat menghapus grup karena masih ada project yang terhubung!
                       </p>
-                      <p className="text-neutral-700">{group.description}</p>
+                      <p className="text-xs text-red-600 mt-1">
+                        Silakan hapus atau selesaikan project terlebih dahulu.
+                      </p>
                     </div>
                   )}
+                  {!project && (
+                    <p className="text-xs text-neutral-500">
+                      Ketik <span className="font-bold text-neutral-900">HAPUS</span> untuk konfirmasi
+                    </p>
+                  )}
+                </div>
 
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <p className="text-sm font-semibold text-neutral-600 mb-1">
-                        Anggota
-                      </p>
-                      <p className="text-2xl font-bold text-primary">
-                        {group.members.length} / {group.maxMembers}
-                      </p>
-                    </div>
-                    <div>
-                      <p className="text-sm font-semibold text-neutral-600 mb-1">
-                        Owner
-                      </p>
-                      <p className="text-neutral-700">{group.owner.name}</p>
-                    </div>
+                {!project && (
+                  <div className="space-y-2">
+                    <Input
+                      value={deleteConfirmText}
+                      onChange={(e) => setDeleteConfirmText(e.target.value.toUpperCase())}
+                      placeholder="Ketik HAPUS"
+                      disabled={actionLoading}
+                      className="font-mono"
+                    />
                   </div>
-                </CardContent>
-              </Card>
+                )}
 
-              {/* Quick Actions */}
-              {isOwner && (
-                <Card className="border-neutral-200 bg-white shadow-sm">
-                  <CardHeader className="bg-gradient-to-r from-primary/10 to-secondary/10">
-                    <CardTitle className="text-primary">Manajemen</CardTitle>
-                  </CardHeader>
-                  <CardContent className="pt-6">
+                <div className="flex gap-3 justify-end">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => {
+                      setDeleteDialogOpen(false);
+                      setDeleteConfirmText('');
+                      setError(null);
+                    }}
+                    disabled={actionLoading}
+                  >
+                    Batal
+                  </Button>
+                  {!project && (
                     <Button
-                      onClick={() => {
-                        setInviteDialogOpen(true);
-                        loadAvailableUsers();
-                      }}
-                      disabled={group.members.length >= group.maxMembers}
-                      className="w-full bg-primary hover:bg-primary-dark text-white font-semibold"
+                      onClick={handleDeleteGroup}
+                      disabled={actionLoading || deleteConfirmText !== 'HAPUS'}
+                      variant="destructive"
                     >
-                      Undang Anggota
+                      {actionLoading ? (
+                        <>
+                          <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                          Menghapus...
+                        </>
+                      ) : (
+                        <>
+                          <Trash2 className="w-4 h-4 mr-2" />
+                          Hapus Grup
+                        </>
+                      )}
                     </Button>
-                  </CardContent>
-                </Card>
+                  )}
+                </div>
+              </div>
+            </DialogContent>
+          </Dialog>
+        </>
+      )}
+
+      {isMember && !isOwner && (
+        <Dialog open={leaveDialogOpen} onOpenChange={setLeaveDialogOpen}>
+          <DialogContent className="max-w-md">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2 text-red-600">
+                <AlertCircle className="w-5 h-5" />
+                Keluar dari Grup
+              </DialogTitle>
+            </DialogHeader>
+            
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <p className="text-sm text-neutral-700">
+                  Apakah Anda yakin ingin keluar dari grup ini?
+                </p>
+                {project && (
+                  <div className="p-3 bg-red-50 border border-red-200 rounded-lg">
+                    <p className="text-sm text-red-700 font-medium">
+                      ⚠️ Tidak dapat keluar karena masih ada project yang terhubung!
+                    </p>
+                    <p className="text-xs text-red-600 mt-1">
+                      Silakan hapus atau selesaikan project terlebih dahulu.
+                    </p>
+                  </div>
+                )}
+                {!project && (
+                  <p className="text-xs text-neutral-500">
+                    Ketik <span className="font-bold text-neutral-900">KELUAR</span> untuk konfirmasi
+                  </p>
+                )}
+              </div>
+
+              {!project && (
+                <div className="space-y-2">
+                  <Input
+                    value={leaveConfirmText}
+                    onChange={(e) => setLeaveConfirmText(e.target.value.toUpperCase())}
+                    placeholder="Ketik KELUAR"
+                    disabled={actionLoading}
+                    className="font-mono"
+                  />
+                </div>
               )}
+
+              <div className="flex gap-3 justify-end">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => {
+                    setLeaveDialogOpen(false);
+                    setLeaveConfirmText('');
+                    setError(null);
+                  }}
+                  disabled={actionLoading}
+                >
+                  Batal
+                </Button>
+                {!project && (
+                  <Button
+                    onClick={handleLeaveGroup}
+                    disabled={actionLoading || leaveConfirmText !== 'KELUAR'}
+                    variant="destructive"
+                  >
+                    {actionLoading ? (
+                      <>
+                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                        Memproses...
+                      </>
+                    ) : (
+                      <>
+                        <UserMinus className="w-4 h-4 mr-2" />
+                        Keluar dari Grup
+                      </>
+                    )}
+                  </Button>
+                )}
+              </div>
             </div>
-          </TabsContent>
-
-          {/* Members Tab */}
-          <TabsContent value="members" className="mt-0">
-            <MemberList
-              members={group.members}
-              owner={group.owner}
-              isOwner={isOwner}
-              onRemoveMember={isOwner ? handleRemoveMember : null}
-            />
-          </TabsContent>
-        </Tabs>
-      </div>
-
-      {/* Invite Dialog */}
-      <InviteMemberDialog
-        isOpen={inviteDialogOpen}
-        onClose={() => setInviteDialogOpen(false)}
-        onInvite={handleInviteMember}
-        isLoading={actionLoading || loadingAvailableUsers}
-        availableUsers={availableUsers}
-      />
+          </DialogContent>
+        </Dialog>
+      )}
     </div>
   );
 };
