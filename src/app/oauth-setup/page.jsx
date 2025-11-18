@@ -65,7 +65,7 @@ function OAuthSetupContent() {
             title: "Menunggu Persetujuan Admin",
             description:
               result.message ||
-              "Akun Anda dengan role Dosen sedang menunggu persetujuan dari admin. Anda akan diberitahu melalui email setelah akun Anda disetujui.",
+              "Akun Google anda dengan role Dosen sedang menunggu persetujuan dari admin. Anda akan diberitahu melalui email setelah akun Anda disetujui.",
             variant: "default",
             duration: 5000,
           });
