@@ -113,7 +113,23 @@ class ProjectService {
       return { success: true, data: response };
     } catch (error) {
       console.error("ProjectService.createProject error:", error);
-      return { success: false, error: error.message };
+      console.error("Error details (stringified):", JSON.stringify({
+        message: error.message,
+        response: error.response,
+        data: error.data,
+        status: error.status,
+      }, null, 2));
+      
+      // Extract meaningful error message
+      const errorMessage = 
+        error.data?.message || 
+        error.data?.error || 
+        error.response?.data?.message || 
+        error.response?.data?.error || 
+        error.message || 
+        "Gagal membuat proyek";
+        
+      return { success: false, error: errorMessage };
     }
   }
 

@@ -419,19 +419,35 @@ export default function BrowseCapstonesPage() {
         </Tabs>
 
         {/* Projects Grid */}
-        <>
-          {/* Results Count */}
-          <div className="mb-4 flex justify-between items-center">
-            <p className="text-sm text-neutral-600">
-              {loading ? (
-                <span className="inline-block h-4 w-48 bg-neutral-200 rounded animate-pulse" />
-              ) : (
-                <>
-                  Menampilkan <span className="font-semibold">{startIndex + 1}-{Math.min(endIndex, filteredProjects.length)}</span> dari <span className="font-semibold">{filteredProjects.length}</span> proyek
-                </>
-              )}
-            </p>
-            {totalPages > 1 && (
+        {loading ? (
+          <div className="py-8 space-y-6">
+            <div className="h-4 w-48 bg-neutral-200 rounded animate-pulse mb-4" />
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+              {[1, 2, 3, 4, 5, 6].map((i) => (
+                <div key={i} className="bg-white rounded-lg shadow-sm p-6 space-y-4">
+                  <div className="h-6 w-3/4 bg-neutral-200 rounded animate-pulse" />
+                  <div className="space-y-2">
+                    <div className="h-4 w-full bg-neutral-200 rounded animate-pulse" />
+                    <div className="h-4 w-full bg-neutral-200 rounded animate-pulse" />
+                    <div className="h-4 w-2/3 bg-neutral-200 rounded animate-pulse" />
+                  </div>
+                  <div className="flex gap-2">
+                    <div className="h-6 w-20 bg-neutral-200 rounded-full animate-pulse" />
+                    <div className="h-6 w-24 bg-neutral-200 rounded-full animate-pulse" />
+                  </div>
+                  <div className="h-10 w-full bg-neutral-200 rounded animate-pulse" />
+                </div>
+              ))}
+            </div>
+          </div>
+        ) : (
+          <>
+            {/* Results Count */}
+            <div className="mb-4 flex justify-between items-center">
+              <p className="text-sm text-neutral-600">
+                Menampilkan <span className="font-semibold">{startIndex + 1}-{Math.min(endIndex, filteredProjects.length)}</span> dari <span className="font-semibold">{filteredProjects.length}</span> proyek
+              </p>
+              {totalPages > 1 && (
                 <p className="text-sm text-neutral-600">
                   Halaman {currentPage} dari {totalPages}
                 </p>
@@ -465,34 +481,15 @@ export default function BrowseCapstonesPage() {
             ) : (
               <>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
-                  {loading ? (
-                    // Show skeleton cards while loading
-                    [1, 2, 3, 4, 5, 6].map((i) => (
-                      <div key={i} className="bg-white rounded-lg shadow-sm p-6 space-y-4">
-                        <div className="h-6 w-3/4 bg-neutral-200 rounded animate-pulse" />
-                        <div className="space-y-2">
-                          <div className="h-4 w-full bg-neutral-200 rounded animate-pulse" />
-                          <div className="h-4 w-full bg-neutral-200 rounded animate-pulse" />
-                          <div className="h-4 w-2/3 bg-neutral-200 rounded animate-pulse" />
-                        </div>
-                        <div className="flex gap-2">
-                          <div className="h-6 w-20 bg-neutral-200 rounded-full animate-pulse" />
-                          <div className="h-6 w-24 bg-neutral-200 rounded-full animate-pulse" />
-                        </div>
-                        <div className="h-10 w-full bg-neutral-200 rounded animate-pulse" />
-                      </div>
-                    ))
-                  ) : (
-                    currentProjects.map((project) => (
-                      <Link key={project._id} href={`/projects/${project._id}`}>
-                        <ProjectCard project={project} />
-                      </Link>
-                    ))
-                  )}
+                  {currentProjects.map((project) => (
+                    <Link key={project._id} href={`/projects/${project._id}`}>
+                      <ProjectCard project={project} />
+                    </Link>
+                  ))}
                 </div>
 
                 {/* Pagination */}
-                {!loading && totalPages > 1 && (
+                {totalPages > 1 && (
                   <Pagination className="mb-8">
                     <PaginationContent>
                       <PaginationItem>
@@ -571,7 +568,8 @@ export default function BrowseCapstonesPage() {
               </>
             )}
           </>
-        </div>
+        )}
+      </div>
     </div>
   );
 }
