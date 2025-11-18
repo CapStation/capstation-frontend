@@ -96,14 +96,24 @@ export const AuthProvider = ({ children }) => {
 
       throw new Error("Login failed - no access token received");
     } catch (error) {
-      // Properly log error with explicit properties
-      console.error("Login error:");
-      console.error("- Message:", error?.message || "No message");
-      console.error("- Status:", error?.status || "No status");
-      console.error("- Data:", error?.data || "No data");
-      if (error?.response) {
-        console.error("- Response:", error.response);
-      }
+      // Safe error logging with proper serialization
+      const errorInfo = {
+        message: error?.message || "Unknown error",
+        status: error?.status,
+        data: error?.data,
+        isNetworkError: error?.isNetworkError || false,
+        type: typeof error,
+        // Safely stringify the full error
+        raw: (() => {
+          try {
+            return JSON.stringify(error);
+          } catch {
+            return error?.toString() || String(error);
+          }
+        })(),
+      };
+
+      console.error("Login error:", errorInfo);
 
       let errorMessage = "Login gagal. Silakan coba lagi.";
 
@@ -112,6 +122,20 @@ export const AuthProvider = ({ children }) => {
         errorMessage =
           error.message ||
           "Tidak dapat terhubung ke server. Periksa koneksi internet Anda.";
+      }
+      // Handle 403 Forbidden - Email not verified or Role not approved
+      else if (error.status === 403) {
+        // Check for specific error codes
+        if (error.data?.code === "EMAIL_NOT_VERIFIED") {
+          errorMessage =
+            "Email Anda belum diverifikasi. Silakan cek email Anda untuk melakukan verifikasi.";
+        } else if (error.data?.code === "ROLE_NOT_APPROVED") {
+          errorMessage =
+            "Akun Anda belum divalidasi oleh admin. Mohon tunggu hingga admin memvalidasi akun Anda.";
+        } else {
+          errorMessage =
+            error.message || error.data?.message || "Akses ditolak.";
+        }
       }
       // Handle 401 Unauthorized
       else if (error.status === 401) {
@@ -165,14 +189,22 @@ export const AuthProvider = ({ children }) => {
     try {
       await apiClient.post(endpoints.auth.logout);
     } catch (error) {
-      // Safely log logout error - it's not critical if backend logout fails
-      const errorInfo = {
-        message: error?.message || "Unknown error",
-        status: error?.status,
-        data: error?.data,
-        type: typeof error,
-      };
-      console.error("Logout error:", errorInfo);
+      // Logout errors are usually non-critical (expired token, no connection, etc.)
+      // Only log if it's an unexpected error (not 401/404/network)
+      const status = error?.status;
+      const isExpectedError =
+        status === 401 || // Unauthorized (token expired) - normal
+        status === 404 || // Endpoint not found - backend issue but not critical
+        error?.isNetworkError; // Network error - normal when offline
+
+      if (!isExpectedError) {
+        // Only log truly unexpected errors
+        console.warn("Unexpected logout error:");
+        console.warn("- Message:", error?.message || "No message");
+        console.warn("- Status:", status || "No status");
+        console.warn("- Data:", error?.data);
+      }
+      // For expected errors, silently continue - logout still succeeds locally
     } finally {
       // Always clear local auth state regardless of backend response
       apiClient.removeAuthToken();

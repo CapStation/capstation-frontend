@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 
 import Navbar from "@/components/layout/Navbar";
@@ -8,7 +8,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Loader2, ArrowLeft } from "lucide-react";
-import Link from "next/link";  
+import Link from "next/link";
 
 import RequestService from "@/services/RequestService";
 import ProjectService from "@/services/ProjectService";
@@ -102,7 +102,7 @@ const formatDate = (value) => {
   });
 };
 
-export default function RequestHistoryPage() {
+function RequestHistoryPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
 
@@ -122,8 +122,7 @@ export default function RequestHistoryPage() {
   const [history, setHistory] = useState([]);
   const [errorMessage, setErrorMessage] = useState("");
 
-
-    useEffect(() => {
+  useEffect(() => {
     if (!requestId) {
       setLoading(false);
       setErrorMessage("ID pengajuan tidak ditemukan.");
@@ -159,9 +158,7 @@ export default function RequestHistoryPage() {
         if (historyList.length > 0) {
           const latest = historyList[0];
           updatedInfo.latestStatus =
-            latest.status ||
-            latest.decisionStatus ||
-            updatedInfo.latestStatus;
+            latest.status || latest.decisionStatus || updatedInfo.latestStatus;
         }
 
         // kalau ada capstoneId, ambil tema + academicYear dari project
@@ -207,7 +204,6 @@ export default function RequestHistoryPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [requestId, capstoneId]);
 
-
   const themeLabel = getThemeLabel(requestInfo?.tema);
   const latestStatusLabel = getStatusLabel(requestInfo?.latestStatus);
   const latestStatusClass = getStatusClass(requestInfo?.latestStatus);
@@ -216,20 +212,15 @@ export default function RequestHistoryPage() {
     <div className="min-h-screen bg-[#EEF3F7]">
       <Navbar />
 
-      <main className="container mx-auto px-6 py-8">
-        <div className="mx-auto max-w-6xl">
-          {/* tombol kembali hijau seperti desain */}
-            <Button
-              asChild
-              variant="ghost"
-              size="sm"
-              className="mb-4"
-            >
-              <Link href="/request?tab=my-request">
-                <ArrowLeft className="h-4 w-4 mr-2" />
-                Kembali
-              </Link>
-            </Button>
+      <main className="container mx-auto px-4 py-8">
+        <div className="max-w-3xl mx-auto">
+          <div className="mb-8"></div>
+          <Button asChild variant="ghost" size="sm" className="mb-4">
+            <Link href="/request?tab=my-request">
+              <ArrowLeft className="h-4 w-4 mr-2" />
+              Kembali
+            </Link>
+          </Button>
 
           <h1 className="mb-1 text-3xl font-bold text-neutral-900">
             Riwayat Pengajuan
@@ -271,7 +262,7 @@ export default function RequestHistoryPage() {
                       )}
                     </div>
 
-                    <div className="space-y-2 text-sm text-neutral-700">
+                    <div className="space-y-5 text-sm text-neutral-700">
                       <p>
                         <span className="font-semibold text-neutral-900">
                           Nama Grup{" "}
@@ -301,64 +292,65 @@ export default function RequestHistoryPage() {
                   </div>
 
                   {/* tabel histori */}
-                <div className="mt-6">
-                <p className="mb-3 text-sm font-semibold text-neutral-800">
-                    Riwayat Pengajuan{" "}
-                    <span className="font-normal text-neutral-600">
-                    (Urut berdasarkan yang terbaru)
-                    </span>
-                </p>
+                  <div className="mt-6">
+                    <p className="mb-3 text-sm font-semibold text-neutral-800">
+                      Riwayat Pengajuan{" "}
+                      <span className="font-normal text-neutral-600">
+                        (Urut berdasarkan yang terbaru)
+                      </span>
+                    </p>
 
-                <div className="overflow-hidden rounded-xl border border-neutral-200 bg-white">
-                    {/* header */}
-                    <div className="grid grid-cols-12 gap-3 border-b border-neutral-200 bg-neutral-50 px-4 py-3 text-xs font-semibold text-neutral-600">
-                      <div className="col-span-8">Alasan</div>
-                      <div className="col-span-4">Status</div>
-                    </div>
+                    <div className="overflow-hidden rounded-xl border border-neutral-200 bg-white">
+                      {/* header */}
+                      <div className="grid grid-cols-12 gap-3 border-b border-neutral-200 bg-neutral-50 px-4 py-3 text-xs font-semibold text-neutral-600">
+                        <div className="col-span-8">Alasan</div>
+                        <div className="col-span-4">Status</div>
+                      </div>
 
+                      {history.length === 0 ? (
+                        <div className="px-5 py-6 text-center text-sm text-neutral-500">
+                          Belum ada riwayat keputusan untuk pengajuan ini.
+                        </div>
+                      ) : (
+                        <div className="divide-y divide-neutral-100">
+                          {history.map((item, idx) => {
+                            const reasonStatus = inferStatusFromReason(
+                              item.reason
+                            );
 
-                    {history.length === 0 ? (
-                    <div className="px-5 py-6 text-center text-sm text-neutral-500">
-                        Belum ada riwayat keputusan untuk pengajuan ini.
-                    </div>
-                    ) : (
-                    <div className="divide-y divide-neutral-100">
-                        {history.map((item, idx) => {
-                          const reasonStatus = inferStatusFromReason(item.reason);
+                            const rowStatus =
+                              item.status ||
+                              item.decisionStatus ||
+                              reasonStatus ||
+                              requestInfo?.latestStatus;
 
-                          const rowStatus =
-                            item.status ||
-                            item.decisionStatus ||
-                            reasonStatus ||
-                            requestInfo?.latestStatus;
+                            return (
+                              <div
+                                key={item.id || item._id || idx}
+                                className="grid grid-cols-12 items-center gap-3 border-b border-neutral-100 px-4 py-3 text-sm"
+                              >
+                                {/* ALASAN */}
+                                <div className="col-span-8 text-neutral-700">
+                                  {item.reason || "-"}
+                                </div>
 
-                          return (
-                            <div
-                              key={item.id || item._id || idx}
-                              className="grid grid-cols-12 items-center gap-3 border-b border-neutral-100 px-4 py-3 text-sm"
-                            >
-                              {/* ALASAN */}
-                              <div className="col-span-8 text-neutral-700">
-                                {item.reason || "-"}
+                                {/* STATUS */}
+                                <div className="col-span-4">
+                                  <span
+                                    className={`inline-flex items-center rounded-full px-3 py-0.5 text-xs font-medium ${getStatusClass(
+                                      rowStatus
+                                    )}`}
+                                  >
+                                    {getStatusLabel(rowStatus)}
+                                  </span>
+                                </div>
                               </div>
-
-                              {/* STATUS */}
-                              <div className="col-span-4">
-                                <span
-                                  className={`inline-flex items-center rounded-full px-3 py-0.5 text-xs font-medium ${getStatusClass(
-                                    rowStatus
-                                  )}`}
-                                >
-                                  {getStatusLabel(rowStatus)}
-                                </span>
-                              </div>
-                            </div>
-                          );
-                        })}
+                            );
+                          })}
+                        </div>
+                      )}
                     </div>
-                    )}
-                </div>
-                </div>
+                  </div>
                 </>
               )}
             </CardContent>
@@ -366,5 +358,19 @@ export default function RequestHistoryPage() {
         </div>
       </main>
     </div>
+  );
+}
+
+export default function RequestHistoryPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen flex items-center justify-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-900"></div>
+        </div>
+      }
+    >
+      <RequestHistoryPageContent />
+    </Suspense>
   );
 }
