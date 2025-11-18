@@ -72,7 +72,9 @@ const CreateGroupPage = () => {
           router.push(`/groups/${result.data._id || result.data.id}`);
         }, 1500);
       } else {
-        setError(result.error || 'Gagal membuat grup');
+        const errorMsg = result.error || 'Gagal membuat grup';
+        console.log('❌ Group creation failed:', errorMsg);
+        setError(errorMsg);
       }
     } catch (err) {
       console.error('❌ Create group error:', err);

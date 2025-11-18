@@ -7,6 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Switch } from '@/components/ui/switch';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useAuth } from '@/contexts/AuthContext';
@@ -34,6 +35,7 @@ export default function GroupSettingsPage() {
     name: '',
     description: '',
     visibility: '',
+    isActive: true,
   });
   const [hasChanges, setHasChanges] = useState(false);
   const [transferLeaderDialog, setTransferLeaderDialog] = useState({ open: false, memberId: null, memberName: '' });
@@ -58,6 +60,7 @@ export default function GroupSettingsPage() {
         name: data.name || '',
         description: data.description || '',
         visibility: data.visibility || 'public',
+        isActive: data.isActive !== undefined ? data.isActive : true,
       });
     } catch (error) {
       console.error('Error loading group detail:', error);
@@ -110,6 +113,7 @@ export default function GroupSettingsPage() {
         name: editData.name.trim(),
         description: editData.description.trim(),
         visibility: editData.visibility,
+        isActive: editData.isActive,
       };
 
       await groupService.updateGroup(groupId, updateData);
@@ -278,6 +282,22 @@ export default function GroupSettingsPage() {
                   </Select>
                 </div>
 
+                {/* Status Aktif */}
+                <div className="flex items-center justify-between space-x-2 p-4 border rounded-lg">
+                  <div className="space-y-0.5">
+                    <Label htmlFor="edit-isActive">Status Grup</Label>
+                    <div className="text-sm text-muted-foreground">
+                      {editData.isActive ? 'Grup aktif dan dapat diakses' : 'Grup tidak aktif dan tidak dapat diakses'}
+                    </div>
+                  </div>
+                  <Switch
+                    id="edit-isActive"
+                    checked={editData.isActive}
+                    onCheckedChange={(checked) => handleSelectChange('isActive', checked)}
+                    disabled={loading}
+                  />
+                </div>
+
                 {/* Save Button */}
                 <div className="flex gap-4 pt-4 border-t">
                   <Button
@@ -287,6 +307,7 @@ export default function GroupSettingsPage() {
                         name: group.name || '',
                         description: group.description || '',
                         visibility: group.visibility || 'public',
+                        isActive: group.isActive !== undefined ? group.isActive : true,
                       });
                       setHasChanges(false);
                     }}

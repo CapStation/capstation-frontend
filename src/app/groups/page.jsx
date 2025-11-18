@@ -18,6 +18,7 @@ const GroupListPage = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
+  const [userHasGroup, setUserHasGroup] = useState(false);
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -28,8 +29,27 @@ const GroupListPage = () => {
   useEffect(() => {
     if (user) {
       loadGroups();
+      checkUserGroup();
     }
   }, [user]);
+
+  const checkUserGroup = async () => {
+    try {
+      const result = await GroupService.getUserGroups();
+      if (result.success && result.data && result.data.length > 0) {
+        setUserHasGroup(true);
+      } else {
+        setUserHasGroup(false);
+      }
+    } catch (err) {
+      // 404 berarti user belum punya grup, bukan error
+      if (err.message?.includes('belum bergabung') || err.status === 404) {
+        setUserHasGroup(false);
+      } else {
+        console.error('Error checking user group:', err);
+      }
+    }
+  };
 
   const loadGroups = async () => {
     try {
@@ -90,13 +110,15 @@ const GroupListPage = () => {
               >
                 Grup Saya
               </Button>
-              <Button
-                onClick={() => router.push('/groups/create')}
-                className="bg-white hover:bg-neutral-100 text-primary font-semibold "
-              >
-                <Plus className="w-5 h-5" />
-                Buat Grup Baru
-              </Button>
+              {!userHasGroup && (
+                <Button
+                  onClick={() => router.push('/groups/create')}
+                  className="bg-white hover:bg-neutral-100 text-primary font-semibold "
+                >
+                  <Plus className="w-5 h-5" />
+                  Buat Grup Baru
+                </Button>
+              )}
             </div>
           </div>
         </div>
@@ -138,13 +160,20 @@ const GroupListPage = () => {
               <p className="text-neutral-600 mb-4">
                 {searchTerm ? 'Tidak ada grup yang cocok dengan pencarian' : 'Belum ada grup tersedia'}
               </p>
-              <Button
-                onClick={() => router.push('/groups/create')}
-                className="bg-primary hover:bg-primary-dark text-white font-semibold"
-              >
-                <Plus className="w-5 h-5 mr-2" />
-                Buat Grup Pertama
-              </Button>
+              {!userHasGroup && (
+                <Button
+                  onClick={() => router.push('/groups/create')}
+                  className="bg-primary hover:bg-primary-dark text-white font-semibold"
+                >
+                  <Plus className="w-5 h-5 mr-2" />
+                  Buat Grup Pertama
+                </Button>
+              )}
+              {userHasGroup && (
+                <p className="text-sm text-neutral-500">
+                  Anda sudah memiliki grup. Satu pengguna hanya dapat memiliki satu grup.
+                </p>
+              )}
             </CardContent>
           </Card>
         ) : (

@@ -132,11 +132,16 @@ class ApiClient {
       }
 
       if (process.env.NODE_ENV === "development") {
-        console.warn("⚠️ GET Error:", {
-          endpoint,
-          status: error.status,
-          message: error.message,
-        });
+        // Don't log 404 for getUserGroups - it's expected when user has no group
+        const isExpected404 = error.status === 404 && endpoint.includes('/groups/my');
+        
+        if (!isExpected404) {
+          console.warn("⚠️ GET Error:", {
+            endpoint,
+            status: error.status,
+            message: error.message,
+          });
+        }
       }
 
       throw error;

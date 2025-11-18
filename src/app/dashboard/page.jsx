@@ -5,7 +5,8 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
-import { Loader2 } from "lucide-react";
+import { Loader2, Plus } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 import ProjectCard from "@/components/project/ProjectCard";
@@ -106,8 +107,13 @@ export default function DashboardPage() {
         const projectsResult = await ProjectService.getMyProjects();
         
         if (projectsResult.success && Array.isArray(projectsResult.data)) {
-          console.log('✅ User projects loaded:', projectsResult.data.length, 'projects');
-          setMyProjects(projectsResult.data);
+          // Filter hanya project dengan status aktif, done, atau dapat_dilanjutkan
+          const filteredProjects = projectsResult.data.filter(project => {
+            const status = project.status?.toLowerCase();
+            return status === 'active' || status === 'done' || status === 'dapat_dilanjutkan';
+          });
+          console.log('✅ User projects loaded:', filteredProjects.length, 'projects (filtered from', projectsResult.data.length, 'total)');
+          setMyProjects(filteredProjects);
         } else {
           console.log('⚠️ Failed to load user projects');
           setMyProjects([]);
@@ -143,7 +149,7 @@ export default function DashboardPage() {
 
       {/* Header - orange theme */}
       
-      <div className="bg-gradient-to-r from-orange-600 via-orange-500 to-orange-400 px-4 py-20 overflow-hidden relative  relative z-0">
+      <div className="bg-gradient-to-r from-orange-600 via-orange-500 to-orange-400 px-4 py-20 overflow-hidden relative z-0">
         <div className="absolute -top-[350px] -left-[200px] w-[500px] h-[500px] rounded-full bg-orange-300/20" />
         <div className="absolute -top-[520px] -left-[400px] w-[800px] h-[800px] rounded-full bg-orange-300/20" />  
         <div className="absolute -bottom-[350px] -right-[200px] w-[500px] h-[500px] rounded-full bg-orange-300/20 hidden lg:block" />
@@ -289,9 +295,32 @@ export default function DashboardPage() {
                   </Link>
                 ))
               ) : (
-                <div className="col-span-full text-center py-8 text-neutral-500">
-                  Anda belum memiliki proyek
-                </div>
+                <Card className="col-span-full p-8 sm:p-12 text-center border-2 border-dashed border-neutral-200">
+                  <div className="max-w-md mx-auto">
+                    <div className="w-20 h-20 bg-gradient-to-br from-primary/10 to-primary/30 rounded-full flex items-center justify-center mx-auto mb-3">
+                      <Plus className="h-10 w-10 text-primary" />
+                    </div>
+                    <h3 className="text-2xl font-bold text-neutral-900 mb-2">
+                      Belum Ada Proyek
+                    </h3>
+                    <p className="text-neutral-600 mb-6">
+                      Anda belum memiliki proyek capstone. Mulai dengan membuat proyek baru atau melanjutkan proyek yang tersedia!
+                    </p>
+                    <div className="flex flex-col sm:flex-row gap-3 justify-center">
+                      <Link href="/projects/new" className="w-full sm:w-auto">
+                        <Button className="w-full sm:w-auto bg-primary hover:bg-primary/90 text-white font-medium shadow-md hover:shadow-lg transition-all">
+                          <Plus className="h-4 w-4 mr-1" />
+                          Buat Proyek Baru
+                        </Button>
+                      </Link>
+                      <Link href="/browse/capstones" className="w-full sm:w-auto">
+                        <Button variant="outline" className="w-full sm:w-auto">
+                          Browse Proyek
+                        </Button>
+                      </Link>
+                    </div>
+                  </div>
+                </Card>
               )}
             </div>
           </section>

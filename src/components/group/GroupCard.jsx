@@ -19,17 +19,16 @@ const GroupCard = ({ group, isOwner = false, isMember = false, onAction = null, 
     .slice(0, 2);
 };
 
-  const getStatusColor = (status) => {
-    switch (status) {
-      case 'active':
-        return 'bg-accent text-neutral-900';
-      case 'inactive':
-        return 'bg-neutral-200 text-neutral-700';
-      case 'archived':
-        return 'bg-neutral-600 text-white';
-      default:
-        return 'bg-neutral-200 text-neutral-700';
+  const getStatusColor = (isActive) => {
+    if (isActive) {
+      return 'bg-green-100 text-green-700 border-green-300';
+    } else {
+      return 'bg-neutral-200 text-neutral-700 border-neutral-300';
     }
+  };
+
+  const getStatusLabel = (isActive) => {
+    return isActive ? 'Aktif' : 'Tidak Aktif';
   };
 
   return (
@@ -48,8 +47,8 @@ const GroupCard = ({ group, isOwner = false, isMember = false, onAction = null, 
               </CardTitle>
             </div>
           </div>
-          <Badge className={`shrink-0 ${getStatusColor(group.status)}`}>
-            {group.status}
+          <Badge className={`shrink-0 ${getStatusColor(group.isActive)}`}>
+            {getStatusLabel(group.isActive)}
           </Badge>
         </div>
       </CardHeader>
