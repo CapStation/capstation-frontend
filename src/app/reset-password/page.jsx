@@ -146,24 +146,24 @@ function ResetPasswordForm() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary/10 via-secondary/10 to-accent/10 p-4">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary/10 via-secondary/10 to-accent/10 p-4 sm:p-6 md:p-8">
       <Card className="w-full max-w-md shadow-xl">
-        <CardHeader className="space-y-1 text-center">
-          <div className="flex justify-center mb-4">
-            <div className="bg-primary rounded-full p-3">
-              <Lock className="w-8 h-8 text-white" />
+        <CardHeader className="space-y-1 text-center px-4 sm:px-6 py-6">
+          <div className="flex justify-center mb-3 sm:mb-4">
+            <div className="bg-primary rounded-full p-2 sm:p-3">
+              <Lock className="w-6 h-6 sm:w-8 sm:h-8 text-white" />
             </div>
           </div>
-          <CardTitle className="text-3xl font-bold text-neutral-900">
+          <CardTitle className="text-2xl sm:text-3xl font-bold text-neutral-900">
             Reset Password
           </CardTitle>
-          <CardDescription className="text-neutral-600">
+          <CardDescription className="text-sm sm:text-base text-neutral-600">
             Masukkan password baru Anda
           </CardDescription>
         </CardHeader>
 
         {success ? (
-          <CardContent className="space-y-4">
+          <CardContent className="space-y-3 sm:space-y-4 px-4 sm:px-6 py-4 sm:py-6">
             <div className="bg-success/10 border border-success/30 text-success px-4 py-3 rounded-md flex items-start gap-3">
               <CheckCircle className="h-5 w-5 mt-0.5 flex-shrink-0" />
               <div>
@@ -188,7 +188,7 @@ function ResetPasswordForm() {
           </CardContent>
         ) : (
           <form onSubmit={handleSubmit}>
-            <CardContent className="space-y-4">
+            <CardContent className="space-y-3 sm:space-y-4 px-4 sm:px-6 py-4 sm:py-6">
               {error && (
                 <div className="bg-destructive/10 border border-destructive/30 text-destructive px-4 py-3 rounded-md flex items-start gap-3">
                   <AlertCircle className="h-5 w-5 mt-0.5 flex-shrink-0" />
@@ -267,10 +267,10 @@ function ResetPasswordForm() {
               </div>
             </CardContent>
 
-            <CardFooter className="flex flex-col space-y-4">
+            <CardFooter className="flex flex-col space-y-3 sm:space-y-4 px-4 sm:px-6 py-6">
               <Button
                 type="submit"
-                className="w-full"
+                className="w-full text-sm sm:text-base"
                 size="lg"
                 disabled={loading}
               >
