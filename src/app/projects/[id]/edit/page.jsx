@@ -321,22 +321,27 @@ export default function EditProjectPage() {
   };
 
   const getCategoryColor = (category) => {
-  const colors = {
-    'Programming Languages': 'bg-blue-100 text-blue-800',
-    'Web Development': 'bg-green-100 text-green-800',
-    'Mobile Development': 'bg-purple-100 text-purple-800',
-    'Data Science': 'bg-orange-100 text-orange-800',
-    'UI/UX Design': 'bg-pink-100 text-pink-800',
-    'DevOps': 'bg-indigo-100 text-indigo-800',
-    'Database': 'bg-yellow-100 text-yellow-800',
-    'Cloud Computing': 'bg-cyan-100 text-cyan-800',
-    'Artificial Intelligence': 'bg-red-100 text-red-800',
-    'Cybersecurity': 'bg-gray-100 text-gray-800',
-    'Project Management': 'bg-teal-100 text-teal-800',
-    'Soft Skills': 'bg-lime-100 text-lime-800',
-    'Others': 'bg-neutral-100 text-neutral-800',
-  };
-  return colors[category] || 'bg-neutral-100 text-neutral-800';
+    const colors = {
+      'Software Development': 'bg-blue-100 text-blue-800',
+      'Web & Mobile Application': 'bg-green-100 text-green-800',
+      'Embedded Systems': 'bg-purple-100 text-purple-800',
+      'IoT (Internet of Things)': 'bg-emerald-100 text-emerald-800',
+      'Robotics & Automation': 'bg-rose-100 text-rose-800',
+      'Signal Processing': 'bg-indigo-100 text-indigo-800',
+      'Computer Vision': 'bg-yellow-100 text-yellow-800',
+      'Machine Learning / AI': 'bg-red-100 text-red-800',
+      'Biomedical Devices': 'bg-pink-100 text-pink-800',
+      'Health Informatics': 'bg-cyan-100 text-cyan-800',
+      'Networking & Security': 'bg-gray-100 text-gray-800',
+      'Cloud & DevOps': 'bg-sky-100 text-sky-800',
+      'Data Engineering & Analytics': 'bg-orange-100 text-orange-800',
+      'Human-Computer Interaction': 'bg-lime-100 text-lime-800',
+      'Control Systems': 'bg-violet-100 text-violet-800',
+      'Energy & Power Systems': 'bg-amber-100 text-amber-800',
+      'Research & Simulation': 'bg-teal-100 text-teal-800',
+      'Others': 'bg-neutral-100 text-neutral-800',
+    };
+    return colors[category] || 'bg-neutral-100 text-neutral-800';
 };
 
   useEffect(() => {
