@@ -29,7 +29,7 @@ function AccountPendingPageContent() {
     switch (reason) {
       case "not-verified":
         return {
-          icon: <Mail className="w-16 h-16 text-yellow-500" />,
+          icon: <Mail className="w-12 h-12 sm:w-16 sm:h-16 text-yellow-500" />,
           title: "Email Belum Diverifikasi",
           description:
             "Akun Anda belum dapat digunakan karena email belum diverifikasi.",
@@ -43,7 +43,7 @@ function AccountPendingPageContent() {
         };
       case "not-approved":
         return {
-          icon: <Clock className="w-16 h-16 text-blue-500" />,
+          icon: <Clock className="w-12 h-12 sm:w-16 sm:h-16 text-blue-500" />,
           title: "Menunggu Validasi Admin",
           description:
             "Akun Anda telah terdaftar dan email sudah diverifikasi.",
@@ -57,7 +57,9 @@ function AccountPendingPageContent() {
         };
       default:
         return {
-          icon: <AlertCircle className="w-16 h-16 text-neutral-500" />,
+          icon: (
+            <AlertCircle className="w-12 h-12 sm:w-16 sm:h-16 text-neutral-500" />
+          ),
           title: "Akun Pending",
           description: "Akun Anda belum dapat digunakan.",
           message:
@@ -74,19 +76,21 @@ function AccountPendingPageContent() {
   const content = getContent();
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-neutral-50 via-white to-neutral-50 p-4">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-neutral-50 via-white to-neutral-50 p-4 sm:p-6 md:p-8">
       <Card className="w-full max-w-md shadow-xl">
-        <CardHeader className="text-center space-y-4">
+        <CardHeader className="text-center space-y-3 sm:space-y-4 px-4 sm:px-6 py-6">
           <div className="flex justify-center">{content.icon}</div>
           <div>
-            <CardTitle className="text-2xl">{content.title}</CardTitle>
-            <CardDescription className="mt-2">
+            <CardTitle className="text-xl sm:text-2xl">
+              {content.title}
+            </CardTitle>
+            <CardDescription className="mt-2 text-sm sm:text-base">
               {content.description}
             </CardDescription>
           </div>
         </CardHeader>
 
-        <CardContent>
+        <CardContent className="px-4 sm:px-6 py-4 sm:py-6">
           <div
             className={`p-4 rounded-lg border ${content.bgColor} ${content.borderColor}`}
           >
@@ -120,14 +124,14 @@ function AccountPendingPageContent() {
           )}
         </CardContent>
 
-        <CardFooter className="flex flex-col gap-2">
+        <CardFooter className="flex flex-col gap-2 px-4 sm:px-6 py-6">
           <Button
             onClick={() =>
               content.actionLink
                 ? router.push(content.actionLink)
                 : router.push("/login")
             }
-            className="w-full"
+            className="w-full text-sm sm:text-base"
           >
             <ArrowLeft className="w-4 h-4 mr-2" />
             {content.action}
@@ -137,7 +141,7 @@ function AccountPendingPageContent() {
             <Button
               variant="outline"
               onClick={() => router.push("/login")}
-              className="w-full"
+              className="w-full text-sm sm:text-base"
             >
               Kembali ke Login
             </Button>

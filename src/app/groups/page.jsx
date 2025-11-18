@@ -72,7 +72,7 @@ const GroupListPage = () => {
       <Navbar />
 
       {/* Header with gradient background */}
-      <div className="bg-primary px-4">
+      <div className="bg-gradient-to-r from-[#FF8730] to-[#FFB464] px-4">
         <div className="container mx-auto px-12 py-12">
           <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
             <div>
@@ -153,18 +153,48 @@ const GroupListPage = () => {
               {filteredGroups.length} Grup Tersedia
             </h2>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {filteredGroups.map((group) => (
-                <GroupCard
-                  key={group._id}
-                  group={group}
-                  isOwner={group.owner?._id === user?._id}
-                  onAction={
-                    group.owner?._id !== user?._id
-                      ? () => handleRequestJoin(group._id)
-                      : null
-                  }
-                />
-              ))}
+              {filteredGroups.map((group) => {
+                // User ID bisa berupa user.id atau user._id
+                const userId = (user?.id || user?._id)?.toString();
+                
+                // Owner ID dari group
+                const ownerId = (typeof group.owner === 'string' 
+                  ? group.owner 
+                  : (group.owner?._id || group.owner?.id))?.toString();
+                
+                const isOwner = userId === ownerId;
+                
+                // Check if user is member
+                const isMember = group.members?.some(member => {
+                  const memberId = (typeof member === 'string' ? member : (member._id || member.id))?.toString();
+                  return memberId === userId;
+                }) || false;
+                
+                console.log('🔍 GroupCard check:', {
+                  groupName: group.name,
+                  userId,
+                  ownerId,
+                  isOwner,
+                  isMember
+                });
+                
+                return (
+                  <GroupCard
+                    key={group._id}
+                    group={group}
+                    isOwner={isOwner}
+                    isMember={isMember}
+                    onAction={
+                      !isOwner && !isMember
+                        ? () => handleRequestJoin(group._id)
+                        : null
+                    }
+                    actionLabel={
+                      isOwner ? 'Kelola' : (isMember ? null : 'Gabung')
+                    }
+                  />
+                );
+              })}
             </div>
           </div>
         )}

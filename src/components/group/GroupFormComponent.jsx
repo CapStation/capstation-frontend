@@ -35,7 +35,6 @@ const GroupForm = ({
   const [formData, setFormData] = useState({
     name: initialData?.name || "",
     description: initialData?.description || "",
-    maxMembers: initialData?.maxMembers || 2,
     inviteEmails: initialData?.inviteEmails || [],
     status: initialData?.status || "active",
   });
@@ -191,10 +190,7 @@ const GroupForm = ({
       errors.description = "Deskripsi maksimal 500 karakter";
     }
 
-    const maxMembersNum = parseInt(formData.maxMembers);
-    if (isNaN(maxMembersNum) || maxMembersNum < 2 || maxMembersNum > 5) {
-      errors.maxMembers = "Max members harus antara 2-5";
-    }
+
 
     return errors;
   };
@@ -331,7 +327,6 @@ const GroupForm = ({
     onSubmit({
       name: formData.name,
       description: formData.description,
-      maxMembers: parseInt(formData.maxMembers),
       inviteEmails: formData.inviteEmails,
       status: formData.status,
     });
@@ -424,48 +419,6 @@ const GroupForm = ({
             </p>
             {formErrors.description && (
               <p className="text-sm text-red-600">{formErrors.description}</p>
-            )}
-          </div>
-
-          {/* Max Members Field */}
-          <div className="space-y-2">
-            <Label
-              htmlFor="maxMembers"
-              className="text-neutral-700 font-semibold"
-            >
-              Maksimal Anggota <span className="text-red-500">*</span>
-            </Label>
-            <Select
-              value={formData.maxMembers.toString()}
-              onValueChange={(value) => {
-                setFormData((prev) => ({
-                  ...prev,
-                  maxMembers: value,
-                }));
-                if (formErrors.maxMembers) {
-                  setFormErrors((prev) => ({
-                    ...prev,
-                    maxMembers: null,
-                  }));
-                }
-              }}
-            >
-              <SelectTrigger className="border-neutral-300 text-neutral-900">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent className="bg-white border-neutral-300">
-                {[2, 3, 4, 5].map((num) => (
-                  <SelectItem key={num} value={num.toString()}>
-                    {num} Anggota
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            <p className="text-xs text-neutral-600">
-              Minimum 2, maksimum 5 anggota per grup
-            </p>
-            {formErrors.maxMembers && (
-              <p className="text-sm text-red-600">{formErrors.maxMembers}</p>
             )}
           </div>
 
