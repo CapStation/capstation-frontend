@@ -17,9 +17,11 @@ const getThemeLabel = (tema) => {
   const themeMap = {
     kesehatan: "Kesehatan",
     pengelolaan_sampah: "Pengelolaan Sampah",
+    "pengelolaan-sampah": "Pengelolaan Sampah",
     smart_city: "Smart City",
     "smart-city": "Smart City",
     transportasi_ramah_lingkungan: "Transportasi Ramah Lingkungan",
+    "transportasi-ramah-lingkungan": "Transportasi Ramah Lingkungan",
     iot: "IoT",
     ai: "Artificial Intelligence",
     mobile: "Mobile Development",

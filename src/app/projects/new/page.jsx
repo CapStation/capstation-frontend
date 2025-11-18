@@ -429,11 +429,11 @@ export default function NewProjectPage() {
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="kesehatan">Kesehatan</SelectItem>
-                      <SelectItem value="pengelolaan_sampah">
+                      <SelectItem value="pengelolaan-sampah">
                         Pengelolaan Sampah
                       </SelectItem>
-                      <SelectItem value="smart_city">Smart City</SelectItem>
-                      <SelectItem value="transportasi_ramah_lingkungan">
+                      <SelectItem value="smart-city">Smart City</SelectItem>
+                      <SelectItem value="transportasi-ramah-lingkungan">
                         Transportasi Ramah Lingkungan
                       </SelectItem>
                     </SelectContent>

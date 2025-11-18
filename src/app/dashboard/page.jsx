@@ -35,13 +35,16 @@ export default function DashboardPage() {
   const [announcements, setAnnouncements] = useState([]);
 
   const formatThemeName = (theme) => {
-    const themeNames = {
+    const themeMap = {
       'kesehatan': 'Kesehatan',
+      'pengelolaan-sampah': 'Pengelolaan Sampah',
       'pengelolaan_sampah': 'Pengelolaan Sampah',
+      'smart-city': 'Smart City',
       'smart_city': 'Smart City',
+      'transportasi-ramah-lingkungan': 'Transportasi Ramah Lingkungan',
       'transportasi_ramah_lingkungan': 'Transportasi Ramah Lingkungan'
     };
-    return themeNames[theme] || theme;
+    return themeMap[theme] || theme;
   };
 
   const getThemeColor = (index) => {

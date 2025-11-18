@@ -35,9 +35,9 @@ import {
 
 const TEMA_OPTIONS = [
   { value: "kesehatan", label: "Kesehatan" },
-  { value: "pengelolaan_sampah", label: "Pengelolaan Sampah" },
-  { value: "smart_city", label: "Smart City" },
-  { value: "transportasi_ramah_lingkungan", label: "Transportasi Ramah Lingkungan" },
+  { value: "pengelolaan-sampah", label: "Pengelolaan Sampah" },
+  { value: "smart-city", label: "Smart City" },
+  { value: "transportasi-ramah-lingkungan", label: "Transportasi Ramah Lingkungan" },
 ];
 
 export default function EditProjectPage() {

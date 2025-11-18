@@ -233,35 +233,23 @@ export default function ProjectCard({ project, showStatus = false }) {
         {/* Gradient shadow overlay gambar */}
         <div className="absolute inset-0 bg-gradient-to-t from-black/40 from-0% via-transparent via-30% to-transparent pointer-events-none"></div>
         
-        {/* Badges - top right */}
+        {/* Badges - top right (Priority: 1. DAPAT DILANJUTKAN, 2. BARU) */}
         <div className="absolute top-3 right-3 flex flex-col gap-2 items-end z-10">
-          {/* NEW Badge (only for projects < 2 weeks old) */}
-          {isNewProject() && (
-            <Badge 
-              className="bg-red-500 text-white border-none rounded-full px-3 py-1 text-xs font-bold shadow-md"
-            >
-              BARU
-            </Badge>
-          )}
-          
-          {/* Dapat Dilanjutkan Badge */}
-          {project.status === 'dapat_dilanjutkan' && (
+          {/* Priority 1: Dapat Dilanjutkan Badge */}
+          {project.status === 'dapat_dilanjutkan' ? (
             <Badge 
               className="bg-emerald-500 text-white border-none rounded-full px-3 py-1 text-xs font-bold shadow-md"
             >
               DAPAT DILANJUTKAN
             </Badge>
-          )}
-          
-          {/* Status Badge (only show if showStatus is true) */}
-          {showStatus && (
+          ) : /* Priority 2: NEW Badge (only for projects < 2 weeks old) */
+          isNewProject() ? (
             <Badge 
-              variant="secondary" 
-              className={`${getStatusColor(project.capstoneStatus || project.status)} border rounded-full px-3 py-1 text-xs font-medium shadow-md`}
+              className="bg-red-500 text-white border-none rounded-full px-3 py-1 text-xs font-bold shadow-md"
             >
-              {getStatusLabel(project.capstoneStatus || project.status)}
+              BARU
             </Badge>
-          )}
+          ) : null}
         </div>
       </div>
 

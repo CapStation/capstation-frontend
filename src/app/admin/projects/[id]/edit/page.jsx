@@ -25,9 +25,9 @@ import ProjectService from "@/services/ProjectService";
 
 const TEMA_OPTIONS = [
   { value: "kesehatan", label: "Kesehatan" },
-  { value: "pengelolaan_sampah", label: "Pengelolaan Sampah" },
-  { value: "smart_city", label: "Smart City" },
-  { value: "transportasi_ramah_lingkungan", label: "Transportasi Ramah Lingkungan" },
+  { value: "pengelolaan-sampah", label: "Pengelolaan Sampah" },
+  { value: "smart-city", label: "Smart City" },
+  { value: "transportasi-ramah-lingkungan", label: "Transportasi Ramah Lingkungan" },
 ];
 
 export default function AdminEditProjectPage() {
@@ -133,15 +133,9 @@ export default function AdminEditProjectPage() {
         console.log('Tema type:', typeof project.tema);
         console.log('Project members:', project.members);
 
-        // Normalize tema format (convert dash to underscore if needed)
+        // Backend already returns tema in dash format, no conversion needed
         let normalizedTema = project.tema || "";
-        if (normalizedTema) {
-          normalizedTema = normalizedTema
-            .replace('pengelolaan-sampah', 'pengelolaan_sampah')
-            .replace('smart-city', 'smart_city')
-            .replace('transportasi-ramah-lingkungan', 'transportasi_ramah_lingkungan');
-        }
-        console.log('Normalized tema:', normalizedTema);
+        console.log('Tema from backend:', normalizedTema);
 
         setFormData({
           title: project.title || "",
