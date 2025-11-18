@@ -9,19 +9,24 @@ import Navbar from "@/components/layout/Navbar";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, Plus, Calendar, User, Users, FileText, Clock, CheckCircle2, XCircle, AlertCircle } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
+import ProjectCardSkeleton from "@/components/project/ProjectCardSkeleton";
+import { Loader2, Plus, Calendar, User, Users, FileText, Clock, CheckCircle2, XCircle, AlertCircle, CheckCircle } from "lucide-react";
 import projectService from "@/services/ProjectService";
 
 export default function ProjectsPage() {
   const { user, loading: authLoading } = useAuth();
   const router = useRouter();
+  const { toast } = useToast();
   const [myProject, setMyProject] = useState(null);
   const [requestHistory, setRequestHistory] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [acceptingRequest, setAcceptingRequest] = useState(false);
 
   useEffect(() => {
     if (!authLoading && !user) {
-      router.push("/login");
+      router.replace("/login");
+      return;
     }
   }, [user, authLoading, router]);
 
@@ -30,6 +35,41 @@ export default function ProjectsPage() {
       loadProjectData();
     }
   }, [user]);
+
+  const handleAcceptContinuation = async () => {
+    if (!myProject?._id) return;
+    
+    try {
+      setAcceptingRequest(true);
+      const result = await projectService.updateProject(myProject._id, {
+        capstoneStatus: 'dapat_dilanjutkan'
+      });
+      
+      if (result.success) {
+        toast({
+          title: 'Berhasil',
+          description: 'Project sekarang dapat dilanjutkan oleh tim lain',
+        });
+        // Reload data
+        loadProjectData();
+      } else {
+        toast({
+          title: 'Error',
+          description: result.error || 'Gagal mengubah status project',
+          variant: 'destructive',
+        });
+      }
+    } catch (error) {
+      console.error('Error accepting continuation:', error);
+      toast({
+        title: 'Error',
+        description: 'Terjadi kesalahan saat mengubah status project',
+        variant: 'destructive',
+      });
+    } finally {
+      setAcceptingRequest(false);
+    }
+  };
 
   const loadProjectData = async () => {
     setLoading(true);
@@ -185,10 +225,35 @@ export default function ProjectsPage() {
     return colors[category] || 'bg-neutral-100 text-neutral-800';
   };
 
-  if (authLoading || loading) {
+  if (authLoading || !user) {
+    return null;
+  }
+
+  if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      <div className="min-h-screen bg-neutral-100">
+        <Navbar />
+        <div className="bg-gradient-to-r from-[#FF8730] to-[#FFB464] px-4">
+          <div className="container mx-auto px-12 py-12">
+            <div className="h-12 w-64 bg-white/30 rounded animate-pulse mb-3" />
+            <div className="h-5 w-96 bg-white/20 rounded animate-pulse" />
+          </div>
+        </div>
+        <div className="container mx-auto px-12 py-8">
+          <div className="mb-8">
+            <div className="h-7 w-48 bg-neutral-200 rounded animate-pulse mb-2" />
+            <div className="h-5 w-64 bg-neutral-200 rounded animate-pulse" />
+          </div>
+          <ProjectCardSkeleton />
+          <div className="mt-8">
+            <div className="h-7 w-48 bg-neutral-200 rounded animate-pulse mb-4" />
+            <div className="space-y-3">
+              {[...Array(3)].map((_, i) => (
+                <div key={i} className="h-20 bg-neutral-200 rounded animate-pulse" />
+              ))}
+            </div>
+          </div>
+        </div>
       </div>
     );
   }
@@ -369,11 +434,30 @@ export default function ProjectsPage() {
                   </>
                 ) : (
                   // Tombol untuk project yang sudah selesai
-                  <Link href={`/groups/${typeof myProject.group === 'string' ? myProject.group : myProject.group?._id}`} className="w-full">
-                    <Button variant="outline" className="w-full">
-                      Lihat Grup
+                  <>
+                    <Link href={`/groups/${typeof myProject.group === 'string' ? myProject.group : myProject.group?._id}`} className="flex-1">
+                      <Button variant="outline" className="w-full">
+                        Lihat Grup
+                      </Button>
+                    </Link>
+                    <Button 
+                      onClick={handleAcceptContinuation}
+                      disabled={acceptingRequest}
+                      className="flex-1 bg-green-300 hover:bg-green-400 text-black"
+                    >
+                      {acceptingRequest ? (
+                        <>
+                          <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                          Memproses...
+                        </>
+                      ) : (
+                        <>
+                          <CheckCircle className="h-4 w-4 mr-2" />
+                          Terima Request Kelanjutan
+                        </>
+                      )}
                     </Button>
-                  </Link>
+                  </>
                 )}
               </div>
             </CardContent>

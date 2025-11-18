@@ -179,10 +179,35 @@ export default function GroupSettingsPage() {
     }
   };
 
-  if (!isAuthenticated || loading) {
+  if (!isAuthenticated) {
+    return null;
+  }
+
+  if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <Loader2 className="w-8 h-8 animate-spin text-primary" />
+      <div className="min-h-screen bg-background py-8">
+        <div className="container mx-auto px-4 max-w-4xl">
+          <div className="h-10 w-32 bg-neutral-200 rounded animate-pulse mb-6" />
+          <div className="mb-8">
+            <div className="h-10 bg-neutral-200 rounded animate-pulse w-64 mb-2" />
+            <div className="h-5 bg-neutral-200 rounded animate-pulse w-48" />
+          </div>
+          <div className="space-y-6">
+            <Card>
+              <CardHeader>
+                <div className="h-6 bg-neutral-200 rounded animate-pulse w-48" />
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {[...Array(4)].map((_, i) => (
+                  <div key={i} className="space-y-2">
+                    <div className="h-4 bg-neutral-200 rounded animate-pulse w-32" />
+                    <div className="h-10 bg-neutral-200 rounded animate-pulse w-full" />
+                  </div>
+                ))}
+              </CardContent>
+            </Card>
+          </div>
+        </div>
       </div>
     );
   }

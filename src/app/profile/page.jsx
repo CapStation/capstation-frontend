@@ -250,14 +250,43 @@ export default function ProfilePage() {
     return colors[category] || "bg-neutral-100 text-neutral-800";
   };
 
+  if (!user) {
+    return null;
+  }
+
   if (loading || isLoadingProfile) {
     return (
       <div className="min-h-screen bg-neutral-50">
         <Navbar />
-        <div className="flex items-center justify-center min-h-[calc(100vh-64px)]">
-          <div className="flex flex-col items-center gap-4">
-            <Loader2 className="h-8 w-8 animate-spin text-primary" />
-            <p className="text-sm text-muted-foreground">Loading profile...</p>
+        <div className="container mx-auto px-4 py-8 max-w-4xl">
+          <div className="h-10 w-48 bg-neutral-200 rounded animate-pulse mb-6" />
+          <Card className="border-neutral-200 mb-6">
+            <CardHeader className="pb-6">
+              <div className="flex items-center gap-4">
+                <div className="h-20 w-20 bg-neutral-200 rounded-full animate-pulse" />
+                <div className="flex-1 space-y-3">
+                  <div className="h-7 bg-neutral-200 rounded animate-pulse w-48" />
+                  <div className="h-5 bg-neutral-200 rounded animate-pulse w-64" />
+                </div>
+              </div>
+            </CardHeader>
+          </Card>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {[...Array(2)].map((_, i) => (
+              <Card key={i} className="border-neutral-200">
+                <CardHeader>
+                  <div className="h-6 bg-neutral-200 rounded animate-pulse w-32" />
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  {[...Array(4)].map((_, j) => (
+                    <div key={j} className="space-y-2">
+                      <div className="h-4 bg-neutral-200 rounded animate-pulse w-24" />
+                      <div className="h-10 bg-neutral-200 rounded animate-pulse w-full" />
+                    </div>
+                  ))}
+                </CardContent>
+              </Card>
+            ))}
           </div>
         </div>
       </div>

@@ -359,10 +359,49 @@ const GroupDetailPage = () => {
   }, [group, user]);
 
 
-  if (authLoading || loading) {
+  if (authLoading || !user) {
+    return null;
+  }
+
+  if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-neutral-100">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      <div className="min-h-screen bg-neutral-100">
+        <Navbar />
+        <main className="container mx-auto px-12 py-8">
+          <div className="h-10 w-32 bg-neutral-200 rounded animate-pulse mb-6" />
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div className="lg:col-span-2 space-y-6">
+              <Card className="border-neutral-200">
+                <CardHeader>
+                  <div className="flex items-start justify-between">
+                    <div className="flex-1 space-y-3">
+                      <div className="h-8 bg-neutral-200 rounded animate-pulse w-3/4" />
+                      <div className="h-5 bg-neutral-200 rounded animate-pulse w-full" />
+                    </div>
+                    <div className="h-6 w-20 bg-neutral-200 rounded-full animate-pulse ml-4" />
+                  </div>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  {[...Array(3)].map((_, i) => (
+                    <div key={i} className="h-16 bg-neutral-200 rounded animate-pulse" />
+                  ))}
+                </CardContent>
+              </Card>
+            </div>
+            <div className="space-y-6">
+              <Card className="border-neutral-200">
+                <CardHeader>
+                  <div className="h-6 bg-neutral-200 rounded animate-pulse w-32" />
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  {[...Array(4)].map((_, i) => (
+                    <div key={i} className="h-12 bg-neutral-200 rounded animate-pulse" />
+                  ))}
+                </CardContent>
+              </Card>
+            </div>
+          </div>
+        </main>
       </div>
     );
   }

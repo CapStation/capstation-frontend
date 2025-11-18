@@ -508,8 +508,41 @@ export default function EditProjectPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      <div className="min-h-screen bg-gradient-to-br from-neutral-50 via-white to-neutral-50">
+        <Navbar />
+        <div className="container mx-auto px-4 py-8">
+          <div className="max-w-3xl mx-auto">
+            <div className="h-10 w-32 bg-neutral-200 rounded animate-pulse mb-6" />
+            <div className="h-8 w-64 bg-neutral-200 rounded animate-pulse mb-2" />
+            <div className="h-5 w-96 bg-neutral-200 rounded animate-pulse mb-8" />
+            
+            <div className="bg-white rounded-lg shadow-sm p-6 space-y-6">
+              <div className="h-6 w-48 bg-neutral-200 rounded animate-pulse mb-4" />
+              <div className="space-y-6">
+                <div className="space-y-2">
+                  <div className="h-4 w-24 bg-neutral-200 rounded animate-pulse" />
+                  <div className="h-10 w-full bg-neutral-200 rounded animate-pulse" />
+                </div>
+                <div className="space-y-2">
+                  <div className="h-4 w-24 bg-neutral-200 rounded animate-pulse" />
+                  <div className="h-24 w-full bg-neutral-200 rounded animate-pulse" />
+                </div>
+                <div className="space-y-2">
+                  <div className="h-4 w-24 bg-neutral-200 rounded animate-pulse" />
+                  <div className="h-10 w-full bg-neutral-200 rounded animate-pulse" />
+                </div>
+                <div className="space-y-2">
+                  <div className="h-4 w-24 bg-neutral-200 rounded animate-pulse" />
+                  <div className="h-10 w-full bg-neutral-200 rounded animate-pulse" />
+                </div>
+                <div className="flex gap-4">
+                  <div className="h-10 w-24 bg-neutral-200 rounded animate-pulse" />
+                  <div className="h-10 w-24 bg-neutral-200 rounded animate-pulse" />
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
     );
   }

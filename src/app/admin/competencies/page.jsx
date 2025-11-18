@@ -396,8 +396,16 @@ export default function AdminCompetenciesPage() {
 
           {/* Table */}
           {loading ? (
-            <div className="flex items-center justify-center py-12">
-              <Loader2 className="h-8 w-8 animate-spin text-neutral-400" />
+            <div className="p-6 space-y-3">
+              {[1, 2, 3, 4, 5, 6].map((i) => (
+                <div key={i} className="flex items-center justify-between">
+                  <div className="h-5 w-64 bg-neutral-200 rounded animate-pulse" />
+                  <div className="flex gap-2">
+                    <div className="h-8 w-16 bg-neutral-200 rounded animate-pulse" />
+                    <div className="h-8 w-8 bg-neutral-200 rounded animate-pulse" />
+                  </div>
+                </div>
+              ))}
             </div>
           ) : competencies.length === 0 ? (
             <div className="text-center py-12">
