@@ -54,12 +54,18 @@ const GroupCard = ({ group, isOwner = false, isMember = false, onAction = null, 
       </CardHeader>
 
       <CardContent className="space-y-4">
-        {/* Description */}
-        {group.description && (
-          <p className="text-sm text-neutral-600 line-clamp-2">
-            {group.description}
-          </p>
-        )}
+        {/* Description - Fixed height untuk konsistensi */}
+        <div className="h-10 flex items-start">
+          {group.description ? (
+            <p className="text-sm text-neutral-600 line-clamp-2">
+              {group.description}
+            </p>
+          ) : (
+            <p className="text-sm text-neutral-400 italic">
+              Tidak ada deskripsi
+            </p>
+          )}
+        </div>
 
         {/* Members Info */}
         <div className="flex items-center justify-between py-2 px-2 bg-neutral-50 rounded-lg">
