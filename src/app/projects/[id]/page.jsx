@@ -1017,18 +1017,23 @@ export default function ProjectDetailPage() {
 
   const getCategoryColor = (category) => {
     const colors = {
-      'Programming Languages': 'bg-blue-100 text-blue-800',
-      'Web Development': 'bg-green-100 text-green-800',
-      'Mobile Development': 'bg-purple-100 text-purple-800',
-      'Data Science': 'bg-orange-100 text-orange-800',
-      'UI/UX Design': 'bg-pink-100 text-pink-800',
-      'DevOps': 'bg-indigo-100 text-indigo-800',
-      'Database': 'bg-yellow-100 text-yellow-800',
-      'Cloud Computing': 'bg-cyan-100 text-cyan-800',
-      'Artificial Intelligence': 'bg-red-100 text-red-800',
-      'Cybersecurity': 'bg-gray-100 text-gray-800',
-      'Project Management': 'bg-teal-100 text-teal-800',
-      'Soft Skills': 'bg-lime-100 text-lime-800',
+      'Software Development': 'bg-blue-100 text-blue-800',
+      'Web & Mobile Application': 'bg-green-100 text-green-800',
+      'Embedded Systems': 'bg-purple-100 text-purple-800',
+      'IoT (Internet of Things)': 'bg-emerald-100 text-emerald-800',
+      'Robotics & Automation': 'bg-rose-100 text-rose-800',
+      'Signal Processing': 'bg-indigo-100 text-indigo-800',
+      'Computer Vision': 'bg-yellow-100 text-yellow-800',
+      'Machine Learning / AI': 'bg-red-100 text-red-800',
+      'Biomedical Devices': 'bg-pink-100 text-pink-800',
+      'Health Informatics': 'bg-cyan-100 text-cyan-800',
+      'Networking & Security': 'bg-gray-100 text-gray-800',
+      'Cloud & DevOps': 'bg-sky-100 text-sky-800',
+      'Data Engineering & Analytics': 'bg-orange-100 text-orange-800',
+      'Human-Computer Interaction': 'bg-lime-100 text-lime-800',
+      'Control Systems': 'bg-violet-100 text-violet-800',
+      'Energy & Power Systems': 'bg-amber-100 text-amber-800',
+      'Research & Simulation': 'bg-teal-100 text-teal-800',
       'Others': 'bg-neutral-100 text-neutral-800',
     };
     return colors[category] || 'bg-neutral-100 text-neutral-800';
@@ -1060,7 +1065,7 @@ export default function ProjectDetailPage() {
     <div className="min-h-screen bg-gradient-to-br from-neutral-50 via-white to-neutral-50">
       <Navbar />
 
-      <div className="container mx-auto px-4 py-8">
+      <div className="max-w-screen-lg mx-auto px-4 py-8">
         <div className="max-w-4xl mx-auto">
           <Link href="/projects">
             <Button 
@@ -1076,7 +1081,7 @@ export default function ProjectDetailPage() {
           {/* Project Header */}
           <Card className="mb-6">
             <CardHeader className="pb-4">
-              <div className="flex items-start justify-between gap-4">
+              <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
                 <div className="flex-1">
                   <CardTitle className="text-2xl mb-4 leading-tight">{project.title}</CardTitle>
                   <div className="flex flex-wrap gap-2">
@@ -1108,7 +1113,7 @@ export default function ProjectDetailPage() {
                     ))}
                   </div>
                 </div>
-                <div className="flex gap-2 flex-shrink-0 flex-wrap">
+                <div className="flex gap-2 flex-shrink-0 flex-wrap mt-3 md:mt-0">
                   {/* Tombol Ajukan Melanjutkan untuk proyek dapat_dilanjutkan jika user belum punya project aktif */}
                   {!checkingActiveProject && canRequestContinue() && (
                     <Button
@@ -1259,14 +1264,14 @@ export default function ProjectDetailPage() {
           {/* Documents Section */}
           <Card>
             <CardHeader>
-              <div className="flex items-center justify-between">
+              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
                 <CardTitle>Dokumen Proyek</CardTitle>
                 {canEditProject() && (
                   <Button 
                     size="sm" 
                     onClick={() => setShowUploadDialog(true)}
                     disabled={uploading}
-                    className="bg-[#FFE49C] text-neutral-900 border border-neutral-100 hover:bg-[#B6EB75]"
+                    className="w-full sm:w-auto bg-[#FFE49C] text-neutral-900 border border-neutral-100 hover:bg-[#B6EB75]"
                   >
                     {uploading ? (
                       <>
@@ -1336,7 +1341,7 @@ export default function ProjectDetailPage() {
                         {docs.map((doc) => (
                           <div
                             key={doc._id}
-                            className="flex items-center justify-between p-3 border border-neutral-200 rounded-lg hover:bg-neutral-50 transition-colors"
+                            className="flex flex-col sm:flex-row items-start sm:items-center justify-between p-3 border border-neutral-200 rounded-lg hover:bg-neutral-50 transition-colors"
                           >
                             <div className="flex items-center gap-3 flex-1 min-w-0">
                               <FileText className="h-5 w-5 text-primary flex-shrink-0" />
@@ -1351,7 +1356,7 @@ export default function ProjectDetailPage() {
                                 </p>
                               </div>
                             </div>
-                            <div className="flex gap-1 flex-shrink-0">
+                            <div className="flex gap-1 flex-shrink-0 mt-3 sm:mt-0">
                               {isPreviewable(doc) && (
                                 <Button 
                                   variant="ghost" 
@@ -1448,9 +1453,9 @@ export default function ProjectDetailPage() {
               </div>
             </DialogHeader>
 
-            <div className="flex gap-4 h-[calc(90vh-200px)]">
+            <div className="flex flex-col md:flex-row gap-4 h-[calc(90vh-200px)]">
               {/* Preview Area */}
-              <div className={`${showInfo ? 'w-3/4' : 'w-full'} transition-all duration-300`}>
+              <div className={`${showInfo ? 'md:w-3/4 w-full' : 'w-full'} transition-all duration-300`}>
                 {previewDocument && (
                   <div className="h-full bg-[#F1F7FA] rounded-lg overflow-auto flex items-center justify-center">
                     {loadingPreview ? (
@@ -1598,7 +1603,7 @@ export default function ProjectDetailPage() {
 
               {/* Info Panel */}
               {showInfo && previewDocument && (
-                <div className="w-1/4 bg-[#F1F7FA] rounded-lg p-4 overflow-auto">
+                <div className="md:w-1/4 w-full bg-[#F1F7FA] rounded-lg p-4 overflow-auto">
                   <h3 className="font-semibold text-[#090B08] mb-4">Informasi Dokumen</h3>
                   <div className="space-y-3">
                     <div>
@@ -1671,7 +1676,7 @@ export default function ProjectDetailPage() {
 
         {/* Upload Document Dialog */}
         <Dialog open={showUploadDialog} onOpenChange={setShowUploadDialog}>
-          <DialogContent className="max-w-2xl">
+          <DialogContent className="w-full max-w-2xl max-h-[90vh] overflow-auto">
             <DialogHeader>
               <DialogTitle>Upload Dokumen</DialogTitle>
               <DialogDescription>
@@ -1744,7 +1749,7 @@ export default function ProjectDetailPage() {
                   onDragOver={handleDragOver}
                   onDragLeave={handleDragLeave}
                   onDrop={handleDrop}
-                  className={`relative border-2 border-dashed rounded-lg p-6 transition-all ${
+                  className={`relative border-2 border-dashed rounded-lg p-4 sm:p-6 transition-all ${
                     isDragging
                       ? 'border-[#FF8730] bg-orange-50'
                       : !uploadForm.documentType
@@ -1835,7 +1840,7 @@ export default function ProjectDetailPage() {
                 )}
               </div>
 
-              <DialogFooter>
+              <DialogFooter className="flex flex-col sm:flex-row gap-2">
                 <Button
                   type="button"
                   variant="outline"
@@ -1855,7 +1860,7 @@ export default function ProjectDetailPage() {
                 <Button 
                   type="submit"
                   disabled={uploading || !uploadForm.title || !uploadForm.documentType || uploadForm.files.length === 0}
-                  className="bg-[#FF8730] hover:bg-[#FF8730]/90 min-w-[200px]"
+                  className="bg-[#FF8730] hover:bg-[#FF8730]/90 w-full sm:w-auto sm:min-w-[200px]"
                 >
                   {uploading ? (
                     <div className="flex flex-col items-center gap-1 w-full">

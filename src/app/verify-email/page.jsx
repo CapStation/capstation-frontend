@@ -78,15 +78,17 @@ function VerifyEmailContent() {
   // Loading State
   if (status === "verifying") {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary/10 via-secondary/10 to-accent/10">
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary/10 via-secondary/10 to-accent/10 px-4">
         <div className="text-center">
-          <div className="bg-white rounded-full p-6 shadow-xl mb-6 inline-block">
-            <Loader2 className="w-16 h-16 text-primary animate-spin" />
+          <div className="bg-white rounded-full p-4 sm:p-6 shadow-xl mb-4 sm:mb-6 inline-block">
+            <Loader2 className="w-12 h-12 sm:w-16 sm:h-16 text-primary animate-spin" />
           </div>
-          <h2 className="text-2xl font-bold text-neutral-900 mb-2">
+          <h2 className="text-xl sm:text-2xl font-bold text-neutral-900 mb-2">
             Memverifikasi Email...
           </h2>
-          <p className="text-neutral-600">Mohon tunggu sebentar</p>
+          <p className="text-sm sm:text-base text-neutral-600">
+            Mohon tunggu sebentar
+          </p>
         </div>
       </div>
     );
@@ -95,19 +97,24 @@ function VerifyEmailContent() {
   // Success State
   if (status === "success") {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary/10 via-secondary/10 to-accent/10 px-4">
-        <div className="max-w-md w-full bg-white rounded-2xl shadow-xl p-8">
-          <div className="flex justify-center mb-6">
-            <div className="w-20 h-20 bg-success/10 rounded-full flex items-center justify-center">
-              <CheckCircle className="w-12 h-12 text-success" strokeWidth={2} />
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary/10 via-secondary/10 to-accent/10 px-4 sm:px-6">
+        <div className="max-w-md w-full bg-white rounded-2xl shadow-xl p-6 sm:p-8">
+          <div className="flex justify-center mb-4 sm:mb-6">
+            <div className="w-16 h-16 sm:w-20 sm:h-20 bg-success/10 rounded-full flex items-center justify-center">
+              <CheckCircle
+                className="w-10 h-10 sm:w-12 sm:h-12 text-success"
+                strokeWidth={2}
+              />
             </div>
           </div>
 
           <div className="text-center">
-            <h2 className="text-2xl font-bold text-neutral-900 mb-3">
+            <h2 className="text-xl sm:text-2xl font-bold text-neutral-900 mb-3">
               Email Berhasil Diverifikasi!
             </h2>
-            <p className="text-neutral-600 mb-4">{message}</p>
+            <p className="text-sm sm:text-base text-neutral-600 mb-4">
+              {message}
+            </p>
             <p className="text-sm text-neutral-500 mb-6">
               Anda akan diarahkan ke halaman login dalam{" "}
               <span className="font-bold text-primary">{countdown}</span>{" "}
@@ -117,7 +124,7 @@ function VerifyEmailContent() {
             <div className="space-y-3">
               <Link
                 href="/login"
-                className="inline-flex items-center justify-center w-full px-6 py-3 bg-primary text-white rounded-lg font-medium hover:bg-primary/90 transition-colors shadow-md hover:shadow-lg"
+                className="inline-flex items-center justify-center w-full px-4 sm:px-6 py-2.5 sm:py-3 bg-primary text-white rounded-lg font-medium hover:bg-primary/90 transition-colors shadow-md hover:shadow-lg text-sm sm:text-base"
               >
                 <Home className="w-4 h-4 mr-2" />
                 Lanjut ke Login
@@ -150,10 +157,12 @@ function VerifyEmailContent() {
         </div>
 
         <div className="text-center">
-          <h2 className="text-2xl font-bold text-neutral-900 mb-3">
+          <h2 className="text-xl sm:text-2xl font-bold text-neutral-900 mb-3">
             Verifikasi Gagal
           </h2>
-          <p className="text-neutral-600 mb-6">{message}</p>
+          <p className="text-sm sm:text-base text-neutral-600 mb-6">
+            {message}
+          </p>
 
           <div className="bg-neutral-50 border border-neutral-200 rounded-lg p-4 mb-6 text-left">
             <h3 className="font-semibold text-neutral-900 mb-2 flex items-center">
@@ -172,13 +181,13 @@ function VerifyEmailContent() {
           <div className="space-y-3">
             <Link
               href="/register"
-              className="inline-flex items-center justify-center w-full px-6 py-3 bg-primary text-white rounded-lg font-medium hover:bg-primary/90 transition-colors shadow-md hover:shadow-lg"
+              className="inline-flex items-center justify-center w-full px-4 sm:px-6 py-2.5 sm:py-3 bg-primary text-white rounded-lg font-medium hover:bg-primary/90 transition-colors shadow-md hover:shadow-lg text-sm sm:text-base"
             >
               Daftar Ulang
             </Link>
             <Link
               href="/login"
-              className="inline-flex items-center justify-center w-full px-6 py-3 border border-neutral-300 text-neutral-700 rounded-lg font-medium hover:bg-neutral-50 transition-colors"
+              className="inline-flex items-center justify-center w-full px-4 sm:px-6 py-2.5 sm:py-3 border border-neutral-300 text-neutral-700 rounded-lg font-medium hover:bg-neutral-50 transition-colors text-sm sm:text-base"
             >
               Kembali ke Login
             </Link>

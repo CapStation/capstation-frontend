@@ -78,7 +78,15 @@ export default function AdminUsersPage() {
   useEffect(() => {
     fetchUsers();
     fetchPendingRoles();
-  }, [currentPage, roleFilter, verificationFilter, approvalFilter, sortBy, searchQuery, itemsPerPage]);
+  }, [
+    currentPage,
+    roleFilter,
+    verificationFilter,
+    approvalFilter,
+    sortBy,
+    searchQuery,
+    itemsPerPage,
+  ]);
 
   const fetchUsers = async () => {
     setLoading(true);
@@ -86,7 +94,7 @@ export default function AdminUsersPage() {
       const result = await AdminService.getAllUsers();
       if (result.success) {
         let filteredUsers = result.data || [];
-        
+
         // Store total count before filtering
         setAllUsersCount(filteredUsers.length);
 
@@ -97,12 +105,16 @@ export default function AdminUsersPage() {
 
         if (verificationFilter !== "all") {
           const isVerified = verificationFilter === "verified";
-          filteredUsers = filteredUsers.filter((u) => u.isVerified === isVerified);
+          filteredUsers = filteredUsers.filter(
+            (u) => u.isVerified === isVerified
+          );
         }
 
         if (approvalFilter !== "all") {
           const isApproved = approvalFilter === "approved";
-          filteredUsers = filteredUsers.filter((u) => u.roleApproved === isApproved);
+          filteredUsers = filteredUsers.filter(
+            (u) => u.roleApproved === isApproved
+          );
         }
 
         if (searchQuery) {
@@ -116,13 +128,19 @@ export default function AdminUsersPage() {
         // Sort
         switch (sortBy) {
           case "newest":
-            filteredUsers.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+            filteredUsers.sort(
+              (a, b) => new Date(b.createdAt) - new Date(a.createdAt)
+            );
             break;
           case "oldest":
-            filteredUsers.sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
+            filteredUsers.sort(
+              (a, b) => new Date(a.createdAt) - new Date(b.createdAt)
+            );
             break;
           case "alphabetical":
-            filteredUsers.sort((a, b) => (a.name || "").localeCompare(b.name || ""));
+            filteredUsers.sort((a, b) =>
+              (a.name || "").localeCompare(b.name || "")
+            );
             break;
         }
 
@@ -215,7 +233,7 @@ export default function AdminUsersPage() {
 
   // Helper function to check if user has pending role
   const getUserPendingRole = (userId) => {
-    return pendingRoles.find(pr => pr.user?._id === userId);
+    return pendingRoles.find((pr) => pr.user?._id === userId);
   };
 
   const handleValidateRole = async () => {
@@ -223,18 +241,22 @@ export default function AdminUsersPage() {
 
     setValidating(true);
     try {
-      const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
-      const token = localStorage.getItem('accessToken');
+      const API_URL =
+        process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api";
+      const token = localStorage.getItem("accessToken");
 
-      const response = await fetch(`${API_URL}/users/${userToValidate._id}/validate-role`, {
-        method: 'PATCH',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ roleApproved: true }),
-        credentials: 'include',
-      });
+      const response = await fetch(
+        `${API_URL}/users/${userToValidate._id}/validate-role`,
+        {
+          method: "PATCH",
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ roleApproved: true }),
+          credentials: "include",
+        }
+      );
 
       if (response.ok) {
         toast({
@@ -274,7 +296,7 @@ export default function AdminUsersPage() {
         {
           method: "DELETE",
           headers: {
-            Authorization: `Bearer ${localStorage.getItem("token")}`,
+            Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
           },
         }
       );
@@ -309,8 +331,9 @@ export default function AdminUsersPage() {
 
   const handleExport = async () => {
     try {
-      const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
-      const token = localStorage.getItem('accessToken');
+      const API_URL =
+        process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api";
+      const token = localStorage.getItem("accessToken");
 
       if (!token) {
         toast({
@@ -327,28 +350,30 @@ export default function AdminUsersPage() {
       });
 
       const response = await fetch(`${API_URL}/users/export`, {
-        method: 'GET',
+        method: "GET",
         headers: {
-          'Authorization': `Bearer ${token}`,
+          Authorization: `Bearer ${token}`,
         },
-        credentials: 'include'
+        credentials: "include",
       });
 
       if (!response.ok) {
-        throw new Error('Gagal mengekspor pengguna');
+        throw new Error("Gagal mengekspor pengguna");
       }
 
       // Get the blob from response
       const blob = await response.blob();
-      
+
       // Create download link
       const url = window.URL.createObjectURL(blob);
-      const a = document.createElement('a');
+      const a = document.createElement("a");
       a.href = url;
-      a.download = `pengguna_capstation_${new Date().toISOString().split('T')[0]}.csv`;
+      a.download = `pengguna_capstation_${
+        new Date().toISOString().split("T")[0]
+      }.csv`;
       document.body.appendChild(a);
       a.click();
-      
+
       // Cleanup
       window.URL.revokeObjectURL(url);
       document.body.removeChild(a);
@@ -358,7 +383,7 @@ export default function AdminUsersPage() {
         description: "Data pengguna berhasil diekspor",
       });
     } catch (error) {
-      console.error('Export error:', error);
+      console.error("Export error:", error);
       toast({
         title: "Error",
         description: error.message || "Gagal mengekspor pengguna",
@@ -371,7 +396,10 @@ export default function AdminUsersPage() {
     const roleMap = {
       admin: { label: "Admin", className: "bg-red-100 text-red-700" },
       dosen: { label: "Dosen", className: "bg-blue-100 text-blue-700" },
-      mahasiswa: { label: "Mahasiswa", className: "bg-green-100 text-green-700" },
+      mahasiswa: {
+        label: "Mahasiswa",
+        className: "bg-green-100 text-green-700",
+      },
       user: { label: "Mahasiswa", className: "bg-green-100 text-green-700" },
     };
 
@@ -420,7 +448,9 @@ export default function AdminUsersPage() {
                     </p>
                     <p className="text-sm text-neutral-500">
                       {request.user?.email} → Mengajukan role:{" "}
-                      <span className="font-semibold">{request.requestedRole}</span>
+                      <span className="font-semibold">
+                        {request.requestedRole}
+                      </span>
                     </p>
                   </div>
                   <div className="flex gap-2">
@@ -455,7 +485,10 @@ export default function AdminUsersPage() {
             Kelola Pengguna
           </h1>
           <div className="flex items-center gap-3">
-            <Badge variant="secondary" className="text-sm px-3 py-1 font-medium">
+            <Badge
+              variant="secondary"
+              className="text-sm px-3 py-1 font-medium"
+            >
               {allUsersCount} Pengguna
             </Badge>
             <Button variant="outline" size="sm" onClick={handleExport}>
@@ -464,9 +497,7 @@ export default function AdminUsersPage() {
             </Button>
           </div>
         </div>
-        <p className="text-neutral-600">
-          Kelola akun pengguna dan hak akses
-        </p>
+        <p className="text-neutral-600">Kelola akun pengguna dan hak akses</p>
       </div>
 
       {/* Filters and Actions */}
@@ -517,7 +548,10 @@ export default function AdminUsersPage() {
             {/* Verification Filter */}
             <div className="space-y-2">
               <label className="text-sm font-medium">Status Verifikasi</label>
-              <Select value={verificationFilter} onValueChange={setVerificationFilter}>
+              <Select
+                value={verificationFilter}
+                onValueChange={setVerificationFilter}
+              >
                 <SelectTrigger>
                   <SelectValue placeholder="Status Verifikasi" />
                 </SelectTrigger>
@@ -562,8 +596,16 @@ export default function AdminUsersPage() {
             {/* Reset Filters */}
             <div className="space-y-2">
               <label className="text-sm font-medium">&nbsp;</label>
-              {(searchQuery || roleFilter !== "all" || verificationFilter !== "all" || approvalFilter !== "all" || sortBy !== "newest") ? (
-                <Button variant="outline" onClick={clearFilters} className="w-full">
+              {searchQuery ||
+              roleFilter !== "all" ||
+              verificationFilter !== "all" ||
+              approvalFilter !== "all" ||
+              sortBy !== "newest" ? (
+                <Button
+                  variant="outline"
+                  onClick={clearFilters}
+                  className="w-full"
+                >
                   <X className="h-4 w-4 mr-2" />
                   Reset Filter
                 </Button>
@@ -591,122 +633,184 @@ export default function AdminUsersPage() {
               <div className="overflow-hidden rounded-lg">
                 <div className="overflow-x-auto">
                   <Table>
-                  <TableHeader>
-                    <TableRow className="bg-[#F1F7FA] hover:bg-[#F1F7FA]">
-                      <TableHead className="text-neutral-900 font-bold">Nama</TableHead>
-                      <TableHead className="text-neutral-900 font-bold">Email</TableHead>
-                      <TableHead className="text-center text-neutral-900 font-bold">Role</TableHead>
-                      <TableHead className="text-center text-neutral-900 font-bold">Status Verifikasi</TableHead>
-                      <TableHead className="text-center text-neutral-900 font-bold">Approval Role</TableHead>
-                      <TableHead className="text-center text-neutral-900 font-bold">Validasi Role</TableHead>
-                      <TableHead className="text-neutral-900 font-bold">Tanggal Dibuat</TableHead>
-                      <TableHead className="text-center text-neutral-900 font-bold">Aksi</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {users.map((user) => (
-                      <TableRow key={user._id}>
-                        <TableCell className="font-medium">
-                          {user.name}
-                        </TableCell>
-                        <TableCell className="text-sm text-neutral-600">{user.email}</TableCell>
-                        <TableCell className="text-center">{getRoleBadge(user.role)}</TableCell>
-                        <TableCell className="text-center">
-                          <Badge 
-                            variant={user.isVerified ? "default" : "secondary"} 
-                            className={`text-xs ${user.isVerified ? 'bg-green-300 hover:bg-green-400' : ''}`}
-                          >
-                            {user.isVerified ? (
-                              <><CheckCircle className="h-3 w-3 mr-1" /> Terverifikasi</>
-                            ) : (
-                              <><XCircle className="h-3 w-3 mr-1" /> Belum Verifikasi</>
-                            )}
-                          </Badge>
-                        </TableCell>
-                        <TableCell className="text-center">
-                          <Badge 
-                            variant={user.roleApproved ? "default" : "secondary"} 
-                            className={`text-xs ${user.roleApproved ? 'bg-green-300 hover:bg-green-400' : ''}`}
-                          >
-                            {user.roleApproved ? (
-                              <><CheckCircle className="h-3 w-3 mr-1" /> Disetujui</>
-                            ) : (
-                              <><XCircle className="h-3 w-3 mr-1" /> Belum Disetujui</>
-                            )}
-                          </Badge>
-                        </TableCell>
-                        <TableCell className="text-center">
-                          {!user.roleApproved ? (
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => {
-                                setUserToValidate(user);
-                                setShowValidateDialog(true);
-                              }}
-                              className="h-8 w-8 p-0 text-blue-600 hover:text-blue-700 hover:bg-blue-50"
-                              title="Validasi role"
+                    <TableHeader>
+                      <TableRow className="bg-[#F1F7FA] hover:bg-[#F1F7FA]">
+                        <TableHead className="text-neutral-900 font-bold">
+                          Nama
+                        </TableHead>
+                        <TableHead className="text-neutral-900 font-bold">
+                          Email
+                        </TableHead>
+                        <TableHead className="text-center text-neutral-900 font-bold">
+                          Role
+                        </TableHead>
+                        <TableHead className="text-center text-neutral-900 font-bold">
+                          Status Verifikasi
+                        </TableHead>
+                        <TableHead className="text-center text-neutral-900 font-bold">
+                          Approval Role
+                        </TableHead>
+                        <TableHead className="text-center text-neutral-900 font-bold">
+                          Validasi Role
+                        </TableHead>
+                        <TableHead className="text-neutral-900 font-bold">
+                          Tanggal Dibuat
+                        </TableHead>
+                        <TableHead className="text-center text-neutral-900 font-bold">
+                          Aksi
+                        </TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {users.map((user) => (
+                        <TableRow key={user._id}>
+                          <TableCell className="font-medium">
+                            {user.name}
+                          </TableCell>
+                          <TableCell className="text-sm text-neutral-600">
+                            {user.email}
+                          </TableCell>
+                          <TableCell className="text-center">
+                            {getRoleBadge(user.role)}
+                          </TableCell>
+                          <TableCell className="text-center">
+                            <Badge
+                              variant={
+                                user.isVerified ? "default" : "secondary"
+                              }
+                              className={`text-xs ${
+                                user.isVerified
+                                  ? "bg-green-300 hover:bg-green-400"
+                                  : ""
+                              }`}
                             >
-                              <CheckCircle className="h-4 w-4" />
-                            </Button>
-                          ) : (
-                            <span className="text-xs text-neutral-400">-</span>
-                          )}
-                        </TableCell>
-                        <TableCell className="text-sm text-neutral-600">
-                          {user.createdAt ? new Date(user.createdAt).toLocaleDateString("id-ID") : "-"}
-                        </TableCell>
-                        <TableCell className="text-center">
-                          <div className="flex items-center justify-center gap-2">
-                            {getUserPendingRole(user._id) && (
+                              {user.isVerified ? (
+                                <>
+                                  <CheckCircle className="h-3 w-3 mr-1" />{" "}
+                                  Terverifikasi
+                                </>
+                              ) : (
+                                <>
+                                  <XCircle className="h-3 w-3 mr-1" /> Belum
+                                  Verifikasi
+                                </>
+                              )}
+                            </Badge>
+                          </TableCell>
+                          <TableCell className="text-center">
+                            <Badge
+                              variant={
+                                user.roleApproved ? "default" : "secondary"
+                              }
+                              className={`text-xs ${
+                                user.roleApproved
+                                  ? "bg-green-300 hover:bg-green-400"
+                                  : ""
+                              }`}
+                            >
+                              {user.roleApproved ? (
+                                <>
+                                  <CheckCircle className="h-3 w-3 mr-1" />{" "}
+                                  Disetujui
+                                </>
+                              ) : (
+                                <>
+                                  <XCircle className="h-3 w-3 mr-1" /> Belum
+                                  Disetujui
+                                </>
+                              )}
+                            </Badge>
+                          </TableCell>
+                          <TableCell className="text-center">
+                            {!user.roleApproved ? (
                               <Button
                                 variant="ghost"
                                 size="sm"
                                 onClick={() => {
-                                  setRoleToApprove(getUserPendingRole(user._id));
-                                  setShowApproveDialog(true);
+                                  setUserToValidate(user);
+                                  setShowValidateDialog(true);
                                 }}
-                                className="h-8 w-8 p-0 text-green-600 hover:text-green-700 hover:bg-green-50"
-                                title="Setujui role"
+                                className="h-8 w-8 p-0 text-blue-600 hover:text-blue-700 hover:bg-blue-50"
+                                title="Validasi role"
                               >
-                                <UserCheck className="h-4 w-4" />
+                                <CheckCircle className="h-4 w-4" />
                               </Button>
+                            ) : (
+                              <span className="text-xs text-neutral-400">
+                                -
+                              </span>
                             )}
-                            <Link href={`/admin/users/${user._id}`}>
-                              <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
-                                <Eye className="h-4 w-4" />
+                          </TableCell>
+                          <TableCell className="text-sm text-neutral-600">
+                            {user.createdAt
+                              ? new Date(user.createdAt).toLocaleDateString(
+                                  "id-ID"
+                                )
+                              : "-"}
+                          </TableCell>
+                          <TableCell className="text-center">
+                            <div className="flex items-center justify-center gap-2">
+                              {getUserPendingRole(user._id) && (
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => {
+                                    setRoleToApprove(
+                                      getUserPendingRole(user._id)
+                                    );
+                                    setShowApproveDialog(true);
+                                  }}
+                                  className="h-8 w-8 p-0 text-green-600 hover:text-green-700 hover:bg-green-50"
+                                  title="Setujui role"
+                                >
+                                  <UserCheck className="h-4 w-4" />
+                                </Button>
+                              )}
+                              <Link href={`/admin/users/${user._id}`}>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  className="h-8 w-8 p-0"
+                                >
+                                  <Eye className="h-4 w-4" />
+                                </Button>
+                              </Link>
+                              <Link href={`/admin/users/${user._id}/edit`}>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  className="h-8 w-8 p-0"
+                                >
+                                  <Edit className="h-4 w-4" />
+                                </Button>
+                              </Link>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => {
+                                  setUserToDelete(user);
+                                  setShowDeleteDialog(true);
+                                }}
+                                className="h-8 w-8 p-0 text-red-600 hover:text-red-700 hover:bg-red-50"
+                              >
+                                <Trash2 className="h-4 w-4" />
                               </Button>
-                            </Link>
-                            <Link href={`/admin/users/${user._id}/edit`}>
-                              <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
-                                <Edit className="h-4 w-4" />
-                              </Button>
-                            </Link>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => {
-                                setUserToDelete(user);
-                                setShowDeleteDialog(true);
-                              }}
-                              className="h-8 w-8 p-0 text-red-600 hover:text-red-700 hover:bg-red-50"
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
-                          </div>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
                   </Table>
                 </div>
 
                 {/* Pagination */}
                 <div className="flex items-center justify-between px-6 py-3 border-t bg-neutral-50">
                   <div className="text-sm text-neutral-600">
-                    Menampilkan {((currentPage - 1) * itemsPerPage) + 1} - {Math.min(currentPage * itemsPerPage, totalUsers)} dari {totalUsers} pengguna
+                    Menampilkan {(currentPage - 1) * itemsPerPage + 1} -{" "}
+                    {Math.min(currentPage * itemsPerPage, totalUsers)} dari{" "}
+                    {totalUsers} pengguna
                   </div>
-                  
+
                   <div className="flex items-center gap-3">
                     <Select
                       value={itemsPerPage.toString()}
@@ -720,7 +824,7 @@ export default function AdminUsersPage() {
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
-                        {limitOptions.map(limit => (
+                        {limitOptions.map((limit) => (
                           <SelectItem key={limit} value={limit.toString()}>
                             {limit} per halaman
                           </SelectItem>
@@ -733,27 +837,36 @@ export default function AdminUsersPage() {
                         <Button
                           variant="outline"
                           size="sm"
-                          onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                          onClick={() =>
+                            setCurrentPage((p) => Math.max(1, p - 1))
+                          }
                           disabled={currentPage === 1}
                         >
                           Sebelumnya
                         </Button>
-                        
+
                         <div className="flex items-center gap-1">
                           {[...Array(totalPages)].map((_, index) => {
                             const page = index + 1;
                             if (
                               page === 1 ||
                               page === totalPages ||
-                              (page >= currentPage - 1 && page <= currentPage + 1)
+                              (page >= currentPage - 1 &&
+                                page <= currentPage + 1)
                             ) {
                               return (
                                 <Button
                                   key={page}
-                                  variant={currentPage === page ? "default" : "outline"}
+                                  variant={
+                                    currentPage === page ? "default" : "outline"
+                                  }
                                   size="sm"
                                   onClick={() => setCurrentPage(page)}
-                                  className={currentPage === page ? "bg-[#B6EB75] hover:bg-[#B6EB75]/90 text-neutral-900" : "hover:bg-[#FFE49C] hover:text-neutral-900"}
+                                  className={
+                                    currentPage === page
+                                      ? "bg-[#B6EB75] hover:bg-[#B6EB75]/90 text-neutral-900"
+                                      : "hover:bg-[#FFE49C] hover:text-neutral-900"
+                                  }
                                 >
                                   {page}
                                 </Button>
@@ -762,7 +875,11 @@ export default function AdminUsersPage() {
                               page === currentPage - 2 ||
                               page === currentPage + 2
                             ) {
-                              return <span key={page} className="px-2">...</span>;
+                              return (
+                                <span key={page} className="px-2">
+                                  ...
+                                </span>
+                              );
                             }
                             return null;
                           })}
@@ -833,27 +950,44 @@ export default function AdminUsersPage() {
               Konfirmasi Persetujuan Role
             </DialogTitle>
             <DialogDescription>
-              Apakah Anda yakin ingin menyetujui permintaan role untuk pengguna berikut?
+              Apakah Anda yakin ingin menyetujui permintaan role untuk pengguna
+              berikut?
             </DialogDescription>
           </DialogHeader>
-          
+
           {roleToApprove && (
             <div className="p-4 bg-neutral-50 rounded-lg space-y-2">
               <div className="flex justify-between">
-                <span className="text-sm font-medium text-neutral-600">Nama:</span>
-                <span className="text-sm font-semibold text-neutral-900">{roleToApprove.user?.name}</span>
+                <span className="text-sm font-medium text-neutral-600">
+                  Nama:
+                </span>
+                <span className="text-sm font-semibold text-neutral-900">
+                  {roleToApprove.user?.name}
+                </span>
               </div>
               <div className="flex justify-between">
-                <span className="text-sm font-medium text-neutral-600">Email:</span>
-                <span className="text-sm text-neutral-900">{roleToApprove.user?.email}</span>
+                <span className="text-sm font-medium text-neutral-600">
+                  Email:
+                </span>
+                <span className="text-sm text-neutral-900">
+                  {roleToApprove.user?.email}
+                </span>
               </div>
               <div className="flex justify-between">
-                <span className="text-sm font-medium text-neutral-600">Role Saat Ini:</span>
-                <Badge variant="outline" className="text-xs">{roleToApprove.user?.role || 'user'}</Badge>
+                <span className="text-sm font-medium text-neutral-600">
+                  Role Saat Ini:
+                </span>
+                <Badge variant="outline" className="text-xs">
+                  {roleToApprove.user?.role || "user"}
+                </Badge>
               </div>
               <div className="flex justify-between">
-                <span className="text-sm font-medium text-neutral-600">Role Diminta:</span>
-                <Badge className="text-xs bg-green-600">{roleToApprove.requestedRole}</Badge>
+                <span className="text-sm font-medium text-neutral-600">
+                  Role Diminta:
+                </span>
+                <Badge className="text-xs bg-green-600">
+                  {roleToApprove.requestedRole}
+                </Badge>
               </div>
             </div>
           )}
@@ -901,23 +1035,35 @@ export default function AdminUsersPage() {
               Apakah Anda yakin ingin memvalidasi role untuk pengguna berikut?
             </DialogDescription>
           </DialogHeader>
-          
+
           {userToValidate && (
             <div className="p-4 bg-neutral-50 rounded-lg space-y-2">
               <div className="flex justify-between">
-                <span className="text-sm font-medium text-neutral-600">Nama:</span>
-                <span className="text-sm font-semibold text-neutral-900">{userToValidate.name}</span>
+                <span className="text-sm font-medium text-neutral-600">
+                  Nama:
+                </span>
+                <span className="text-sm font-semibold text-neutral-900">
+                  {userToValidate.name}
+                </span>
               </div>
               <div className="flex justify-between">
-                <span className="text-sm font-medium text-neutral-600">Email:</span>
-                <span className="text-sm text-neutral-900">{userToValidate.email}</span>
+                <span className="text-sm font-medium text-neutral-600">
+                  Email:
+                </span>
+                <span className="text-sm text-neutral-900">
+                  {userToValidate.email}
+                </span>
               </div>
               <div className="flex justify-between">
-                <span className="text-sm font-medium text-neutral-600">Role:</span>
+                <span className="text-sm font-medium text-neutral-600">
+                  Role:
+                </span>
                 {getRoleBadge(userToValidate.role)}
               </div>
               <div className="flex justify-between">
-                <span className="text-sm font-medium text-neutral-600">Status Approval:</span>
+                <span className="text-sm font-medium text-neutral-600">
+                  Status Approval:
+                </span>
                 <Badge variant="secondary" className="text-xs">
                   <XCircle className="h-3 w-3 mr-1" />
                   Belum Disetujui

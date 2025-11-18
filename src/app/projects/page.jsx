@@ -163,18 +163,23 @@ export default function ProjectsPage() {
 
   const getCategoryColor = (category) => {
     const colors = {
-      'Programming Languages': 'bg-blue-100 text-blue-800',
-      'Web Development': 'bg-green-100 text-green-800',
-      'Mobile Development': 'bg-purple-100 text-purple-800',
-      'Data Science': 'bg-orange-100 text-orange-800',
-      'UI/UX Design': 'bg-pink-100 text-pink-800',
-      'DevOps': 'bg-indigo-100 text-indigo-800',
-      'Database': 'bg-yellow-100 text-yellow-800',
-      'Cloud Computing': 'bg-cyan-100 text-cyan-800',
-      'Artificial Intelligence': 'bg-red-100 text-red-800',
-      'Cybersecurity': 'bg-gray-100 text-gray-800',
-      'Project Management': 'bg-teal-100 text-teal-800',
-      'Soft Skills': 'bg-lime-100 text-lime-800',
+      'Software Development': 'bg-blue-100 text-blue-800',
+      'Web & Mobile Application': 'bg-green-100 text-green-800',
+      'Embedded Systems': 'bg-purple-100 text-purple-800',
+      'IoT (Internet of Things)': 'bg-emerald-100 text-emerald-800',
+      'Robotics & Automation': 'bg-rose-100 text-rose-800',
+      'Signal Processing': 'bg-indigo-100 text-indigo-800',
+      'Computer Vision': 'bg-yellow-100 text-yellow-800',
+      'Machine Learning / AI': 'bg-red-100 text-red-800',
+      'Biomedical Devices': 'bg-pink-100 text-pink-800',
+      'Health Informatics': 'bg-cyan-100 text-cyan-800',
+      'Networking & Security': 'bg-gray-100 text-gray-800',
+      'Cloud & DevOps': 'bg-sky-100 text-sky-800',
+      'Data Engineering & Analytics': 'bg-orange-100 text-orange-800',
+      'Human-Computer Interaction': 'bg-lime-100 text-lime-800',
+      'Control Systems': 'bg-violet-100 text-violet-800',
+      'Energy & Power Systems': 'bg-amber-100 text-amber-800',
+      'Research & Simulation': 'bg-teal-100 text-teal-800',
       'Others': 'bg-neutral-100 text-neutral-800',
     };
     return colors[category] || 'bg-neutral-100 text-neutral-800';
@@ -374,7 +379,7 @@ export default function ProjectsPage() {
             </CardContent>
           </Card>
         ) : (
-          <Card className="p-12 text-center border-2 border-dashed border-neutral-200 mb-8">
+          <Card className="p-8 sm:p-12 text-center border-2 border-dashed border-neutral-200 mb-8">
             <div className="max-w-md mx-auto">
               <div className="w-20 h-20 bg-gradient-to-br from-[#FF8730]/10 to-[#FF8730]/30 rounded-full flex items-center justify-center mx-auto mb-3">
                 <Plus className="h-10 w-10 text-[#FF8730]" />
@@ -404,12 +409,16 @@ export default function ProjectsPage() {
 
         {/* Request History Section */}
         <div>
-          <div className="flex flex-col md:flex-row items-start md:items-center gap-3 mb-6">
-            <div className="h-8 w-1 bg-gradient-to-b from-blue-500 to-blue-300 rounded-full" />
-            <h2 className="text-xl md:text-2xl font-bold text-neutral-900">Riwayat Request Melanjutkan Proyek</h2>
-            <Badge className="bg-blue-100 text-blue-700 border-blue-300">
-              {requestHistory.length}
-            </Badge>
+          <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-3 mb-6">
+            <div className="flex items-center gap-3">
+              <div className="h-8 w-1 bg-gradient-to-b from-blue-500 to-blue-300 rounded-full" />
+              <h2 className="text-xl md:text-2xl font-bold text-neutral-900">Riwayat Request Melanjutkan Proyek</h2>
+            </div>
+            <div>
+              <Badge className="bg-blue-100 text-blue-700 border-blue-300">
+                {requestHistory.length}
+              </Badge>
+            </div>
           </div>
 
           {requestHistory.length === 0 ? (
@@ -429,8 +438,8 @@ export default function ProjectsPage() {
                 const statusInfo = getStatusBadge(request.status);
                 return (
                   <Card key={request._id} className="hover:shadow-lg transition-shadow">
-                    <CardContent className="p-6">
-                      <div className="flex items-start justify-between">
+                    <CardContent className="p-4 md:p-6">
+                      <div className="flex flex-col md:flex-row items-start md:items-center justify-between">
                         <div className="flex-1">
                           <div className="flex items-center gap-3 mb-2">
                             <h3 className="font-bold text-lg text-neutral-900">{request.projectTitle}</h3>

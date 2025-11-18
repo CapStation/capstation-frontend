@@ -3,6 +3,7 @@
 import { useState, useEffect, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
+import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -18,6 +19,7 @@ function OAuthSetupContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { loginWithOAuth } = useAuth();
+  const { toast } = useToast();
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -58,13 +60,27 @@ function OAuthSetupContent() {
 
       if (result.success) {
         if (result.isPending) {
-          // Pending approval - show message and redirect to login
-          alert(
-            result.message || "Role Anda sedang menunggu persetujuan admin."
-          );
-          router.push("/login");
+          // Pending approval - show custom toast notification and redirect to login
+          toast({
+            title: "Menunggu Persetujuan Admin",
+            description:
+              result.message ||
+              "Akun Google anda dengan role Dosen sedang menunggu persetujuan dari admin. Anda akan diberitahu melalui email setelah akun Anda disetujui.",
+            variant: "default",
+            duration: 5000,
+          });
+
+          // Redirect to login after showing notification
+          setTimeout(() => {
+            router.push("/login");
+          }, 1500);
         } else {
-          // Success - redirect to dashboard
+          // Success - show success toast and redirect to dashboard
+          toast({
+            title: "Setup Berhasil",
+            description: "Selamat datang di CapStation!",
+            variant: "default",
+          });
           router.push("/dashboard");
         }
       } else {
@@ -101,13 +117,13 @@ function OAuthSetupContent() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary/10 via-secondary/10 to-accent/10 p-4">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary/10 via-secondary/10 to-accent/10 p-4 sm:p-6 md:p-8">
       <Card className="w-full max-w-2xl shadow-xl">
-        <CardHeader className="space-y-1 text-center">
-          <div className="flex justify-center mb-4">
-            <div className="bg-primary rounded-full p-3">
+        <CardHeader className="space-y-1 text-center px-4 sm:px-6 py-6">
+          <div className="flex justify-center mb-3 sm:mb-4">
+            <div className="bg-primary rounded-full p-2 sm:p-3">
               <svg
-                className="w-8 h-8 text-white"
+                className="w-6 h-6 sm:w-8 sm:h-8 text-white"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -121,15 +137,15 @@ function OAuthSetupContent() {
               </svg>
             </div>
           </div>
-          <CardTitle className="text-3xl font-bold text-neutral-900">
+          <CardTitle className="text-2xl sm:text-3xl font-bold text-neutral-900">
             Selamat Datang di CapStation
           </CardTitle>
-          <CardDescription className="text-neutral-600 text-lg">
+          <CardDescription className="text-sm sm:text-base md:text-lg text-neutral-600">
             Pilih peran Anda untuk melanjutkan
           </CardDescription>
         </CardHeader>
 
-        <CardContent className="space-y-6 pt-6">
+        <CardContent className="space-y-4 sm:space-y-6 pt-4 sm:pt-6 px-4 sm:px-6">
           {error && (
             <div className="bg-destructive/10 border border-destructive/30 text-destructive px-4 py-3 rounded-md flex items-start gap-3">
               <AlertCircle className="h-5 w-5 mt-0.5 flex-shrink-0" />
@@ -142,7 +158,7 @@ function OAuthSetupContent() {
             <button
               onClick={() => handleRoleSelection("mahasiswa")}
               disabled={loading}
-              className={`group relative overflow-hidden rounded-lg border-2 p-6 transition-all duration-300 hover:shadow-lg ${
+              className={`group relative overflow-hidden rounded-lg border-2 p-4 sm:p-6 transition-all duration-300 hover:shadow-lg ${
                 selectedRole === "mahasiswa"
                   ? "border-primary bg-primary/5"
                   : "border-neutral-200 hover:border-primary/50"
@@ -150,22 +166,22 @@ function OAuthSetupContent() {
                 loading ? "opacity-50 cursor-not-allowed" : "cursor-pointer"
               }`}
             >
-              <div className="flex flex-col items-center text-center space-y-4">
+              <div className="flex flex-col items-center text-center space-y-3 sm:space-y-4">
                 <div
-                  className={`rounded-full p-4 transition-colors ${
+                  className={`rounded-full p-3 sm:p-4 transition-colors ${
                     selectedRole === "mahasiswa"
                       ? "bg-primary text-white"
                       : "bg-primary/10 text-primary group-hover:bg-primary group-hover:text-white"
                   }`}
                 >
-                  <GraduationCap className="h-10 w-10" />
+                  <GraduationCap className="h-8 w-8 sm:h-10 sm:w-10" />
                 </div>
 
                 <div>
-                  <h3 className="text-xl font-bold text-neutral-900 mb-2">
+                  <h3 className="text-lg sm:text-xl font-bold text-neutral-900 mb-2">
                     Mahasiswa
                   </h3>
-                  <p className="text-sm text-neutral-600">
+                  <p className="text-xs sm:text-sm text-neutral-600">
                     Saya adalah mahasiswa yang ingin mengerjakan proyek capstone
                     dan berkolaborasi dengan dosen
                   </p>
@@ -183,7 +199,7 @@ function OAuthSetupContent() {
             <button
               onClick={() => handleRoleSelection("dosen")}
               disabled={loading}
-              className={`group relative overflow-hidden rounded-lg border-2 p-6 transition-all duration-300 hover:shadow-lg ${
+              className={`group relative overflow-hidden rounded-lg border-2 p-4 sm:p-6 transition-all duration-300 hover:shadow-lg ${
                 selectedRole === "dosen"
                   ? "border-secondary bg-secondary/5"
                   : "border-neutral-200 hover:border-secondary/50"
@@ -191,22 +207,22 @@ function OAuthSetupContent() {
                 loading ? "opacity-50 cursor-not-allowed" : "cursor-pointer"
               }`}
             >
-              <div className="flex flex-col items-center text-center space-y-4">
+              <div className="flex flex-col items-center text-center space-y-3 sm:space-y-4">
                 <div
-                  className={`rounded-full p-4 transition-colors ${
+                  className={`rounded-full p-3 sm:p-4 transition-colors ${
                     selectedRole === "dosen"
                       ? "bg-secondary text-white"
                       : "bg-secondary/10 text-secondary group-hover:bg-secondary group-hover:text-white"
                   }`}
                 >
-                  <Users className="h-10 w-10" />
+                  <Users className="h-8 w-8 sm:h-10 sm:w-10" />
                 </div>
 
                 <div>
-                  <h3 className="text-xl font-bold text-neutral-900 mb-2">
+                  <h3 className="text-lg sm:text-xl font-bold text-neutral-900 mb-2">
                     Dosen
                   </h3>
-                  <p className="text-sm text-neutral-600">
+                  <p className="text-xs sm:text-sm text-neutral-600">
                     Saya adalah dosen pembimbing yang ingin membimbing mahasiswa
                     dalam proyek capstone
                   </p>

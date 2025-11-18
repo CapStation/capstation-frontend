@@ -13,7 +13,13 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { AlertCircle, Loader2, Mail, ArrowLeft, CheckCircle } from "lucide-react";
+import {
+  AlertCircle,
+  Loader2,
+  Mail,
+  ArrowLeft,
+  CheckCircle,
+} from "lucide-react";
 import apiClient from "@/lib/api-client";
 import endpoints from "@/lib/api-config";
 
@@ -49,22 +55,20 @@ export default function ForgotPasswordPage() {
       setSuccess(true);
     } catch (err) {
       console.error("Forgot password error:", err);
-      setError(
-        err.message || "Terjadi kesalahan. Silakan coba lagi."
-      );
+      setError(err.message || "Terjadi kesalahan. Silakan coba lagi.");
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary/10 via-secondary/10 to-accent/10 p-4">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary/10 via-secondary/10 to-accent/10 p-4 sm:p-6 md:p-8">
       <Card className="w-full max-w-md shadow-xl">
-        <CardHeader className="space-y-1 text-center">
-          <div className="flex justify-center mb-4">
-            <div className="bg-primary rounded-full p-3">
+        <CardHeader className="space-y-1 text-center px-4 sm:px-6 py-6">
+          <div className="flex justify-center mb-3 sm:mb-4">
+            <div className="bg-primary rounded-full p-2 sm:p-3">
               <svg
-                className="w-8 h-8 text-white"
+                className="w-6 h-6 sm:w-8 sm:h-8 text-white"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -78,23 +82,25 @@ export default function ForgotPasswordPage() {
               </svg>
             </div>
           </div>
-          <CardTitle className="text-3xl font-bold text-neutral-900">
+          <CardTitle className="text-2xl sm:text-3xl font-bold text-neutral-900">
             Lupa Password?
           </CardTitle>
-          <CardDescription className="text-neutral-600">
-            Masukkan email Anda dan kami akan mengirimkan link untuk reset password
+          <CardDescription className="text-sm sm:text-base text-neutral-600">
+            Masukkan email Anda dan kami akan mengirimkan link untuk reset
+            password
           </CardDescription>
         </CardHeader>
 
         {success ? (
-          <CardContent className="space-y-4">
+          <CardContent className="space-y-3 sm:space-y-4 px-4 sm:px-6 py-4 sm:py-6">
             <div className="bg-success/10 border border-success/30 text-success px-4 py-3 rounded-md flex items-start gap-3">
               <CheckCircle className="h-5 w-5 mt-0.5 flex-shrink-0" />
               <div>
                 <p className="text-sm font-semibold mb-1">Email terkirim!</p>
                 <p className="text-sm">
-                  Jika akun dengan email tersebut terdaftar, kami telah mengirimkan link reset password. 
-                  Silakan cek inbox atau folder spam Anda.
+                  Jika akun dengan email tersebut terdaftar, kami telah
+                  mengirimkan link reset password. Silakan cek inbox atau folder
+                  spam Anda.
                 </p>
               </div>
             </div>
@@ -111,7 +117,7 @@ export default function ForgotPasswordPage() {
           </CardContent>
         ) : (
           <form onSubmit={handleSubmit}>
-            <CardContent className="space-y-4">
+            <CardContent className="space-y-3 sm:space-y-4 px-4 sm:px-6 py-4 sm:py-6">
               {error && (
                 <div className="bg-destructive/10 border border-destructive/30 text-destructive px-4 py-3 rounded-md flex items-start gap-3">
                   <AlertCircle className="h-5 w-5 mt-0.5 flex-shrink-0" />
@@ -141,10 +147,10 @@ export default function ForgotPasswordPage() {
               </div>
             </CardContent>
 
-            <CardFooter className="flex flex-col space-y-4">
+            <CardFooter className="flex flex-col space-y-3 sm:space-y-4 px-4 sm:px-6 py-6">
               <Button
                 type="submit"
-                className="w-full"
+                className="w-full text-sm sm:text-base"
                 size="lg"
                 disabled={loading}
               >
