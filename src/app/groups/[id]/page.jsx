@@ -250,12 +250,28 @@ const GroupDetailPage = () => {
       const result = await GroupService.leaveGroup(group._id);
       
       if (result.success) {
+        toast({
+          title: 'Berhasil',
+          description: 'Anda telah keluar dari grup',
+        });
         router.push('/groups');
       } else {
-        setError(result.error || 'Gagal keluar dari grup');
+        const errorMsg = result.error || 'Gagal keluar dari grup';
+        setError(errorMsg);
+        toast({
+          title: 'Error',
+          description: errorMsg,
+          variant: 'destructive',
+        });
       }
     } catch (err) {
-      setError(err.message || 'Gagal keluar dari grup');
+      const errorMsg = err.message || 'Gagal keluar dari grup';
+      setError(errorMsg);
+      toast({
+        title: 'Error',
+        description: errorMsg,
+        variant: 'destructive',
+      });
     } finally {
       setActionLoading(false);
       setLeaveDialogOpen(false);

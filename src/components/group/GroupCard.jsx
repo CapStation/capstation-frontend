@@ -19,17 +19,16 @@ const GroupCard = ({ group, isOwner = false, isMember = false, onAction = null, 
     .slice(0, 2);
 };
 
-  const getStatusColor = (status) => {
-    switch (status) {
-      case 'active':
-        return 'bg-accent text-neutral-900';
-      case 'inactive':
-        return 'bg-neutral-200 text-neutral-700';
-      case 'archived':
-        return 'bg-neutral-600 text-white';
-      default:
-        return 'bg-neutral-200 text-neutral-700';
+  const getStatusColor = (isActive) => {
+    if (isActive) {
+      return 'bg-green-100 text-green-700 border-green-300';
+    } else {
+      return 'bg-neutral-200 text-neutral-700 border-neutral-300';
     }
+  };
+
+  const getStatusLabel = (isActive) => {
+    return isActive ? 'Aktif' : 'Tidak Aktif';
   };
 
   return (
@@ -48,19 +47,25 @@ const GroupCard = ({ group, isOwner = false, isMember = false, onAction = null, 
               </CardTitle>
             </div>
           </div>
-          <Badge className={`shrink-0 ${getStatusColor(group.status)}`}>
-            {group.status}
+          <Badge className={`shrink-0 ${getStatusColor(group.isActive)}`}>
+            {getStatusLabel(group.isActive)}
           </Badge>
         </div>
       </CardHeader>
 
       <CardContent className="space-y-4">
-        {/* Description */}
-        {group.description && (
-          <p className="text-sm text-neutral-600 line-clamp-2">
-            {group.description}
-          </p>
-        )}
+        {/* Description - Fixed height untuk konsistensi */}
+        <div className="h-10 flex items-start">
+          {group.description ? (
+            <p className="text-sm text-neutral-600 line-clamp-2">
+              {group.description}
+            </p>
+          ) : (
+            <p className="text-sm text-neutral-400 italic">
+              Tidak ada deskripsi
+            </p>
+          )}
+        </div>
 
         {/* Members Info */}
         <div className="flex items-center justify-between py-2 px-2 bg-neutral-50 rounded-lg">

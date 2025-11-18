@@ -54,8 +54,15 @@ class GroupService {
       };
     } catch (error) {
       // 404 is expected when user has no group - not an error
-      if (error.response?.status === 404) {
-        console.log("ℹ️ getUserGroups: User belum memiliki grup (404 - expected)");
+      // Also check message content as fallback
+      const is404 = error.response?.status === 404 || error.status === 404;
+      const isNoGroupMessage = error?.message?.includes('belum bergabung') || 
+                               error?.data?.message?.includes('belum bergabung');
+      
+      if (is404 || isNoGroupMessage) {
+        if (process.env.NODE_ENV === "development") {
+          console.log("ℹ️ getUserGroups: User belum memiliki grup (expected behavior)");
+        }
         return {
           success: true,
           data: [],
@@ -64,9 +71,11 @@ class GroupService {
       }
       
       // Other errors are actual errors
-      console.error("❌ getUserGroups error:");
-      console.error("- Message:", error?.message || "No message");
-      console.error("- Response:", error?.response?.data || "No response data");
+      if (process.env.NODE_ENV === "development") {
+        console.error("❌ getUserGroups error:");
+        console.error("- Message:", error?.message || "No message");
+        console.error("- Response:", error?.response?.data || "No response data");
+      }
       return {
         success: false,
         error:
@@ -151,15 +160,24 @@ class GroupService {
       };
     } catch (error) {
       // Properly log error with explicit properties
-      console.error("❌ createGroup error:");
-      console.error("- Message:", error?.message || "No message");
-      console.error("- Status:", error?.status || "No status");
-      console.error("- Data:", error?.data || "No data");
-      console.error("- Network Error:", !error?.status ? "Yes" : "No");
+      if (process.env.NODE_ENV === "development") {
+        console.error("❌ createGroup error:");
+        console.error("- Message:", error?.message || "No message");
+        console.error("- Status:", error?.status || "No status");
+        console.error("- Data:", error?.data || "No data");
+        console.error("- Network Error:", !error?.status ? "Yes" : "No");
+      }
+
+      // Extract error message - check multiple possible locations
+      const errorMessage = 
+        error?.message || 
+        error?.data?.message || 
+        error?.data?.error ||
+        "Gagal membuat grup";
 
       return {
         success: false,
-        error: error.message || error.data?.message || "Gagal membuat grup",
+        error: errorMessage,
       };
     }
   }
@@ -422,13 +440,27 @@ class GroupService {
         message: response.message || "Berhasil keluar dari grup",
       };
     } catch (error) {
-      console.error("❌ leaveGroup error:", error);
+      if (process.env.NODE_ENV === "development") {
+        console.error("❌ leaveGroup error:", {
+          status: error?.status,
+          message: error?.message,
+          data: error?.data,
+          response: error?.response?.data,
+        });
+      }
+      
+      // Extract error message from various possible locations
+      const errorMessage = 
+        error?.data?.message || 
+        error?.data?.error ||
+        error?.response?.data?.message ||
+        error?.response?.data?.error ||
+        error?.message ||
+        "Gagal keluar dari grup";
+      
       return {
         success: false,
-        error:
-          error.response?.data?.message ||
-          error.message ||
-          "Gagal keluar dari grup",
+        error: errorMessage,
       };
     }
   }
