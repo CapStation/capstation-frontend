@@ -259,15 +259,24 @@ export default function BrowseCapstonesPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-neutral-50 via-white to-neutral-50">
+    <div className="min-h-screen bg-neutral-100">
       <Navbar />
 
-      <div className="container mx-auto px-4 py-8">
-        {/* Header Banner */}
-        <header className="mb-8 text-center">
-          <h1 className="text-4xl font-bold text-neutral-900 mb-2">Jelajahi Capstone</h1>
-          <p className="text-lg text-neutral-600">Temukan proyek capstone yang sesuai dengan minat Anda</p>
-        </header>
+      {/* Header with gradient background */}
+      <div className="bg-gradient-to-r from-[#FF8730] to-[#FFB464] px-4">
+        <div className="container mx-auto px-12 py-12">
+          <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+            <div>
+              <h1 className="text-4xl md:text-5xl font-bold text-white">Jelajahi Capstone</h1>
+              <p className="mt-2 text-neutral-50">
+                Temukan proyek capstone yang sesuai dengan minat Anda
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div className="container mx-auto px-12 py-8">
 
         {/* Filter & Search Section */}
         <Card className="mb-8 p-6">
