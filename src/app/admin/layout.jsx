@@ -24,7 +24,7 @@ export default function AdminLayout({ children }) {
     );
   }
 
-  if (!user || user.role !== "admin") {
+  if (!user || user.role !== "admin") {   
     return null;
   }
 
@@ -36,7 +36,7 @@ export default function AdminLayout({ children }) {
 
       <main className="flex-1 overflow-auto">
         {/* Desktop / tablet: constrained centered container */}
-        <div className="hidden lg:block max-w-screen-lg mx-auto px-4 py-6">
+        <div className="hidden lg:block mx-auto px-4 py-6">
           {children}
         </div>
 

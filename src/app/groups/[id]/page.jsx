@@ -11,7 +11,8 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '@/components/ui/dialog';
+import { useToast } from '@/hooks/use-toast';
 import GroupService from '@/services/GroupService';
 import InviteMemberDialog from '@/components/group/InviteMemberDialog';
 import Navbar from '@/components/layout/Navbar';
@@ -37,6 +38,7 @@ const GroupDetailPage = () => {
   const router = useRouter();
   const params = useParams();
   const { user, loading: authLoading } = useAuth();
+  const { toast } = useToast();
   const [group, setGroup] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -49,6 +51,8 @@ const GroupDetailPage = () => {
   const [leaveConfirmText, setLeaveConfirmText] = useState('');
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [deleteConfirmText, setDeleteConfirmText] = useState('');
+  const [removeMemberDialogOpen, setRemoveMemberDialogOpen] = useState(false);
+  const [memberToRemove, setMemberToRemove] = useState(null);
   const [project, setProject] = useState(null);
   
   // Form state untuk edit
@@ -141,25 +145,37 @@ const GroupDetailPage = () => {
     }
   };
 
-  const handleRemoveMember = async (userId) => {
-    if (!group) return;
+  const handleRemoveMember = async () => {
+    if (!group || !memberToRemove) return;
     
     if (project) {
-      setError('Tidak dapat mengeluarkan anggota karena grup masih memiliki project yang terhubung');
+      toast({
+        title: "Tidak Dapat Menghapus",
+        description: "Tidak dapat mengeluarkan anggota karena grup masih memiliki project yang terhubung",
+        variant: "destructive"
+      });
       return;
     }
     
-    if (confirm('Apakah Anda yakin ingin menghapus anggota ini dari grup?')) {
-      try {
-        setActionLoading(true);
-        setError(null);
-        await GroupService.removeMember(group._id, userId);
-        await loadGroupDetail();
-      } catch (err) {
-        setError(err.message || 'Gagal menghapus anggota');
-      } finally {
-        setActionLoading(false);
-      }
+    try {
+      setActionLoading(true);
+      setError(null);
+      await GroupService.removeMember(group._id, memberToRemove);
+      toast({
+        title: "Berhasil",
+        description: "Anggota berhasil dikeluarkan dari grup"
+      });
+      setRemoveMemberDialogOpen(false);
+      setMemberToRemove(null);
+      await loadGroupDetail();
+    } catch (err) {
+      toast({
+        title: "Error",
+        description: err.message || 'Gagal menghapus anggota',
+        variant: "destructive"
+      });
+    } finally {
+      setActionLoading(false);
     }
   };
 
@@ -167,12 +183,20 @@ const GroupDetailPage = () => {
     if (!group) return;
     
     if (deleteConfirmText !== 'HAPUS') {
-      setError('Ketik "HAPUS" untuk konfirmasi');
+      toast({
+        title: "Konfirmasi Diperlukan",
+        description: 'Ketik "HAPUS" untuk konfirmasi',
+        variant: "destructive"
+      });
       return;
     }
 
     if (project) {
-      setError('Tidak dapat menghapus grup karena masih ada project yang terhubung');
+      toast({
+        title: "Tidak Dapat Menghapus",
+        description: 'Tidak dapat menghapus grup karena masih ada project yang terhubung',
+        variant: "destructive"
+      });
       return;
     }
 
@@ -182,12 +206,24 @@ const GroupDetailPage = () => {
       const result = await GroupService.deleteGroup(group._id);
       
       if (result.success) {
+        toast({
+          title: "Berhasil",
+          description: "Grup berhasil dihapus"
+        });
         router.push('/groups');
       } else {
-        setError(result.error || 'Gagal menghapus grup');
+        toast({
+          title: "Error",
+          description: result.error || 'Gagal menghapus grup',
+          variant: "destructive"
+        });
       }
     } catch (err) {
-      setError(err.message || 'Gagal menghapus grup');
+      toast({
+        title: "Error",
+        description: err.message || 'Gagal menghapus grup',
+        variant: "destructive"
+      });
     } finally {
       setActionLoading(false);
       setDeleteDialogOpen(false);
@@ -582,13 +618,16 @@ const GroupDetailPage = () => {
                         <Button
                           size="sm"
                           variant="ghost"
-                          onClick={() => handleRemoveMember(memberId)}
+                          onClick={() => {
+                            setMemberToRemove(memberId);
+                            setRemoveMemberDialogOpen(true);
+                          }}
                           disabled={actionLoading}
                           className="text-red-600 hover:text-red-700 hover:bg-red-50"
                         >
                           <UserMinus className="w-4 h-4" />
                         </Button>
-                      )}
+                      )}  
                     </div>
                   );
                 })}
@@ -776,6 +815,62 @@ const GroupDetailPage = () => {
             </DialogContent>
           </Dialog>
         </>
+      )}
+
+      {/* Remove Member Dialog */}
+      {isOwner && (
+        <Dialog open={removeMemberDialogOpen} onOpenChange={setRemoveMemberDialogOpen}>
+          <DialogContent className="max-w-md">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2 text-red-600">
+                <AlertCircle className="w-5 h-5" />
+                Keluarkan Anggota
+              </DialogTitle>
+              <DialogDescription>
+                Apakah Anda yakin ingin mengeluarkan anggota ini dari grup?
+              </DialogDescription>
+            </DialogHeader>
+            
+            {project && (
+              <div className="p-3 bg-red-50 border border-red-200 rounded-lg">
+                <p className="text-sm text-red-700 font-medium">
+                  ⚠️ Tidak dapat mengeluarkan anggota karena grup masih memiliki project yang terhubung!
+                </p>
+              </div>
+            )}
+
+            <DialogFooter>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => {
+                  setRemoveMemberDialogOpen(false);
+                  setMemberToRemove(null);
+                }}
+                disabled={actionLoading}
+              >
+                Batal
+              </Button>
+              <Button
+                onClick={handleRemoveMember}
+                disabled={actionLoading || project}
+                variant="destructive"
+              >
+                {actionLoading ? (
+                  <>
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    Memproses...
+                  </>
+                ) : (
+                  <>
+                    <UserMinus className="w-4 h-4 mr-2" />
+                    Ya, Keluarkan
+                  </>
+                )}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       )}
 
       {isMember && !isOwner && (

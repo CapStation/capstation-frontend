@@ -179,7 +179,7 @@ function RequestPageContent() {
     };
   }, [user]);
 
-  // Load inbox and decision history when user has project with dapat_dilanjutkan status
+  // Load inbox and decision history when user has project with dapat_dilanjutkan or selesai status
   useEffect(() => {
     if (hasProjectDapatDilanjutkan) {
       loadInbox();
@@ -199,9 +199,9 @@ function RequestPageContent() {
           (p) => p.status === "dapat_dilanjutkan"
         );
 
-        // Check if current user owns any project with status dapat_dilanjutkan
+        // Check if current user owns any project with status dapat_dilanjutkan or selesai
         const userHasProjectDapatDilanjutkan = projects.some((p) => {
-          if (p.status !== "dapat_dilanjutkan") return false;
+          if (p.status !== "dapat_dilanjutkan" && p.status !== "selesai") return false;
           
           const userId = user?._id || user?.id;
           const ownerId = typeof p.owner === "object" ? p.owner?._id || p.owner?.id : p.owner;
@@ -211,6 +211,14 @@ function RequestPageContent() {
           const isSupervisor = supervisorId && userId && (supervisorId === userId || supervisorId.toString() === userId.toString());
           
           return isOwner || isSupervisor;
+        });
+        
+        console.log('🔍 Checking for decision access:', {
+          userHasProjectDapatDilanjutkan,
+          userId: user?._id || user?.id,
+          totalProjects: projects.length,
+          dapatDilanjutkanProjects: projects.filter(p => p.status === 'dapat_dilanjutkan').length,
+          selesaiProjects: projects.filter(p => p.status === 'selesai').length
         });
         
         setHasProjectDapatDilanjutkan(userHasProjectDapatDilanjutkan);
@@ -339,19 +347,27 @@ function RequestPageContent() {
   const loadInbox = async () => {
     setLoadingInbox(true);
     try {
+      console.log('📥 Loading inbox...');
       const [inboxResult, projectResult] = await Promise.all([
         RequestService.getOwnerInbox(),
         ProjectService.getAllProjects(),
       ]);
+
+      console.log('📥 Inbox result:', inboxResult);
+      console.log('📥 Project result:', projectResult);
 
       let list = [];
 
       if (inboxResult.success && inboxResult.data) {
         const raw = inboxResult.data;
         list = Array.isArray(raw) ? raw : raw.data || [];
+        console.log('📥 Processed inbox list:', list);
+      } else {
+        console.warn('❌ Inbox result not successful or no data:', inboxResult);
       }
 
       if (list.length === 0) {
+        console.log('⚠️ No inbox items found');
         setInboxRequests([]);
         return;
       }
@@ -915,7 +931,7 @@ function RequestPageContent() {
               <span className="hidden sm:inline">My Request</span>
               <span className="sm:hidden">My</span>
             </TabsTrigger>
-            {/* Only show Decision Inbox and History for users with project dapat_dilanjutkan */}
+            {/* Only show Decision Inbox and History for users with project dapat_dilanjutkan or selesai */}
             {hasProjectDapatDilanjutkan && (
               <>
                 <TabsTrigger

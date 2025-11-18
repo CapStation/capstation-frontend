@@ -40,6 +40,9 @@ class RequestService {
       };
     } catch (error) {
       console.error("RequestService.createRequest error:", error);
+      console.error("Error response:", error.response);
+      console.error("Error status:", error.response?.status);
+      console.error("Error data:", error.response?.data);
 
       const data = error.response?.data;
       console.log("createRequest backend error data:", data);
@@ -217,10 +220,12 @@ class RequestService {
   // ambil daftar request yang harus diputuskan oleh user (owner / dosen)
   async getOwnerInbox() {
     try {
+      console.log('=== FETCHING OWNER INBOX ===');
       const response = await apiClient.get(
         API_ENDPOINTS.decisions.ownerInbox
       );
 
+      console.log('Owner inbox response:', response);
       const raw = response.data || response;
       const data = Array.isArray(raw) ? raw : raw.data || [];
 
@@ -230,10 +235,17 @@ class RequestService {
       };
     } catch (error) {
       console.error("RequestService.getOwnerInbox error:", error);
+      console.error("Error response:", error?.response);
+      console.error("Error status:", error?.response?.status);
+      console.error("Error data:", error?.response?.data);
+      console.error("Error message:", error?.message);
+      
       return {
         success: false,
         error:
-          error.response?.data?.message ||
+          error?.response?.data?.error ||
+          error?.response?.data?.message ||
+          error?.message ||
           "Gagal mengambil daftar pengajuan untuk diputuskan",
       };
     }

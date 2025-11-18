@@ -116,6 +116,15 @@ export default function ProjectDetailPage() {
   // Set to dapat dilanjutkan dialog
   const [showSetContinuableDialog, setShowSetContinuableDialog] = useState(false);
   
+  // Delete project dialog
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [deletingProject, setDeletingProject] = useState(false);
+  
+  // Delete document dialog
+  const [showDeleteDocDialog, setShowDeleteDocDialog] = useState(false);
+  const [docToDelete, setDocToDelete] = useState(null);
+  const [deletingDocument, setDeletingDocument] = useState(false);
+  
   // State for checking user's active projects
   const [userHasActiveProject, setUserHasActiveProject] = useState(false);
   const [checkingActiveProject, setCheckingActiveProject] = useState(true);
@@ -231,10 +240,7 @@ export default function ProjectDetailPage() {
   };
 
   const handleDelete = async () => {
-    if (!confirm("Apakah Anda yakin ingin menghapus proyek ini?")) {
-      return;
-    }
-
+    setDeletingProject(true);
     try {
       const result = await projectService.deleteProject(params.id);
       if (result.success) {
@@ -242,6 +248,7 @@ export default function ProjectDetailPage() {
           title: "Berhasil",
           description: "Proyek berhasil dihapus",
         });
+        setShowDeleteDialog(false);
         router.push("/projects");
       } else {
         toast({
@@ -257,6 +264,8 @@ export default function ProjectDetailPage() {
         description: "Terjadi kesalahan saat menghapus proyek",
         variant: "destructive",
       });
+    } finally {
+      setDeletingProject(false);
     }
   };
 
@@ -444,7 +453,7 @@ export default function ProjectDetailPage() {
   
   // Handle request to continue project
   const handleRequestContinue = () => {
-    router.push(`/projects/${params.id}/continue-request`);
+    router.push(`/request/new?projectId=${params.id}`);
   };
 
   const handleSetContinuable = async () => {
@@ -512,18 +521,19 @@ export default function ProjectDetailPage() {
     }
   };
 
-  const handleDeleteDocument = async (docId) => {
-    if (!confirm("Apakah Anda yakin ingin menghapus dokumen ini?")) {
-      return;
-    }
-
+  const handleDeleteDocument = async () => {
+    if (!docToDelete) return;
+    
+    setDeletingDocument(true);
     try {
-      const result = await projectService.deleteDocument(params.id, docId);
+      const result = await projectService.deleteDocument(params.id, docToDelete);
       if (result.success) {
         toast({
           title: "Berhasil",
           description: "Dokumen berhasil dihapus",
         });
+        setShowDeleteDocDialog(false);
+        setDocToDelete(null);
         loadDocuments();
       } else {
         toast({
@@ -539,6 +549,8 @@ export default function ProjectDetailPage() {
         description: "Terjadi kesalahan saat menghapus dokumen",
         variant: "destructive",
       });
+    } finally {
+      setDeletingDocument(false);
     }
   };
 
@@ -1139,7 +1151,7 @@ export default function ProjectDetailPage() {
                       <Button
                         variant="outline"
                         size="sm"
-                        onClick={handleDelete}
+                        onClick={() => setShowDeleteDialog(true)}
                         className="text-red-600 hover:text-red-700"
                       >
                         <Trash2 className="h-4 w-4 mr-1" />
@@ -1379,7 +1391,10 @@ export default function ProjectDetailPage() {
                                 <Button
                                   variant="ghost"
                                   size="sm"
-                                  onClick={() => handleDeleteDocument(doc._id)}
+                                  onClick={() => {
+                                    setDocToDelete(doc._id);
+                                    setShowDeleteDocDialog(true);
+                                  }}
                                   className="text-red-600 hover:text-red-700"
                                   title="Hapus"
                                 >
@@ -1981,6 +1996,87 @@ export default function ProjectDetailPage() {
               >
                 <AlertCircle className="h-4 w-4 mr-2" />
                 Ya, Dapat Dilanjutkan
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        {/* Delete Project Dialog */}
+        <Dialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+          <DialogContent className="max-w-md">
+            <DialogHeader>
+              <DialogTitle>Hapus Proyek</DialogTitle>
+              <DialogDescription>
+                Apakah Anda yakin ingin menghapus proyek ini? Tindakan ini tidak dapat dibatalkan dan semua data proyek akan hilang permanen.
+              </DialogDescription>
+            </DialogHeader>
+
+            <DialogFooter>
+              <Button
+                variant="outline"
+                onClick={() => setShowDeleteDialog(false)}
+                disabled={deletingProject}
+              >
+                Batal
+              </Button>
+              <Button
+                variant="destructive"
+                onClick={handleDelete}
+                disabled={deletingProject}
+              >
+                {deletingProject ? (
+                  <>
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    Menghapus...
+                  </>
+                ) : (
+                  <>
+                    <Trash2 className="h-4 w-4 mr-2" />
+                    Ya, Hapus
+                  </>
+                )}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        {/* Delete Document Dialog */}
+        <Dialog open={showDeleteDocDialog} onOpenChange={setShowDeleteDocDialog}>
+          <DialogContent className="max-w-md">
+            <DialogHeader>
+              <DialogTitle>Hapus Dokumen</DialogTitle>
+              <DialogDescription>
+                Apakah Anda yakin ingin menghapus dokumen ini? Tindakan ini tidak dapat dibatalkan.
+              </DialogDescription>
+            </DialogHeader>
+
+            <DialogFooter>
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setShowDeleteDocDialog(false);
+                  setDocToDelete(null);
+                }}
+                disabled={deletingDocument}
+              >
+                Batal
+              </Button>
+              <Button
+                variant="destructive"
+                onClick={handleDeleteDocument}
+                disabled={deletingDocument}
+              >
+                {deletingDocument ? (
+                  <>
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    Menghapus...
+                  </>
+                ) : (
+                  <>
+                    <Trash2 className="h-4 w-4 mr-2" />
+                    Ya, Hapus
+                  </>
+                )}
               </Button>
             </DialogFooter>
           </DialogContent>

@@ -60,6 +60,10 @@ export default function NewProjectPage() {
   const [competencySearchQuery, setCompetencySearchQuery] = useState('');
   const [loadingCompetencyDialog, setLoadingCompetencyDialog] = useState(false);
   const [addingCompetency, setAddingCompetency] = useState(false);
+  
+  // Remove competency dialog
+  const [showRemoveCompDialog, setShowRemoveCompDialog] = useState(false);
+  const [compIndexToRemove, setCompIndexToRemove] = useState(null);
 
   useEffect(() => {
     loadDosenList();
@@ -176,8 +180,15 @@ export default function NewProjectPage() {
     }
   };
 
-  const handleRemoveProjectCompetency = (index) => {
-    setProjectCompetencies(prev => prev.filter((_, i) => i !== index));
+  const handleRemoveProjectCompetency = () => {
+    if (compIndexToRemove === null) return;
+    setProjectCompetencies(prev => prev.filter((_, i) => i !== compIndexToRemove));
+    setShowRemoveCompDialog(false);
+    setCompIndexToRemove(null);
+    toast({
+      title: "Berhasil",
+      description: "Kompetensi berhasil dihapus dari proyek",
+    });
   };
 
   // Filter competencies list when searching or category changes
@@ -451,7 +462,14 @@ export default function NewProjectPage() {
                       projectCompetencies.map((c, idx) => (
                         <Badge key={c._id || c.id || c} className="flex items-center gap-2">
                           <span>{c.name || c}</span>
-                          <button type="button" onClick={() => handleRemoveProjectCompetency(idx)} className="ml-2">
+                          <button 
+                            type="button" 
+                            onClick={() => {
+                              setCompIndexToRemove(idx);
+                              setShowRemoveCompDialog(true);
+                            }} 
+                            className="ml-2"
+                          >
                             <X className="h-3 w-3" />
                           </button>
                         </Badge>
@@ -542,6 +560,37 @@ export default function NewProjectPage() {
           </Card>
         </div>
       </div>
+
+      {/* Remove Competency Confirmation Dialog */}
+      <Dialog open={showRemoveCompDialog} onOpenChange={setShowRemoveCompDialog}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Hapus Kompetensi</DialogTitle>
+            <DialogDescription>
+              Apakah Anda yakin ingin menghapus kompetensi ini dari proyek?
+            </DialogDescription>
+          </DialogHeader>
+
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setShowRemoveCompDialog(false);
+                setCompIndexToRemove(null);
+              }}
+            >
+              Batal
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={handleRemoveProjectCompetency}
+            >
+              <X className="w-4 h-4 mr-2" />
+              Ya, Hapus
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

@@ -59,6 +59,11 @@ export default function ProfilePage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [loadingDialog, setLoadingDialog] = useState(false);
   const [addingCompetency, setAddingCompetency] = useState(false);
+  
+  // Remove competency dialog
+  const [showRemoveDialog, setShowRemoveDialog] = useState(false);
+  const [competencyToRemove, setCompetencyToRemove] = useState(null);
+  const [removingCompetency, setRemovingCompetency] = useState(false);
 
   useEffect(() => {
     if (!loading) {
@@ -161,15 +166,20 @@ export default function ProfilePage() {
     }
   };
 
-  const handleRemoveCompetency = async (index) => {
+  const handleRemoveCompetency = async () => {
+    if (competencyToRemove === null) return;
+    
+    setRemovingCompetency(true);
     try {
-      const result = await CompetencyService.removeCompetency(index);
+      const result = await CompetencyService.removeCompetency(competencyToRemove);
       if (result.success) {
         setMyCompetencies(result.data || []);
         toast({
           title: "Berhasil",
           description: result.message || "Kompetensi berhasil dihapus",
         });
+        setShowRemoveDialog(false);
+        setCompetencyToRemove(null);
       } else {
         toast({
           title: "Error",
@@ -183,6 +193,8 @@ export default function ProfilePage() {
         description: "Gagal menghapus kompetensi",
         variant: "destructive",
       });
+    } finally {
+      setRemovingCompetency(false);
     }
   };
 
@@ -425,7 +437,10 @@ export default function ProfilePage() {
                       >
                         <span className="font-medium">{comp.name}</span>
                         <button
-                          onClick={() => handleRemoveCompetency(index)}
+                          onClick={() => {
+                            setCompetencyToRemove(index);
+                            setShowRemoveDialog(true);
+                          }}
                           className="hover:bg-black/10 rounded-full p-0.5 transition-colors"
                         >
                           <X className="h-3 w-3" />
@@ -584,6 +599,48 @@ export default function ProfilePage() {
           <DialogFooter>
             <Button variant="outline" onClick={() => setShowAddDialog(false)}>
               Tutup
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Remove Competency Confirmation Dialog */}
+      <Dialog open={showRemoveDialog} onOpenChange={setShowRemoveDialog}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Hapus Kompetensi</DialogTitle>
+            <DialogDescription>
+              Apakah Anda yakin ingin menghapus kompetensi ini dari profil Anda?
+            </DialogDescription>
+          </DialogHeader>
+
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setShowRemoveDialog(false);
+                setCompetencyToRemove(null);
+              }}
+              disabled={removingCompetency}
+            >
+              Batal
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={handleRemoveCompetency}
+              disabled={removingCompetency}
+            >
+              {removingCompetency ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  Menghapus...
+                </>
+              ) : (
+                <>
+                  <X className="w-4 h-4 mr-2" />
+                  Ya, Hapus
+                </>
+              )}
             </Button>
           </DialogFooter>
         </DialogContent>
