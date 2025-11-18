@@ -68,12 +68,12 @@ const GroupListPage = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-neutral-50 via-white to-neutral-50">
+    <div className="min-h-screen bg-neutral-100">
       <Navbar />
 
       {/* Header with gradient background */}
-      <div className="bg-gradient-to-r from-primary via-secondary to-accent">
-        <div className="container mx-auto px-4 py-12">
+      <div className="bg-gradient-to-r from-[#FF8730] to-[#FFB464] px-4">
+        <div className="container mx-auto px-12 py-12">
           <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
             <div>
               <h1 className="text-4xl md:text-5xl font-bold text-white">Semua Grup</h1>
@@ -92,9 +92,9 @@ const GroupListPage = () => {
               </Button>
               <Button
                 onClick={() => router.push('/groups/create')}
-                className="bg-white hover:bg-neutral-100 text-primary font-semibold shadow-lg"
+                className="bg-white hover:bg-neutral-100 text-primary font-semibold "
               >
-                <Plus className="w-5 h-5 mr-2" />
+                <Plus className="w-5 h-5" />
                 Buat Grup Baru
               </Button>
             </div>
@@ -102,7 +102,7 @@ const GroupListPage = () => {
         </div>
       </div>
 
-      <div className="container mx-auto px-4 py-8">
+      <div className="container mx-auto px-12 py-8">
         {/* Error Alert */}
         {error && (
           <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg flex items-start gap-3">
@@ -153,18 +153,48 @@ const GroupListPage = () => {
               {filteredGroups.length} Grup Tersedia
             </h2>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {filteredGroups.map((group) => (
-                <GroupCard
-                  key={group._id}
-                  group={group}
-                  isOwner={group.owner?._id === user?._id}
-                  onAction={
-                    group.owner?._id !== user?._id
-                      ? () => handleRequestJoin(group._id)
-                      : null
-                  }
-                />
-              ))}
+              {filteredGroups.map((group) => {
+                // User ID bisa berupa user.id atau user._id
+                const userId = (user?.id || user?._id)?.toString();
+                
+                // Owner ID dari group
+                const ownerId = (typeof group.owner === 'string' 
+                  ? group.owner 
+                  : (group.owner?._id || group.owner?.id))?.toString();
+                
+                const isOwner = userId === ownerId;
+                
+                // Check if user is member
+                const isMember = group.members?.some(member => {
+                  const memberId = (typeof member === 'string' ? member : (member._id || member.id))?.toString();
+                  return memberId === userId;
+                }) || false;
+                
+                console.log('🔍 GroupCard check:', {
+                  groupName: group.name,
+                  userId,
+                  ownerId,
+                  isOwner,
+                  isMember
+                });
+                
+                return (
+                  <GroupCard
+                    key={group._id}
+                    group={group}
+                    isOwner={isOwner}
+                    isMember={isMember}
+                    onAction={
+                      !isOwner && !isMember
+                        ? () => handleRequestJoin(group._id)
+                        : null
+                    }
+                    actionLabel={
+                      isOwner ? 'Kelola' : (isMember ? null : 'Gabung')
+                    }
+                  />
+                );
+              })}
             </div>
           </div>
         )}

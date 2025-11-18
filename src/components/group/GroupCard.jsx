@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import Link from 'next/link';
 
-const GroupCard = ({ group, isOwner = false, onAction = null }) => {
+const GroupCard = ({ group, isOwner = false, isMember = false, onAction = null, actionLabel = null }) => {
   const getInitials = (text) => {
   if (!text) return 'GR';
   return text
@@ -33,7 +33,7 @@ const GroupCard = ({ group, isOwner = false, onAction = null }) => {
   };
 
   return (
-    <Card className="h-full hover:shadow-lg transition-shadow duration-200 border-neutral-200 bg-white">
+    <Card className="h-full border-2 border-neutral-200 hover:shadow-2xl transition-all duration-300 bg-white">
       <CardHeader className="pb-3">
         <div className="flex items-start justify-between gap-4">
           <div className="flex items-start gap-3 flex-1">
@@ -111,17 +111,21 @@ const GroupCard = ({ group, isOwner = false, onAction = null }) => {
             asChild
             variant="outline"
             size="sm"
-            className="flex-1 border-neutral-300 text-neutral-700 hover:bg-neutral-50"
+            className="flex-1 bg-[#FFE49C] border-[#FFE49C] text-neutral-900 hover:bg-[#B6EB75] hover:border-[#B6EB75] font-semibold transition-colors"
           >
             <Link href={`/groups/${group._id}`}>Lihat Detail</Link>
           </Button>
-          {isOwner && (
-          <Button
-            size="sm"
-            className="flex-1 bg-primary hover:bg-primary-dark text-white"
-            onClick={() => onAction && onAction(group._id)}
-          >
-            Kelola
+          {(isOwner || isMember) && onAction && (
+            <Button
+              size="sm"
+              className={`flex-1 ${
+                isOwner 
+                  ? 'bg-primary hover:bg-primary-dark text-white' 
+                  : 'bg-red-600 hover:bg-red-700 text-white'
+              }`}
+              onClick={() => onAction(group._id)}
+            >
+              {actionLabel || (isOwner ? 'Kelola' : 'Tinggalkan')}
             </Button>
           )}
         </div>

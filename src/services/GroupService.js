@@ -53,16 +53,20 @@ class GroupService {
         data: groups,
       };
     } catch (error) {
-      console.error("❌ getUserGroups error:");
-      console.error("- Message:", error?.message || "No message");
-      console.error("- Response:", error?.response?.data || "No response data");
+      // 404 is expected when user has no group - not an error
       if (error.response?.status === 404) {
+        console.log("ℹ️ getUserGroups: User belum memiliki grup (404 - expected)");
         return {
           success: true,
           data: [],
           message: "Anda belum memiliki grup",
         };
       }
+      
+      // Other errors are actual errors
+      console.error("❌ getUserGroups error:");
+      console.error("- Message:", error?.message || "No message");
+      console.error("- Response:", error?.response?.data || "No response data");
       return {
         success: false,
         error:
@@ -106,7 +110,6 @@ class GroupService {
       const {
         name,
         description,
-        maxMembers,
         inviteEmails = [],
         ...rest
       } = groupData;
@@ -128,15 +131,9 @@ class GroupService {
         throw new Error("Deskripsi tidak boleh lebih dari 500 karakter");
       }
 
-      const maxMembersNum = parseInt(maxMembers);
-      if (isNaN(maxMembersNum) || maxMembersNum < 2 || maxMembersNum > 5) {
-        throw new Error("Jumlah anggota harus antara 2-5");
-      }
-
       const payload = {
         name: name.trim(),
         description: description?.trim() || "",
-        maxMembers: maxMembersNum,
         inviteEmails: Array.isArray(inviteEmails) ? inviteEmails : [],
         ...rest,
       };
