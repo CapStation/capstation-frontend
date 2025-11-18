@@ -29,12 +29,17 @@ import CompetencyService from "@/services/CompetencyService";
 import Link from "next/link";
 import projectService from "@/services/ProjectService";
 import UserService from "@/services/UserService";
+import GroupService from "@/services/GroupService";
+import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 
 export default function NewProjectPage() {
   const router = useRouter();
   const { toast } = useToast();
+  const { user, loading: authLoading } = useAuth();
   const [loading, setLoading] = useState(false);
+  const [userGroup, setUserGroup] = useState(null);
+  const [loadingGroup, setLoadingGroup] = useState(true);
   const [dosenList, setDosenList] = useState([]);
   const [filteredDosenList, setFilteredDosenList] = useState([]);
   const [loadingDosen, setLoadingDosen] = useState(true);
@@ -66,8 +71,17 @@ export default function NewProjectPage() {
   const [compIndexToRemove, setCompIndexToRemove] = useState(null);
 
   useEffect(() => {
-    loadDosenList();
-  }, []);
+    if (!authLoading && !user) {
+      router.push('/login');
+    }
+  }, [user, authLoading, router]);
+
+  useEffect(() => {
+    if (user) {
+      loadUserGroup();
+      loadDosenList();
+    }
+  }, [user]);
 
   useEffect(() => {
     // Auto-generate academicYear when semester and year are selected
@@ -76,6 +90,34 @@ export default function NewProjectPage() {
       setFormData(prev => ({ ...prev, academicYear }));
     }
   }, [formData.semester, formData.year]);
+
+  const loadUserGroup = async () => {
+    setLoadingGroup(true);
+    try {
+      const result = await GroupService.getUserGroups();
+      if (result.success && result.data && result.data.length > 0) {
+        setUserGroup(result.data[0]); // Take the first group
+        console.log('👥 User group loaded:', result.data[0]);
+      } else {
+        toast({
+          title: "Tidak Ada Grup",
+          description: "Anda harus bergabung dengan grup terlebih dahulu untuk membuat proyek",
+          variant: "destructive",
+        });
+        router.push('/groups');
+      }
+    } catch (error) {
+      console.error('Error loading user group:', error);
+      toast({
+        title: "Error",
+        description: "Gagal memuat informasi grup. Pastikan Anda sudah bergabung dengan grup.",
+        variant: "destructive",
+      });
+      router.push('/groups');
+    } finally {
+      setLoadingGroup(false);
+    }
+  };
 
   const loadDosenList = async () => {
     setLoadingDosen(true);
@@ -233,16 +275,35 @@ export default function NewProjectPage() {
       return;
     }
 
+    console.log('🔍 Debug - userGroup:', userGroup);
+    console.log('🔍 Debug - userGroup._id:', userGroup?._id);
+
+    // Check if user has group
+    if (!userGroup) {
+      toast({
+        title: "Tidak Ada Grup",
+        description: "Anda harus bergabung dengan grup terlebih dahulu",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setLoading(true);
     try {
       // Prepare data to send
       const submitData = {
         ...formData,
+        group: userGroup._id, // Add group ID (backend expects 'group' not 'groupId')
         academicYear: formData.academicYear || undefined, // Only send if filled
         competencies: projectCompetencies ? projectCompetencies.map(c => c._id || c.id || c) : [],
       };
       
+      console.log('📤 Creating project with data:', JSON.stringify(submitData, null, 2));
+      console.log('🔍 submitData.group specifically:', submitData.group);
+      
       const result = await projectService.createProject(submitData);
+      
+      console.log('📥 Create project result:', JSON.stringify(result, null, 2));
       
       if (result.success) {
         toast({
@@ -268,6 +329,33 @@ export default function NewProjectPage() {
       setLoading(false);
     }
   };
+
+  if (authLoading || loadingGroup) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-neutral-50 via-white to-neutral-50">
+        <Navbar />
+        <div className="container mx-auto px-4 py-8">
+          <div className="max-w-3xl mx-auto">
+            <div className="h-10 w-32 bg-neutral-200 rounded animate-pulse mb-6" />
+            <div className="h-8 w-64 bg-neutral-200 rounded animate-pulse mb-2" />
+            <div className="h-5 w-96 bg-neutral-200 rounded animate-pulse mb-8" />
+            
+            <div className="bg-white rounded-lg shadow-sm p-6">
+              <div className="h-6 w-48 bg-neutral-200 rounded animate-pulse mb-4" />
+              <div className="space-y-4">
+                {[...Array(4)].map((_, i) => (
+                  <div key={i} className="space-y-2">
+                    <div className="h-4 w-24 bg-neutral-200 rounded animate-pulse" />
+                    <div className="h-10 w-full bg-neutral-200 rounded animate-pulse" />
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-neutral-50 via-white to-neutral-50">

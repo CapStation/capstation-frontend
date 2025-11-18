@@ -34,8 +34,7 @@ const GroupListPage = () => {
 
   useEffect(() => {
     if (!authLoading && !user) {
-      router.replace('/login');
-      return;
+      router.push('/login');
     }
   }, [user, authLoading, router]);
 
@@ -112,6 +111,39 @@ const GroupListPage = () => {
     return null;
   }
 
+  if (loading && allGroups.length === 0) {
+    return (
+      <div className="min-h-screen bg-neutral-100">
+        <Navbar />
+        <div className="bg-gradient-to-r from-[#FF8730] to-[#FFB464] px-4">
+          <div className="container mx-auto px-12 py-12">
+            <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+              <div>
+                <div className="h-12 w-64 bg-white/30 rounded animate-pulse mb-3" />
+                <div className="h-5 w-80 bg-white/20 rounded animate-pulse" />
+              </div>
+              <div className="flex gap-2">
+                <div className="h-10 w-32 bg-white/30 rounded animate-pulse" />
+                <div className="h-10 w-40 bg-white/30 rounded animate-pulse" />
+              </div>
+            </div>
+          </div>
+        </div>
+        <div className="container mx-auto px-12 py-8">
+          <div className="mb-6">
+            <div className="h-10 w-full max-w-md bg-neutral-200 rounded animate-pulse" />
+          </div>
+          <div className="h-7 w-48 bg-neutral-200 rounded animate-pulse mb-4" />
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {[...Array(6)].map((_, index) => (
+              <GroupCardSkeleton key={index} />
+            ))}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-neutral-100">
       <Navbar />
@@ -175,66 +207,49 @@ const GroupListPage = () => {
         </div>
 
         {/* Main Content */}
-        <div>
-          <h2 className="text-2xl font-bold text-neutral-900 mb-6">
-            {loading ? (
-              <span className="inline-block h-7 w-48 bg-neutral-200 rounded animate-pulse" />
-            ) : (
-              `Semua Grup (${filteredGroups.length})`
-            )}
-          </h2>
-          
-          {loading && allGroups.length === 0 ? (
+        {loading ? (
+          <div>
+            <div className="h-7 w-48 bg-neutral-200 rounded animate-pulse mb-4" />
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {[...Array(6)].map((_, index) => (
                 <GroupCardSkeleton key={index} />
               ))}
             </div>
-          ) : filteredGroups.length === 0 ? (
-            <Card className="border-neutral-200 bg-white text-center py-12">
-              <CardContent>
-                <p className="text-neutral-600 mb-4">
-                  {searchTerm ? 'Tidak ada grup yang cocok dengan pencarian' : 'Belum ada grup tersedia'}
+          </div>
+        ) : filteredGroups.length === 0 ? (
+          <Card className="border-neutral-200 bg-white text-center py-12">
+            <CardContent>
+              <p className="text-neutral-600 mb-4">
+                {searchTerm ? 'Tidak ada grup yang cocok dengan pencarian' : 'Belum ada grup tersedia'}
+              </p>
+              {!userHasGroup && (
+                <Button
+                  onClick={() => router.push('/groups/create')}
+                  className="bg-primary hover:bg-primary-dark text-white font-semibold"
+                >
+                  <Plus className="w-5 h-5 mr-2" />
+                  Buat Grup Pertama
+                </Button>
+              )}
+              {userHasGroup && (
+                <p className="text-sm text-neutral-500">
+                  Anda sudah memiliki grup. Satu pengguna hanya dapat memiliki satu grup.
                 </p>
-                {!userHasGroup && (
-                  <Button
-                    onClick={() => router.push('/groups/create')}
-                    className="bg-primary hover:bg-primary-dark text-white font-semibold"
-                  >
-                    <Plus className="w-5 h-5 mr-2" />
-                    Buat Grup Pertama
-                  </Button>
-                )}
-                {userHasGroup && (
-                  <p className="text-sm text-neutral-500">
-                    Anda sudah memiliki grup. Satu pengguna hanya dapat memiliki satu grup.
-                  </p>
-                )}
-              </CardContent>
-            </Card>
-          ) : (
+              )}
+            </CardContent>
+          </Card>
+        ) : (
           <div>
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-xl font-semibold text-neutral-900">
-                {loading ? (
-                  <span className="inline-block h-6 w-32 bg-neutral-200 rounded animate-pulse" />
-                ) : (
-                  `${filteredGroups.length} Grup Tersedia`
-                )}
+                {filteredGroups.length} Grup Tersedia
               </h2>
-              {!loading && (
-                <p className="text-sm text-neutral-600">
-                  Halaman {currentPage} dari {totalPages}
-                </p>
-              )}
+              <p className="text-sm text-neutral-600">
+                Halaman {currentPage} dari {totalPages}
+              </p>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
-              {loading ? (
-                [...Array(itemsPerPage)].map((_, index) => (
-                  <GroupCardSkeleton key={index} />
-                ))
-              ) : (
-                currentGroups.map((group) => {
+              {currentGroups.map((group) => {
                 // User ID bisa berupa user.id atau user._id
                 const userId = (user?.id || user?._id)?.toString();
                 
@@ -275,11 +290,11 @@ const GroupListPage = () => {
                     }
                   />
                 );
-              }))}
+              })}
             </div>
 
             {/* Pagination */}
-            {!loading && totalPages > 1 && (
+            {totalPages > 1 && (
               <Pagination className="mb-8">
                 <PaginationContent>
                   <PaginationItem>
@@ -356,8 +371,7 @@ const GroupListPage = () => {
               </Pagination>
             )}
           </div>
-          )}
-        </div>
+        )}
       </div>
     </div>
   );

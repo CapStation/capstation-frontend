@@ -16,10 +16,8 @@ export const useAuth = () => {
 };
 
 export const AuthProvider = ({ children }) => {
-  // Initialize with check if token exists to avoid flash
-  const hasToken = typeof window !== 'undefined' && !!apiClient.getAuthToken();
   const [user, setUser] = useState(null);
-  const [loading, setLoading] = useState(hasToken); // Only show loading if token exists
+  const [loading, setLoading] = useState(true);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
 
   // Check if user is logged in on mount
@@ -30,15 +28,11 @@ export const AuthProvider = ({ children }) => {
   const checkAuth = async () => {
     try {
       const token = apiClient.getAuthToken();
-      if (!token) {
-        // No token, set loading to false immediately
-        setLoading(false);
-        return;
+      if (token) {
+        const userData = await apiClient.get(endpoints.users.profile);
+        setUser(userData.user || userData);
+        setIsAuthenticated(true);
       }
-      
-      const userData = await apiClient.get(endpoints.users.profile);
-      setUser(userData.user || userData);
-      setIsAuthenticated(true);
     } catch (error) {
       // Only log error if it's not a simple "no token" case
       if (apiClient.getAuthToken()) {
