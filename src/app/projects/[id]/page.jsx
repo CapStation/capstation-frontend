@@ -1457,7 +1457,7 @@ export default function ProjectDetailPage() {
               )}
               {/* Tombol Aksi Proyek - hanya untuk owner, dipindah ke bawah dokumen */}
               {user && project.owner && 
-               (typeof project.owner === 'string' ? project.owner === user.id : project.owner._id === user.id) && (
+               (typeof project.owner === 'string' ? project.owner === user.id : (project.owner._id === user.id || project.owner.id === user.id)) && (
                 <div className="pt-6 border-t border-neutral-200 mt-8 space-y-2">
                   {/* Tombol Selesaikan Proyek - untuk project active */}
                   {project.status === 'active' && (
