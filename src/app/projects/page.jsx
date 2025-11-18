@@ -192,7 +192,7 @@ export default function ProjectsPage() {
     <div className="min-h-screen bg-gradient-to-br from-neutral-50 via-white to-neutral-50">
       <Navbar />
 
-      <div className="max-w-screen-xl mx-auto px-4 sm:px-6 md:px-10 py-5">
+      <div className="container mx-auto px-20 py-5">
         {/* Header */}
         <div className="flex flex-col md:flex-row items-start md:items-center justify-between mb-8 gap-4">
           <div>
@@ -336,7 +336,7 @@ export default function ProjectsPage() {
                         Edit Proyek
                       </Button>
                     </Link>
-                    <Link href={`/projects/${myProject._id}/documents`} className="w-full md:flex-1">
+                    <Link href={`/groups/${typeof myProject.group === 'string' ? myProject.group : myProject.group?._id}`} className="flex-1">
                       <Button variant="outline" className="w-full">
                         Detail Grup
                       </Button>
@@ -345,7 +345,7 @@ export default function ProjectsPage() {
                 ) : myProject.status === 'dapat_dilanjutkan' ? (
                   // Tombol untuk project yang dapat dilanjutkan
                   <>
-                    <Link href={`/projects/${myProject._id}/documents`} className="w-full md:flex-1">
+                    <Link href={`/groups/${typeof myProject.group === 'string' ? myProject.group : myProject.group?._id}`} className="flex-1">
                       <Button variant="outline" className="w-full">
                         Lihat Grup
                       </Button>
@@ -358,7 +358,7 @@ export default function ProjectsPage() {
                   </>
                 ) : (
                   // Tombol untuk project yang sudah selesai
-                  <Link href={`/projects/${myProject._id}/documents`} className="w-full">
+                  <Link href={`/groups/${typeof myProject.group === 'string' ? myProject.group : myProject.group?._id}`} className="w-full">
                     <Button variant="outline" className="w-full">
                       Lihat Grup
                     </Button>

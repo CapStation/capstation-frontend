@@ -561,106 +561,100 @@ export default function DocumentsAdminPage() {
       </div>
 
       {/* Filter Section */}
-          <Card className="mb-6">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Filter className="h-5 w-5" />
-                Filter & Pencarian
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              {/* Search Bar */}
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-neutral-400" />
-                <Input
-                  placeholder="Cari berdasarkan nama file, proyek, atau mahasiswa..."
-                  value={filters.search}
-                  onChange={(e) => handleFilterChange('search', e.target.value)}
-                  className="pl-10"
-                />
+      <Card className="mb-6 border-neutral-200">
+        <CardContent className="pt-6">
+          <div className="space-y-4">
+            {/* Search Bar */}
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-neutral-400" />
+              <Input
+                placeholder="Cari berdasarkan nama file, proyek, atau mahasiswa..."
+                value={filters.search}
+                onChange={(e) => handleFilterChange('search', e.target.value)}
+                className="pl-10 border-neutral-300"
+              />
+            </div>
+
+            {/* Filter Row */}
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+              {/* Document Type Filter */}
+              <div className="space-y-2">
+                <Label>Tipe Dokumen</Label>
+                <Select
+                  value={filters.documentType}
+                  onValueChange={(value) => handleFilterChange('documentType', value)}
+                >
+                  <SelectTrigger className="border-neutral-300">
+                    <SelectValue placeholder="Pilih tipe" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {documentTypeOptions.map(option => (
+                      <SelectItem key={option.value} value={option.value}>
+                        {option.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
 
-              {/* Filter Row */}
-              <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                {/* Document Type Filter */}
-                <div className="space-y-2">
-                  <Label>Tipe Dokumen</Label>
-                  <Select
-                    value={filters.documentType}
-                    onValueChange={(value) => handleFilterChange('documentType', value)}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Pilih tipe" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {documentTypeOptions.map(option => (
-                        <SelectItem key={option.value} value={option.value}>
-                          {option.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                {/* Capstone Category Filter */}
-                <div className="space-y-2">
-                  <Label>Kategori Capstone</Label>
-                  <Select
-                    value={filters.capstoneCategory}
-                    onValueChange={(value) => handleFilterChange('capstoneCategory', value)}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Pilih kategori" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {capstoneCategoryOptions.map(option => (
-                        <SelectItem key={option.value} value={option.value}>
-                          {option.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                {/* Sort Order */}
-                <div className="space-y-2">
-                  <Label>Urutkan</Label>
-                  <Select
-                    value={filters.sortOrder}
-                    onValueChange={(value) => handleFilterChange('sortOrder', value)}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Urutkan" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="newest">Terbaru</SelectItem>
-                      <SelectItem value="oldest">Terlama</SelectItem>
-                      <SelectItem value="alphabetical">A-Z</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                {/* Reset Filters Button */}
-                <div className="space-y-2">
-                  <Label>&nbsp;</Label>
-                  {hasActiveFilters ? (
-                    <Button
-                      variant="outline"
-                      onClick={resetFilters}
-                      className="w-full"
-                    >
-                      <RotateCcw className="h-4 w-4 mr-2" />
-                      Reset Filter
-                    </Button>
-                  ) : (
-                    <div className="h-10" />
-                  )}
-                </div>
+              {/* Capstone Category Filter */}
+              <div className="space-y-2">
+                <Label>Kategori Capstone</Label>
+                <Select
+                  value={filters.capstoneCategory}
+                  onValueChange={(value) => handleFilterChange('capstoneCategory', value)}
+                >
+                  <SelectTrigger className="border-neutral-300">
+                    <SelectValue placeholder="Pilih kategori" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {capstoneCategoryOptions.map(option => (
+                      <SelectItem key={option.value} value={option.value}>
+                        {option.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
 
+              {/* Sort Order */}
+              <div className="space-y-2">
+                <Label>Urutkan</Label>
+                <Select
+                  value={filters.sortOrder}
+                  onValueChange={(value) => handleFilterChange('sortOrder', value)}
+                >
+                  <SelectTrigger className="border-neutral-300">
+                    <SelectValue placeholder="Urutkan" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="newest">Terbaru</SelectItem>
+                    <SelectItem value="oldest">Terlama</SelectItem>
+                    <SelectItem value="alphabetical">A-Z</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
 
-            </CardContent>
-          </Card>
+              {/* Reset Filters Button */}
+              <div className="space-y-2">
+                <Label>&nbsp;</Label>
+                {hasActiveFilters ? (
+                  <Button
+                    variant="outline"
+                    onClick={resetFilters}
+                    className="w-full border-neutral-300"
+                  >
+                    <RotateCcw className="h-4 w-4 mr-2" />
+                    Reset Filter
+                  </Button>
+                ) : (
+                  <div className="h-10" />
+                )}
+              </div>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
 
           {/* Documents Table */}
           <Card>

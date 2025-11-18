@@ -458,10 +458,6 @@ export default function AdminUsersPage() {
             <Badge variant="secondary" className="text-sm px-3 py-1 font-medium">
               {allUsersCount} Pengguna
             </Badge>
-            <Button onClick={() => router.push('/admin/users/new')}>
-              <Plus className="h-4 w-4 mr-2" />
-              Tambah Pengguna
-            </Button>
             <Button variant="outline" size="sm" onClick={handleExport}>
               <Download className="h-4 w-4 mr-2" />
               Ekspor
