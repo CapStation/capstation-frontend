@@ -25,7 +25,8 @@ export default function ProjectsPage() {
 
   useEffect(() => {
     if (!authLoading && !user) {
-      router.push("/login");
+      router.replace("/login");
+      return;
     }
   }, [user, authLoading, router]);
 
@@ -291,7 +292,7 @@ export default function ProjectsPage() {
         {/* Main Project Card - Large and Detailed */}
         {myProject ? (
           <Card className="mb-8 border-2 border-neutral-200 hover:shadow-lg transition-all duration-300">
-            <CardHeader className="bg-gradient-to-br from-secondary to-accent pb-6">
+            <CardHeader className="bg-gradient-to-br from-secondary to-[#faa255] pb-6">
                 <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
                   <div className="flex-1">
                   <div className="flex items-center gap-3 mb-3">
@@ -317,7 +318,7 @@ export default function ProjectsPage() {
                 </div>
                 <div className="mt-3 md:mt-0">
                   <Link href={`/projects/${myProject._id}`}>
-                    <Button className="bg-white hover:bg-neutral-50 text-black shadow-sm transition-all">
+                    <Button className="bg-[#fff1c9] hover:bg-secondary text-black shadow-sm transition-all">
                       Lihat Detail
                     </Button>
                   </Link>
