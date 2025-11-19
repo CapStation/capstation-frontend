@@ -40,24 +40,34 @@ class RequestService {
       };
     } catch (error) {
       console.error("RequestService.createRequest error:", error);
-      console.error("Error response:", error.response);
-      console.error("Error status:", error.response?.status);
-      console.error("Error data:", error.response?.data);
+      console.error("Error type:", typeof error);
+      console.error("Error keys:", Object.keys(error));
+      console.error("Error details:", {
+        status: error.status,
+        message: error.message,
+        data: error.data
+      });
+      console.error("Full error data:", JSON.stringify(error.data, null, 2));
+      console.error("Full error object:", JSON.stringify(error, null, 2));
 
-      const data = error.response?.data;
-      console.log("createRequest backend error data:", data);
-
+      // Get detailed error message from backend response
       let message = "Gagal membuat request capstone";
 
-      if (data?.error) {
-        message = data.error;
-      } else if (data?.message) {
-        message = data.message;
-      } else if (typeof data === "string") {
-        message = data;
-      } else if (data) {
+      if (error.data?.error) {
+        message = error.data.error;
+      } else if (error.data?.message) {
+        message = error.data.message;
+        // Append errors array if exists
+        if (error.data?.errors && Array.isArray(error.data.errors) && error.data.errors.length > 0) {
+          message += ":\n" + error.data.errors.map(err => `• ${err}`).join('\n');
+        }
+      } else if (error.message) {
+        message = error.message;
+      } else if (typeof error.data === "string") {
+        message = error.data;
+      } else if (error.data) {
         try {
-          message = JSON.stringify(data);
+          message = JSON.stringify(error.data);
         } catch {
           // biarkan default
         }
@@ -66,6 +76,7 @@ class RequestService {
       return {
         success: false,
         error: message,
+        errors: error.data?.errors || [],
       };
     }
   }

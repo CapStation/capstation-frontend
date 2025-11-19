@@ -498,41 +498,6 @@ export default function ProjectDetailPage() {
     }
   };
 
-  const handleFileUpload = async (e) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    setUploading(true);
-    const formData = new FormData();
-    formData.append("document", file);
-
-    try {
-      const result = await projectService.uploadDocument(params.id, formData);
-      if (result.success) {
-        toast({
-          title: "Berhasil",
-          description: "Dokumen berhasil diupload",
-        });
-        loadDocuments();
-      } else {
-        toast({
-          title: "Error",
-          description: result.error || "Gagal mengupload dokumen",
-          variant: "destructive",
-        });
-      }
-    } catch (error) {
-      console.error("Error uploading document:", error);
-      toast({
-        title: "Error",
-        description: "Terjadi kesalahan saat mengupload dokumen",
-        variant: "destructive",
-      });
-    } finally {
-      setUploading(false);
-    }
-  };
-
   const handleDeleteDocument = async () => {
     if (!docToDelete) return;
     
@@ -821,6 +786,30 @@ export default function ProjectDetailPage() {
         formData.append('file', file);
       });
 
+      // Debug log - show all FormData entries
+      console.log('📤 Upload form data:');
+      console.log('  title:', uploadForm.title);
+      console.log('  description:', uploadForm.description);
+      console.log('  project:', params.id);
+      console.log('  documentType:', uploadForm.documentType);
+      console.log('  capstoneCategory:', docTypeOption?.capstoneCategory || 'general');
+      console.log('  filesCount:', uploadForm.files.length);
+      console.log('  files:', Array.from(uploadForm.files).map(f => ({ 
+        name: f.name, 
+        size: f.size, 
+        type: f.type 
+      })));
+      
+      // Log FormData entries
+      console.log('📋 FormData entries:');
+      for (let pair of formData.entries()) {
+        if (pair[1] instanceof File) {
+          console.log(`  ${pair[0]}:`, pair[1].name, `(${pair[1].size} bytes)`);
+        } else {
+          console.log(`  ${pair[0]}:`, pair[1]);
+        }
+      }
+
       const result = await projectService.uploadDocument(params.id, formData);
 
       if (result.success) {
@@ -842,9 +831,19 @@ export default function ProjectDetailPage() {
         // Reload documents
         await loadDocuments();
       } else {
+        // Show detailed error information
+        console.error('Upload failed with errors:', result.errors);
+        
+        let errorDescription = result.message || "Failed to upload documents";
+        if (result.errors && result.errors.length > 0) {
+          errorDescription += "\n\nDetails:\n" + result.errors.map(err => 
+            `• ${err.file}: ${err.error}`
+          ).join('\n');
+        }
+        
         toast({
           title: "Error",
-          description: result.message || "Failed to upload documents",
+          description: errorDescription,
           variant: "destructive",
         });
       }
