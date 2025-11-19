@@ -199,7 +199,21 @@ class ProjectService {
       return { success: true, data: response };
     } catch (error) {
       console.error("ProjectService.uploadDocument error:", error);
-      return { success: false, error: error.message };
+      console.error("Error details:", {
+        status: error.status,
+        message: error.message,
+        data: error.data,
+        errors: error.data?.errors
+      });
+      // Get detailed error message from backend response
+      const errorMessage = error.data?.message || error.message || "Upload failed";
+      const errors = error.data?.errors || [];
+      return { 
+        success: false, 
+        error: errorMessage, 
+        message: errorMessage,
+        errors: errors 
+      };
     }
   }
 
