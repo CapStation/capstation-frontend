@@ -31,9 +31,8 @@ export default function BrowseCapstonesPage() {
   const [allProjects, setAllProjects] = useState([]);
   const [filteredProjects, setFilteredProjects] = useState([]);
   const [loading, setLoading] = useState(true);
-  
-  
-  const [activeTab, setActiveTab] = useState("all"); 
+
+  const [activeTab, setActiveTab] = useState("all");
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("all");
   const [selectedStatus, setSelectedStatus] = useState("all");
@@ -41,17 +40,14 @@ export default function BrowseCapstonesPage() {
   const [sortBy, setSortBy] = useState("newest");
   const [showFilters, setShowFilters] = useState(false);
 
-  
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 9;
   useEffect(() => {
-  
-  const savedFilter = localStorage.getItem('browseFilter');
+    const savedFilter = localStorage.getItem("browseFilter");
     if (savedFilter) {
       try {
         const filter = JSON.parse(savedFilter);
-        
-        
+
         if (filter.status) {
           setSelectedStatus(filter.status);
         }
@@ -64,45 +60,56 @@ export default function BrowseCapstonesPage() {
         if (filter.tab) {
           setActiveTab(filter.tab);
         }
-        
-        
-        localStorage.removeItem('browseFilter');
+
+        localStorage.removeItem("browseFilter");
       } catch (error) {
-        console.error('Failed to parse saved filter:', error);
-        localStorage.removeItem('browseFilter');
+        console.error("Failed to parse saved filter:", error);
+        localStorage.removeItem("browseFilter");
       }
     }
-  }, []); 
+  }, []);
   useEffect(() => {
     loadProjects();
   }, []);
 
   useEffect(() => {
     applyFilters();
-  }, [allProjects, activeTab, searchQuery, selectedCategory, selectedStatus, selectedAcademicYear, sortBy]);
+  }, [
+    allProjects,
+    activeTab,
+    searchQuery,
+    selectedCategory,
+    selectedStatus,
+    selectedAcademicYear,
+    sortBy,
+  ]);
 
   const loadProjects = async () => {
     setLoading(true);
     try {
       const result = await ProjectService.getAllProjects();
-      
+
       if (result.success && Array.isArray(result.data)) {
-        
-        const filteredData = result.data.filter(p => 
-          p.status === 'active' || p.status === 'selesai' || p.status === 'dapat_dilanjutkan'
+        const filteredData = result.data.filter(
+          (p) =>
+            p.status === "active" ||
+            p.status === "selesai" ||
+            p.status === "dapat_dilanjutkan"
         );
-        
+
         // Debug: Log tema values from real data
-        console.log('📊 Real projects tema values:', filteredData.map(p => ({ title: p.title, tema: p.tema })));
-        
+        console.log(
+          "📊 Real projects tema values:",
+          filteredData.map((p) => ({ title: p.title, tema: p.tema }))
+        );
+
         setAllProjects(filteredData);
       } else {
-        
         setAllProjects(generateMockProjects(30));
       }
     } catch (error) {
       console.error("Failed to load projects:", error);
-      
+
       setAllProjects(generateMockProjects(30));
     } finally {
       setLoading(false);
@@ -111,118 +118,102 @@ export default function BrowseCapstonesPage() {
 
   const applyFilters = () => {
     let result = [...allProjects];
-    
+
     // Debug: Log all tema values before filtering
-    console.log('🔍 All projects tema before filter:', result.map(p => p.tema));
-    console.log('🎯 Selected category filter:', selectedCategory);
+    console.log(
+      "🔍 All projects tema before filter:",
+      result.map((p) => p.tema)
+    );
+    console.log("🎯 Selected category filter:", selectedCategory);
 
-
-    
     if (activeTab === "new") {
-      
       const twoWeeksAgo = new Date();
       twoWeeksAgo.setDate(twoWeeksAgo.getDate() - 14);
-      
-      result = result.filter(p => {
+
+      result = result.filter((p) => {
         const createdDate = new Date(p.createdAt);
         return createdDate >= twoWeeksAgo;
       });
-      
-      
+
       result.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
     } else if (activeTab === "available") {
-      result = result.filter(p => 
-        p.status === 'dapat_dilanjutkan'
-      );
+      result = result.filter((p) => p.status === "dapat_dilanjutkan");
     }
 
-    
     if (searchQuery.trim()) {
       const query = searchQuery.toLowerCase();
-      result = result.filter(p => {
-        
+      result = result.filter((p) => {
         const titleMatch = p.title?.toLowerCase().includes(query);
-        
-        
+
         const keywordsMatch = p.keywords?.toLowerCase().includes(query);
-        
-        
+
         let supervisorMatch = false;
         if (p.supervisor) {
-          if (typeof p.supervisor === 'object' && p.supervisor !== null) {
-            
-            supervisorMatch = 
+          if (typeof p.supervisor === "object" && p.supervisor !== null) {
+            supervisorMatch =
               p.supervisor.fullName?.toLowerCase().includes(query) ||
               p.supervisor.name?.toLowerCase().includes(query) ||
               p.supervisor.username?.toLowerCase().includes(query) ||
               p.supervisor.email?.toLowerCase().includes(query);
-          } else if (typeof p.supervisor === 'string') {
-            
+          } else if (typeof p.supervisor === "string") {
             supervisorMatch = p.supervisor.toLowerCase().includes(query);
           }
         }
-        
-        
+
         let ownerMatch = false;
         if (p.owner) {
-          if (typeof p.owner === 'object' && p.owner !== null) {
-            
-            ownerMatch = 
+          if (typeof p.owner === "object" && p.owner !== null) {
+            ownerMatch =
               p.owner.fullName?.toLowerCase().includes(query) ||
               p.owner.name?.toLowerCase().includes(query) ||
               p.owner.username?.toLowerCase().includes(query) ||
               p.owner.email?.toLowerCase().includes(query);
-          } else if (typeof p.owner === 'string') {
-            
+          } else if (typeof p.owner === "string") {
             ownerMatch = p.owner.toLowerCase().includes(query);
           }
         }
-        
+
         return titleMatch || keywordsMatch || supervisorMatch || ownerMatch;
       });
     }
 
-    
     // Filter by category/tema
     if (selectedCategory && selectedCategory !== "all") {
-      result = result.filter(p => {
+      result = result.filter((p) => {
         if (!p.tema) return false;
-        
+
         // Normalize both values: remove spaces, underscores, dashes, convert to lowercase
         const normalizeString = (str) => {
-          return str.toLowerCase().replace(/[\s_-]/g, '');
+          return str.toLowerCase().replace(/[\s_-]/g, "");
         };
-        
+
         const projectTema = normalizeString(p.tema);
         const filterCategory = normalizeString(selectedCategory);
-        
+
         const match = projectTema === filterCategory;
-        
-        console.log('Filtering tema:', { 
-          original: p.tema, 
-          normalized: projectTema, 
+
+        console.log("Filtering tema:", {
+          original: p.tema,
+          normalized: projectTema,
           filter: selectedCategory,
           filterNormalized: filterCategory,
-          match 
+          match,
         });
-        
+
         return match;
       });
-      
-      console.log('🎯 Filtered result count:', result.length);
+
+      console.log("🎯 Filtered result count:", result.length);
     }
 
-    
     if (selectedStatus && selectedStatus !== "all") {
-      result = result.filter(p => p.status === selectedStatus);
+      result = result.filter((p) => p.status === selectedStatus);
     }
 
-    
     if (selectedAcademicYear && selectedAcademicYear !== "all") {
-      result = result.filter(p => p.academicYear === selectedAcademicYear);
+      result = result.filter((p) => p.academicYear === selectedAcademicYear);
     }
 
-    
     switch (sortBy) {
       case "newest":
         result.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
@@ -236,7 +227,7 @@ export default function BrowseCapstonesPage() {
     }
 
     setFilteredProjects(result);
-    setCurrentPage(1); 
+    setCurrentPage(1);
   };
 
   const clearFilters = () => {
@@ -249,9 +240,13 @@ export default function BrowseCapstonesPage() {
     setCurrentPage(1);
   };
 
-  const hasActiveFilters = searchQuery || selectedCategory !== "all" || selectedStatus !== "all" || selectedAcademicYear !== "all" || sortBy !== "newest";
+  const hasActiveFilters =
+    searchQuery ||
+    selectedCategory !== "all" ||
+    selectedStatus !== "all" ||
+    selectedAcademicYear !== "all" ||
+    sortBy !== "newest";
 
-  
   const totalPages = Math.ceil(filteredProjects.length / itemsPerPage);
   const startIndex = (currentPage - 1) * itemsPerPage;
   const endIndex = startIndex + itemsPerPage;
@@ -259,7 +254,7 @@ export default function BrowseCapstonesPage() {
 
   const goToPage = (page) => {
     setCurrentPage(page);
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
   const generateMockProjects = (count) => {
@@ -273,7 +268,12 @@ export default function BrowseCapstonesPage() {
     ];
 
     // Use dash format to match backend
-    const mockTemas = ["kesehatan", "smart-city", "pengelolaan-sampah", "transportasi-ramah-lingkungan"];
+    const mockTemas = [
+      "kesehatan",
+      "smart-city",
+      "pengelolaan-sampah",
+      "transportasi-ramah-lingkungan",
+    ];
     const statuses = ["active", "inactive", "selesai", "dapat_dilanjutkan"];
     const capstoneStatuses = ["new", "pending"];
 
@@ -281,10 +281,14 @@ export default function BrowseCapstonesPage() {
       _id: `browse-${i}`,
       title: titles[i % titles.length],
       author: { name: "John Doe" },
-      supervisor: { name: `Prof. Dr. Eng. Supervisor ${i % 5 + 1}` },
+      supervisor: { name: `Prof. Dr. Eng. Supervisor ${(i % 5) + 1}` },
       tema: mockTemas[i % mockTemas.length], // Use 'tema' field with dash format
       keywords: `IoT, ${mockTemas[i % mockTemas.length]}, Smart Systems`,
-      createdAt: new Date(2026 - (i % 2), Math.floor(Math.random() * 12), Math.floor(Math.random() * 28)).toISOString(),
+      createdAt: new Date(
+        2026 - (i % 2),
+        Math.floor(Math.random() * 12),
+        Math.floor(Math.random() * 28)
+      ).toISOString(),
       status: statuses[i % 2],
       capstoneStatus: capstoneStatuses[i % 3],
     }));
@@ -299,7 +303,9 @@ export default function BrowseCapstonesPage() {
         <div className="container mx-auto px-12 py-12">
           <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
             <div>
-              <h1 className="text-4xl md:text-5xl font-bold text-white">Jelajahi Capstone</h1>
+              <h1 className="text-4xl md:text-5xl font-bold text-white">
+                Jelajahi Capstone
+              </h1>
               <p className="mt-2 text-neutral-50">
                 Temukan proyek capstone yang sesuai dengan minat Anda
               </p>
@@ -309,7 +315,6 @@ export default function BrowseCapstonesPage() {
       </div>
 
       <div className="container mx-auto px-12 py-8">
-
         {/* Filter & Search Section */}
         <Card className="mb-8 p-6">
           <div className="space-y-4">
@@ -338,7 +343,11 @@ export default function BrowseCapstonesPage() {
             </div>
 
             {/* Filters */}
-            <div className={`grid grid-cols-1 lg:grid-cols-5 gap-4 ${showFilters ? 'block' : 'hidden lg:grid'}`}>
+            <div
+              className={`grid grid-cols-1 lg:grid-cols-5 gap-4 ${
+                showFilters ? "block" : "hidden lg:grid"
+              }`}
+            >
               {/* Tema Filter */}
               <div>
                 <label className="block text-sm font-medium text-neutral-700 mb-2">
@@ -355,8 +364,12 @@ export default function BrowseCapstonesPage() {
                     <SelectItem value="all">Semua Tema</SelectItem>
                     <SelectItem value="kesehatan">Kesehatan</SelectItem>
                     <SelectItem value="smart-city">Smart City</SelectItem>
-                    <SelectItem value="pengelolaan-sampah">Pengelolaan Sampah</SelectItem>
-                    <SelectItem value="transportasi-ramah-lingkungan">Transportasi Ramah Lingkungan</SelectItem>
+                    <SelectItem value="pengelolaan-sampah">
+                      Pengelolaan Sampah
+                    </SelectItem>
+                    <SelectItem value="transportasi-ramah-lingkungan">
+                      Transportasi Ramah Lingkungan
+                    </SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -377,7 +390,9 @@ export default function BrowseCapstonesPage() {
                     <SelectItem value="all">Semua Status</SelectItem>
                     <SelectItem value="active">Aktif</SelectItem>
                     <SelectItem value="selesai">Selesai</SelectItem>
-                    <SelectItem value="dapat_dilanjutkan">Dapat Dilanjutkan</SelectItem>
+                    <SelectItem value="dapat_dilanjutkan">
+                      Dapat Dilanjutkan
+                    </SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -409,10 +424,7 @@ export default function BrowseCapstonesPage() {
                 <label className="block text-sm font-medium text-neutral-700 mb-2">
                   Urutkan
                 </label>
-                <Select
-                  value={sortBy}
-                  onValueChange={setSortBy}
-                >
+                <Select value={sortBy} onValueChange={setSortBy}>
                   <SelectTrigger>
                     <SelectValue placeholder="Terbaru" />
                   </SelectTrigger>
@@ -443,10 +455,30 @@ export default function BrowseCapstonesPage() {
 
         {/* Tabs Navigation using shadcn Tabs */}
         <Tabs value={activeTab} onValueChange={setActiveTab} className="mb-6">
-          <TabsList className="grid w-full max-w-md grid-cols-3">
-            <TabsTrigger value="all">Semua Proyek</TabsTrigger>
-            <TabsTrigger value="new">Proyek Terbaru</TabsTrigger>
-            <TabsTrigger value="available">Proyek Tersedia</TabsTrigger>
+          <TabsList className="grid w-full max-w-md grid-cols-3 h-auto">
+            <TabsTrigger
+              value="all"
+              className="text-xs sm:text-sm py-2 px-2 sm:px-4 whitespace-normal sm:whitespace-nowrap"
+            >
+              <span className="block sm:inline">Semua</span>
+              <span className="hidden sm:inline"> Proyek</span>
+            </TabsTrigger>
+            <TabsTrigger
+              value="new"
+              className="text-xs sm:text-sm py-2 px-2 sm:px-4 whitespace-normal sm:whitespace-nowrap"
+            >
+              <span className="block sm:inline">Proyek</span>
+              <span className="hidden sm:inline"> </span>
+              <span className="block sm:inline">Terbaru</span>
+            </TabsTrigger>
+            <TabsTrigger
+              value="available"
+              className="text-xs sm:text-sm py-2 px-2 sm:px-4 whitespace-normal sm:whitespace-nowrap"
+            >
+              <span className="block sm:inline">Proyek</span>
+              <span className="hidden sm:inline"> </span>
+              <span className="block sm:inline">Tersedia</span>
+            </TabsTrigger>
           </TabsList>
         </Tabs>
 
@@ -456,7 +488,10 @@ export default function BrowseCapstonesPage() {
             <div className="h-4 w-48 bg-neutral-200 rounded animate-pulse mb-4" />
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
               {[1, 2, 3, 4, 5, 6].map((i) => (
-                <div key={i} className="bg-white rounded-lg shadow-sm p-6 space-y-4">
+                <div
+                  key={i}
+                  className="bg-white rounded-lg shadow-sm p-6 space-y-4"
+                >
                   <div className="h-6 w-3/4 bg-neutral-200 rounded animate-pulse" />
                   <div className="space-y-2">
                     <div className="h-4 w-full bg-neutral-200 rounded animate-pulse" />
@@ -477,7 +512,13 @@ export default function BrowseCapstonesPage() {
             {/* Results Count */}
             <div className="mb-4 flex justify-between items-center">
               <p className="text-sm text-neutral-600">
-                Menampilkan <span className="font-semibold">{startIndex + 1}-{Math.min(endIndex, filteredProjects.length)}</span> dari <span className="font-semibold">{filteredProjects.length}</span> proyek
+                Menampilkan{" "}
+                <span className="font-semibold">
+                  {startIndex + 1}-{Math.min(endIndex, filteredProjects.length)}
+                </span>{" "}
+                dari{" "}
+                <span className="font-semibold">{filteredProjects.length}</span>{" "}
+                proyek
               </p>
               {totalPages > 1 && (
                 <p className="text-sm text-neutral-600">
@@ -492,16 +533,14 @@ export default function BrowseCapstonesPage() {
                 <div className="max-w-md mx-auto">
                   <Search className="h-16 w-16 text-neutral-300 mx-auto mb-4" />
                   <h3 className="text-lg font-semibold text-neutral-900 mb-2">
-                    {activeTab === "new" 
+                    {activeTab === "new"
                       ? "Tidak ada proyek terbaru untuk saat ini"
-                      : "Tidak ada proyek yang ditemukan"
-                    }
+                      : "Tidak ada proyek yang ditemukan"}
                   </h3>
                   <p className="text-neutral-500 mb-4">
                     {activeTab === "new"
                       ? "Belum ada proyek yang dibuat dalam 2 minggu terakhir"
-                      : "Coba ubah filter atau kata kunci pencarian Anda"
-                    }
+                      : "Coba ubah filter atau kata kunci pencarian Anda"}
                   </p>
                   {hasActiveFilters && activeTab !== "new" && (
                     <Button onClick={clearFilters} variant="outline">
@@ -525,73 +564,98 @@ export default function BrowseCapstonesPage() {
                   <Pagination className="mb-8">
                     <PaginationContent>
                       <PaginationItem>
-                        <PaginationPrevious 
-                          onClick={() => currentPage > 1 && goToPage(currentPage - 1)}
-                          className={currentPage === 1 ? "pointer-events-none opacity-50" : "cursor-pointer"}
+                        <PaginationPrevious
+                          onClick={() =>
+                            currentPage > 1 && goToPage(currentPage - 1)
+                          }
+                          className={
+                            currentPage === 1
+                              ? "pointer-events-none opacity-50"
+                              : "cursor-pointer"
+                          }
                         />
                       </PaginationItem>
-                      
+
                       {/* First page */}
                       {currentPage > 2 && (
                         <PaginationItem>
-                          <PaginationLink onClick={() => goToPage(1)} className="cursor-pointer">
+                          <PaginationLink
+                            onClick={() => goToPage(1)}
+                            className="cursor-pointer"
+                          >
                             1
                           </PaginationLink>
                         </PaginationItem>
                       )}
-                      
+
                       {/* Ellipsis before */}
                       {currentPage > 3 && (
                         <PaginationItem>
                           <PaginationEllipsis />
                         </PaginationItem>
                       )}
-                      
+
                       {/* Previous page */}
                       {currentPage > 1 && (
                         <PaginationItem>
-                          <PaginationLink onClick={() => goToPage(currentPage - 1)} className="cursor-pointer">
+                          <PaginationLink
+                            onClick={() => goToPage(currentPage - 1)}
+                            className="cursor-pointer"
+                          >
                             {currentPage - 1}
                           </PaginationLink>
                         </PaginationItem>
                       )}
-                      
+
                       {/* Current page */}
                       <PaginationItem>
                         <PaginationLink isActive className="cursor-default">
                           {currentPage}
                         </PaginationLink>
                       </PaginationItem>
-                      
+
                       {/* Next page */}
                       {currentPage < totalPages && (
                         <PaginationItem>
-                          <PaginationLink onClick={() => goToPage(currentPage + 1)} className="cursor-pointer">
+                          <PaginationLink
+                            onClick={() => goToPage(currentPage + 1)}
+                            className="cursor-pointer"
+                          >
                             {currentPage + 1}
                           </PaginationLink>
                         </PaginationItem>
                       )}
-                      
+
                       {/* Ellipsis after */}
                       {currentPage < totalPages - 2 && (
                         <PaginationItem>
                           <PaginationEllipsis />
                         </PaginationItem>
                       )}
-                      
+
                       {/* Last page */}
                       {currentPage < totalPages - 1 && (
                         <PaginationItem>
-                          <PaginationLink onClick={() => goToPage(totalPages)} className="cursor-pointer">
+                          <PaginationLink
+                            onClick={() => goToPage(totalPages)}
+                            className="cursor-pointer"
+                          >
                             {totalPages}
                           </PaginationLink>
                         </PaginationItem>
                       )}
-                      
+
                       <PaginationItem>
-                        <PaginationNext 
-                          onClick={() => currentPage < totalPages && goToPage(currentPage + 1)}
-                          className={currentPage === totalPages ? "pointer-events-none opacity-50" : "cursor-pointer"}
+                        <PaginationNext
+                          onClick={() =>
+                            currentPage < totalPages &&
+                            goToPage(currentPage + 1)
+                          }
+                          className={
+                            currentPage === totalPages
+                              ? "pointer-events-none opacity-50"
+                              : "cursor-pointer"
+                          }
                         />
                       </PaginationItem>
                     </PaginationContent>
@@ -605,5 +669,3 @@ export default function BrowseCapstonesPage() {
     </div>
   );
 }
-
-

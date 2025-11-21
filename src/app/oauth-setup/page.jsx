@@ -84,7 +84,22 @@ function OAuthSetupContent() {
           router.push("/dashboard");
         }
       } else {
-        setError(result.error || "Gagal menyelesaikan setup profil.");
+        // BUG FIX: Handle role already selected error
+        if (result.error && result.error.includes("sudah dipilih")) {
+          toast({
+            title: "Role Sudah Dipilih",
+            description: result.error,
+            variant: "destructive",
+            duration: 5000,
+          });
+
+          // Redirect to login after showing notification
+          setTimeout(() => {
+            router.push("/login");
+          }, 2000);
+        } else {
+          setError(result.error || "Gagal menyelesaikan setup profil.");
+        }
       }
     } catch (err) {
       console.error("Role selection error:", err);
