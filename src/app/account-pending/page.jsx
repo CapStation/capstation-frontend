@@ -55,6 +55,19 @@ function AccountPendingPageContent() {
           borderColor: "border-blue-200",
           textColor: "text-blue-900",
         };
+      case "role_approval":
+        return {
+          icon: <Clock className="w-12 h-12 sm:w-16 sm:h-16 text-purple-500" />,
+          title: "Menunggu Persetujuan Admin",
+          description: "Pendaftaran Google OAuth berhasil!",
+          message:
+            "Role yang Anda pilih sedang menunggu persetujuan dari administrator. Akun Google Anda sudah terverifikasi. Anda akan menerima email notifikasi setelah admin menyetujui akun Anda.",
+          action: "Kembali ke Login",
+          actionLink: "/login",
+          bgColor: "bg-purple-50",
+          borderColor: "border-purple-200",
+          textColor: "text-purple-900",
+        };
       default:
         return {
           icon: (

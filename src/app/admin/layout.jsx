@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
 import AdminSidebar from "@/components/admin/AdminSidebar";
@@ -8,15 +8,32 @@ import { Loader2 } from "lucide-react";
 
 export default function AdminLayout({ children }) {
   const router = useRouter();
-  const { user, loading } = useAuth();
+  const { user, loading, checkAuth } = useAuth();
+  const [isInitialized, setIsInitialized] = useState(false);
 
   useEffect(() => {
-    if (!loading && (!user || user.role !== "admin")) {
-      router.push("/login?redirect=/admin");
-    }
+    // BUG FIX: Prevent premature redirect during auth check
+    // Only redirect if auth check is complete AND user is not admin
+    const initializeAuth = async () => {
+      if (!loading) {
+        if (!user) {
+          // No user found after loading complete - redirect to login
+          router.push("/login?redirect=/admin");
+        } else if (user.role !== "admin") {
+          // User exists but not admin - redirect to dashboard
+          router.push("/dashboard");
+        } else {
+          // User is admin - ready to render
+          setIsInitialized(true);
+        }
+      }
+    };
+
+    initializeAuth();
   }, [user, loading, router]);
 
-  if (loading) {
+  // Show loading state while checking authentication
+  if (loading || !isInitialized) {
     return (
       <div className="min-h-screen bg-neutral-50">
         <div className="h-16 bg-white border-b border-neutral-200 animate-pulse" />
@@ -32,7 +49,8 @@ export default function AdminLayout({ children }) {
     );
   }
 
-  if (!user || user.role !== "admin") {   
+  // Only render admin content if user is confirmed admin
+  if (!user || user.role !== "admin") {
     return null;
   }
 
@@ -44,15 +62,18 @@ export default function AdminLayout({ children }) {
 
       <main className="flex-1 overflow-auto">
         {/* Desktop / tablet: constrained centered container */}
-        <div className="hidden lg:block mx-auto px-4 py-6">
-          {children}
-        </div>
+        <div className="hidden lg:block mx-auto px-4 py-6">{children}</div>
 
         {/* Narrow screens: show message (admin not available) */}
-        <div className="block lg:hidden min-h-screen flex items-center justify-center bg-neutral-50">
+        <div className="lg:hidden min-h-screen flex items-center justify-center bg-neutral-50">
           <div className="max-w-sm text-center p-6">
-            <h2 className="text-lg font-semibold text-neutral-900 mb-2">Halaman Admin</h2>
-            <p className="text-neutral-600">Halaman admin tidak tersedia di perangkat seluler. Silakan buka di desktop untuk mengakses fitur admin.</p>
+            <h2 className="text-lg font-semibold text-neutral-900 mb-2">
+              Halaman Admin
+            </h2>
+            <p className="text-neutral-600">
+              Halaman admin tidak tersedia di perangkat seluler. Silakan buka di
+              desktop untuk mengakses fitur admin.
+            </p>
           </div>
         </div>
       </main>

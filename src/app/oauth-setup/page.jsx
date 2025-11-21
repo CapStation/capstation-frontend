@@ -60,22 +60,22 @@ function OAuthSetupContent() {
 
       if (result.success) {
         if (result.isPending) {
-          // Pending approval - show custom toast notification and redirect to login
+          // All OAuth users require admin approval
           toast({
             title: "Menunggu Persetujuan Admin",
             description:
               result.message ||
-              "Akun Google anda dengan role Dosen sedang menunggu persetujuan dari admin. Anda akan diberitahu melalui email setelah akun Anda disetujui.",
+              "Pendaftaran berhasil! Akun Anda sedang menunggu persetujuan dari admin. Anda akan diberitahu melalui email setelah disetujui.",
             variant: "default",
             duration: 5000,
           });
 
-          // Redirect to login after showing notification
+          // Redirect to account-pending page
           setTimeout(() => {
-            router.push("/login");
+            router.push("/account-pending?reason=role_approval");
           }, 1500);
         } else {
-          // Success - show success toast and redirect to dashboard
+          // This shouldn't happen anymore as all OAuth users are pending
           toast({
             title: "Setup Berhasil",
             description: "Selamat datang di CapStation!",
