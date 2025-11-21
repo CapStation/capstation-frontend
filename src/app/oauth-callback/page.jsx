@@ -10,7 +10,7 @@ function OAuthCallbackContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { checkAuth } = useAuth();
-  const [status, setStatus] = useState("processing"); // processing, success, error
+  const [status, setStatus] = useState("processing"); 
 
   useEffect(() => {
     const processCallback = async () => {
@@ -129,5 +129,4 @@ export default function OAuthCallbackPage() {
   );
 }
 
-// Import Suspense at the top
 import { Suspense } from "react";

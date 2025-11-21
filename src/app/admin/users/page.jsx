@@ -680,7 +680,26 @@ export default function AdminUsersPage() {
                             {user.email}
                           </TableCell>
                           <TableCell className="text-center">
-                            {getRoleBadge(user.role)}
+                            {/* Display pendingRole if role is null (OAuth users awaiting approval) */}
+                            {user.role ? (
+                              getRoleBadge(user.role)
+                            ) : user.pendingRole ? (
+                              <Badge
+                                variant="outline"
+                                className="text-xs bg-yellow-50 text-yellow-700 border-yellow-300"
+                              >
+                                {user.pendingRole.charAt(0).toUpperCase() +
+                                  user.pendingRole.slice(1)}{" "}
+                                (Pending)
+                              </Badge>
+                            ) : (
+                              <Badge
+                                variant="outline"
+                                className="text-xs text-neutral-400"
+                              >
+                                Tidak Ada Role
+                              </Badge>
+                            )}
                           </TableCell>
                           <TableCell className="text-center">
                             <Badge
@@ -731,7 +750,21 @@ export default function AdminUsersPage() {
                             </Badge>
                           </TableCell>
                           <TableCell className="text-center">
-                            {!user.roleApproved ? (
+                            {/* Show validation button if: has pendingRole OR has role but not approved */}
+                            {user.pendingRole && !user.roleApproved ? (
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => {
+                                  setUserToValidate(user);
+                                  setShowValidateDialog(true);
+                                }}
+                                className="h-8 w-8 p-0 text-blue-600 hover:text-blue-700 hover:bg-blue-50"
+                                title="Validasi dan setujui role"
+                              >
+                                <UserCheck className="h-4 w-4" />
+                              </Button>
+                            ) : user.role && !user.roleApproved ? (
                               <Button
                                 variant="ghost"
                                 size="sm"

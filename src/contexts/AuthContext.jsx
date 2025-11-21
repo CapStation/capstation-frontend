@@ -286,6 +286,27 @@ export const AuthProvider = ({ children }) => {
       const result = await OAuthService.completeProfile(setupToken, role);
 
       if (result.success) {
+        // BUG FIX #3: Handle already approved users
+        if (result.code === "ALREADY_APPROVED" && result.shouldRedirect) {
+          return {
+            success: true,
+            alreadyApproved: true,
+            redirectTo: result.redirectTo || "/dashboard",
+            message: result.message,
+          };
+        }
+
+        // Handle pending approval users
+        if (result.code === "PENDING_APPROVAL" && result.shouldRedirect) {
+          return {
+            success: true,
+            isPending: true,
+            redirectTo:
+              result.redirectTo || "/account-pending?reason=role_approval",
+            message: result.message,
+          };
+        }
+
         if (result.isPending) {
           // Role pending approval - don't login
           return {

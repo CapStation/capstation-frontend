@@ -27,23 +27,77 @@ function OAuthSetupContent() {
   const [setupToken, setSetupToken] = useState("");
 
   useEffect(() => {
-    // Get token from URL
-    const token = OAuthService.getSetupTokenFromURL(searchParams);
+    // BUG FIX #3: Check if user already has approved role FIRST
+    // If user is already authenticated with approved role, redirect to dashboard
+    const checkExistingAuth = async () => {
+      const token = localStorage.getItem("accessToken");
+      if (token) {
+        try {
+          // Try to get current user profile
+          const response = await fetch(
+            `${process.env.NEXT_PUBLIC_API_URL}/users/profile`,
+            {
+              headers: {
+                Authorization: `Bearer ${token}`,
+              },
+            }
+          );
 
-    if (!token) {
-      setError("Token setup tidak ditemukan. Silakan login ulang.");
-      setTimeout(() => router.push("/login"), 3000);
-      return;
-    }
+          if (response.ok) {
+            const data = await response.json();
+            const currentUser = data.user || data;
 
-    if (!OAuthService.isValidSetupToken(token)) {
-      setError("Token setup tidak valid. Silakan login ulang.");
-      setTimeout(() => router.push("/login"), 3000);
-      return;
-    }
+            // If user has approved role, redirect to dashboard
+            if (currentUser.role && currentUser.roleApproved) {
+              toast({
+                title: "Sudah Terautentikasi",
+                description:
+                  "Anda sudah memiliki akses ke aplikasi. Mengarahkan ke dashboard...",
+                variant: "default",
+              });
+              setTimeout(() => router.push("/dashboard"), 1000);
+              return;
+            }
 
-    setSetupToken(token);
-  }, [searchParams, router]);
+            // If user has pending role, redirect to account-pending
+            if (currentUser.pendingRole && !currentUser.roleApproved) {
+              toast({
+                title: "Menunggu Persetujuan",
+                description: "Akun Anda sedang menunggu persetujuan admin.",
+                variant: "default",
+              });
+              setTimeout(
+                () => router.push("/account-pending?reason=role_approval"),
+                1000
+              );
+              return;
+            }
+          }
+        } catch (error) {
+          console.log("No existing auth or token invalid - proceed with setup");
+        }
+      }
+
+      // No existing auth or auth invalid - proceed with setup token
+      const setupTokenFromURL = OAuthService.getSetupTokenFromURL(searchParams);
+
+      if (!setupTokenFromURL) {
+        setError("Token setup tidak ditemukan. Silakan login ulang.");
+        setTimeout(() => router.push("/login"), 3000);
+        return;
+      }
+
+      if (!OAuthService.isValidSetupToken(setupTokenFromURL)) {
+        setError("Token setup tidak valid. Silakan login ulang.");
+        setTimeout(() => router.push("/login"), 3000);
+        return;
+      }
+
+      setSetupToken(setupTokenFromURL);
+    };
+
+    checkExistingAuth();
+  }, [searchParams, router, toast]);
 
   const handleRoleSelection = async (role) => {
     if (!setupToken) {
@@ -59,6 +113,31 @@ function OAuthSetupContent() {
       const result = await loginWithOAuth(setupToken, role);
 
       if (result.success) {
+        // BUG FIX #3: Handle already approved users
+        if (result.alreadyApproved && result.redirectTo) {
+          toast({
+            title: "Sudah Terautentikasi",
+            description:
+              result.message ||
+              "Anda sudah memiliki akses. Mengarahkan ke dashboard...",
+            variant: "default",
+          });
+          setTimeout(() => router.push(result.redirectTo), 1000);
+          return;
+        }
+
+        // Handle pending users with specific redirect
+        if (result.isPending && result.redirectTo) {
+          toast({
+            title: "Menunggu Persetujuan Admin",
+            description: result.message,
+            variant: "default",
+            duration: 5000,
+          });
+          setTimeout(() => router.push(result.redirectTo), 1500);
+          return;
+        }
+
         if (result.isPending) {
           // All OAuth users require admin approval
           toast({
