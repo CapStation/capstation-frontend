@@ -10,11 +10,20 @@ export default function AdminLayout({ children }) {
   const router = useRouter();
   const { user, loading, checkAuth } = useAuth();
   const [isInitialized, setIsInitialized] = useState(false);
+  const [authCheckAttempted, setAuthCheckAttempted] = useState(false);
 
   useEffect(() => {
     // BUG FIX: Prevent premature redirect during auth check
-    // Only redirect if auth check is complete AND user is not admin
+    // Force re-check auth on mount to handle token refresh
     const initializeAuth = async () => {
+      // Force checkAuth on mount/refresh to validate current token
+      if (!authCheckAttempted) {
+        setAuthCheckAttempted(true);
+        await checkAuth();
+        return; // Wait for next render with updated user state
+      }
+
+      // After auth check is complete
       if (!loading) {
         if (!user) {
           // No user found after loading complete - redirect to login
@@ -30,7 +39,7 @@ export default function AdminLayout({ children }) {
     };
 
     initializeAuth();
-  }, [user, loading, router]);
+  }, [user, loading, router, checkAuth, authCheckAttempted]);
 
   // Show loading state while checking authentication
   if (loading || !isInitialized) {

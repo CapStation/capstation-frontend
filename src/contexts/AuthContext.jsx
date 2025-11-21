@@ -20,55 +20,101 @@ export const AuthProvider = ({ children }) => {
   const [loading, setLoading] = useState(true);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
 
-  // Check if user is logged in on mount
+  // Load user from localStorage on mount (for instant UI)
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const cachedUser = localStorage.getItem("user");
+      if (cachedUser) {
+        try {
+          const parsedUser = JSON.parse(cachedUser);
+          setUser(parsedUser);
+          setIsAuthenticated(true);
+        } catch (error) {
+          console.error("Failed to parse cached user:", error);
+          localStorage.removeItem("user");
+        }
+      }
+    }
+  }, []);
+
+  // Check if user is logged in on mount (verify with backend)
   useEffect(() => {
     checkAuth();
   }, []);
 
+  // Periodic auth check every 5 minutes to catch token expiration
+  useEffect(() => {
+    if (!isAuthenticated) return;
+
+    const interval = setInterval(() => {
+      console.log("Periodic auth check...");
+      checkAuth();
+    }, 5 * 60 * 1000); // 5 minutes
+
+    return () => clearInterval(interval);
+  }, [isAuthenticated]);
+
   const checkAuth = async () => {
     try {
       const token = apiClient.getAuthToken();
-      if (token) {
-        const userData = await apiClient.get(endpoints.users.profile);
-        setUser(userData.user || userData);
-        setIsAuthenticated(true);
+      if (!token) {
+        // No token - clear auth state immediately
+        setUser(null);
+        setIsAuthenticated(false);
+        setLoading(false);
+        return;
       }
+
+      // Token exists - verify with backend
+      const userData = await apiClient.get(endpoints.users.profile);
+      const userObj = userData.user || userData;
+
+      // Cache user data in localStorage for instant load on refresh
+      if (typeof window !== "undefined") {
+        localStorage.setItem("user", JSON.stringify(userObj));
+      }
+
+      setUser(userObj);
+      setIsAuthenticated(true);
+      setLoading(false);
     } catch (error) {
-      // Only log error if it's not a simple "no token" case
+      // Only log error if token exists (real auth failure)
       if (apiClient.getAuthToken()) {
         // Safely extract error information
         const errorInfo = {
-          // Direct error properties
           message: error?.message || "Unknown error",
           status: error?.status,
           data: error?.data,
-
-          // Network error flag
           isNetworkError: error?.isNetworkError || false,
-
-          // For standard Error objects
-          name: error?.name,
-          stack: error?.stack,
-
-          // Check if it's an object
-          type: typeof error,
-
-          // Serialize the full error for debugging
-          raw: (() => {
-            try {
-              return JSON.stringify(error);
-            } catch {
-              return error?.toString() || String(error);
-            }
-          })(),
         };
 
         console.error("Auth check failed:", errorInfo);
+
+        // Only remove token if it's truly invalid (401 Unauthorized)
+        // Don't remove on network errors or other temporary issues
+        if (error?.status === 401) {
+          console.log("Token invalid (401) - removing token and user cache");
+          apiClient.removeAuthToken();
+          if (typeof window !== "undefined") {
+            localStorage.removeItem("user");
+          }
+          setUser(null);
+          setIsAuthenticated(false);
+        } else {
+          // Network error or server error - keep token, retry later
+          console.log(
+            "Temporary error - keeping token and user cache for retry"
+          );
+          // Keep cached user data visible during network issues
+        }
+      } else {
+        // No token exists - clear cache
+        if (typeof window !== "undefined") {
+          localStorage.removeItem("user");
+        }
+        setUser(null);
+        setIsAuthenticated(false);
       }
-      apiClient.removeAuthToken();
-      setUser(null);
-      setIsAuthenticated(false);
-    } finally {
       setLoading(false);
     }
   };
@@ -89,6 +135,12 @@ export const AuthProvider = ({ children }) => {
       // Backend returns { accessToken, user }
       if (response.accessToken) {
         apiClient.setAuthToken(response.accessToken);
+
+        // Cache user data for instant load
+        if (typeof window !== "undefined") {
+          localStorage.setItem("user", JSON.stringify(response.user));
+        }
+
         setUser(response.user);
         setIsAuthenticated(true);
         return { success: true, user: response.user };
@@ -208,6 +260,12 @@ export const AuthProvider = ({ children }) => {
     } finally {
       // Always clear local auth state regardless of backend response
       apiClient.removeAuthToken();
+
+      // Clear user cache
+      if (typeof window !== "undefined") {
+        localStorage.removeItem("user");
+      }
+
       setUser(null);
       setIsAuthenticated(false);
     }
@@ -240,6 +298,12 @@ export const AuthProvider = ({ children }) => {
         // Login successful - set token and user
         if (result.accessToken) {
           apiClient.setAuthToken(result.accessToken);
+
+          // Cache user data
+          if (typeof window !== "undefined") {
+            localStorage.setItem("user", JSON.stringify(result.user));
+          }
+
           setUser(result.user);
           setIsAuthenticated(true);
           return {
