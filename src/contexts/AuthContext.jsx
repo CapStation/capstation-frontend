@@ -23,7 +23,26 @@ export const AuthProvider = ({ children }) => {
   // Load user from localStorage on mount (for instant UI)
   useEffect(() => {
     if (typeof window !== "undefined") {
-      const cachedUser = localStorage.getItem("user");
+      // BUG FIX #1: Try to load user-specific cache first
+      const currentUserId = localStorage.getItem("currentUserId");
+
+      let cachedUser = null;
+      if (currentUserId) {
+        // Try user-specific cache
+        const userSpecificCache = localStorage.getItem(`user_${currentUserId}`);
+        if (userSpecificCache) {
+          cachedUser = userSpecificCache;
+          console.log(
+            `📦 Loaded user-specific cache for user ${currentUserId}`
+          );
+        }
+      }
+
+      // Fallback to generic cache (backward compatibility)
+      if (!cachedUser) {
+        cachedUser = localStorage.getItem("user");
+      }
+
       if (cachedUser) {
         try {
           const parsedUser = JSON.parse(cachedUser);
@@ -32,6 +51,9 @@ export const AuthProvider = ({ children }) => {
         } catch (error) {
           console.error("Failed to parse cached user:", error);
           localStorage.removeItem("user");
+          if (currentUserId) {
+            localStorage.removeItem(`user_${currentUserId}`);
+          }
         }
       }
     }
@@ -69,8 +91,25 @@ export const AuthProvider = ({ children }) => {
       const userData = await apiClient.get(endpoints.users.profile);
       const userObj = userData.user || userData;
 
-      // Cache user data in localStorage for instant load on refresh
+      // BUG FIX #1: Use user-specific localStorage key to prevent cross-account pollution
+      // Clear ALL old user caches first (clean up stale data)
       if (typeof window !== "undefined") {
+        const currentUserId = userObj._id;
+        const cachedUserId = localStorage.getItem("currentUserId");
+
+        // If switching users, clear old user's cache
+        if (cachedUserId && cachedUserId !== currentUserId) {
+          console.log(
+            `🔄 User switch detected: ${cachedUserId} → ${currentUserId}`
+          );
+          localStorage.removeItem(`user_${cachedUserId}`);
+        }
+
+        // Store current user data with user-specific key
+        localStorage.setItem(`user_${currentUserId}`, JSON.stringify(userObj));
+        localStorage.setItem("currentUserId", currentUserId);
+
+        // Also keep generic "user" key for backward compatibility (will be removed in future)
         localStorage.setItem("user", JSON.stringify(userObj));
       }
 
@@ -96,7 +135,13 @@ export const AuthProvider = ({ children }) => {
           console.log("Token invalid (401) - removing token and user cache");
           apiClient.removeAuthToken();
           if (typeof window !== "undefined") {
+            // BUG FIX #1: Clear both generic and user-specific cache
+            const currentUserId = localStorage.getItem("currentUserId");
             localStorage.removeItem("user");
+            if (currentUserId) {
+              localStorage.removeItem(`user_${currentUserId}`);
+              localStorage.removeItem("currentUserId");
+            }
           }
           setUser(null);
           setIsAuthenticated(false);
@@ -136,9 +181,20 @@ export const AuthProvider = ({ children }) => {
       if (response.accessToken) {
         apiClient.setAuthToken(response.accessToken);
 
-        // Cache user data for instant load
+        // BUG FIX #1: Cache user data with user-specific key
         if (typeof window !== "undefined") {
-          localStorage.setItem("user", JSON.stringify(response.user));
+          const userId = response.user._id;
+
+          // Clear old user cache if switching accounts
+          const oldUserId = localStorage.getItem("currentUserId");
+          if (oldUserId && oldUserId !== userId) {
+            localStorage.removeItem(`user_${oldUserId}`);
+          }
+
+          // Store new user data
+          localStorage.setItem(`user_${userId}`, JSON.stringify(response.user));
+          localStorage.setItem("currentUserId", userId);
+          localStorage.setItem("user", JSON.stringify(response.user)); // Backward compat
         }
 
         setUser(response.user);
@@ -261,9 +317,14 @@ export const AuthProvider = ({ children }) => {
       // Always clear local auth state regardless of backend response
       apiClient.removeAuthToken();
 
-      // Clear user cache
+      // BUG FIX #1: Clear both generic and user-specific cache
       if (typeof window !== "undefined") {
+        const currentUserId = localStorage.getItem("currentUserId");
         localStorage.removeItem("user");
+        if (currentUserId) {
+          localStorage.removeItem(`user_${currentUserId}`);
+          localStorage.removeItem("currentUserId");
+        }
       }
 
       setUser(null);
@@ -320,9 +381,20 @@ export const AuthProvider = ({ children }) => {
         if (result.accessToken) {
           apiClient.setAuthToken(result.accessToken);
 
-          // Cache user data
+          // BUG FIX #1: Cache user data with user-specific key
           if (typeof window !== "undefined") {
-            localStorage.setItem("user", JSON.stringify(result.user));
+            const userId = result.user._id;
+
+            // Clear old user cache if switching accounts
+            const oldUserId = localStorage.getItem("currentUserId");
+            if (oldUserId && oldUserId !== userId) {
+              localStorage.removeItem(`user_${oldUserId}`);
+            }
+
+            // Store new user data
+            localStorage.setItem(`user_${userId}`, JSON.stringify(result.user));
+            localStorage.setItem("currentUserId", userId);
+            localStorage.setItem("user", JSON.stringify(result.user)); // Backward compat
           }
 
           setUser(result.user);
